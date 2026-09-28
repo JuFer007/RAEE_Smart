@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="logoRAEE_Smart.png" alt="RAEE_Smart" width="100"/>
+  <img src="logoRAEE_Smart.png" alt="RAEE_Smart" width="140"/>
   <br><br>
   <p><strong>Plataforma de reciclaje de residuos de aparatos eléctricos y electrónicos (RAEE) con clasificación por IA, certificación digital con QR y reportes municipales</strong></p>
 
