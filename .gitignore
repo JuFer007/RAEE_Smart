@@ -1,0 +1,27 @@
+# Dependencias
+node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+.env
+
+# Java / Maven
+target/
+*.class
+
+# Modelos de IA (se distribuyen aparte)
+model_weights/*.h5
+!model_weights/.gitkeep
+
+# Entorno
+.env
+*.local
+
+# Sistema / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
