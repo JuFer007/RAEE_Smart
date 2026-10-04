@@ -30,6 +30,7 @@ com.raeesmart.backend
 │   ├── ClasificacionIAService.java (+ impl)   # consume el microservicio Python
 │   ├── GeolocalizacionService.java (+ impl)   # consume API de mapas
 │   └── QRService.java (+ impl)
+│   └── AlmacenamientoService.java (+ impl)
 │
 ├── repository/
 │   ├── UsuarioRepository.java
@@ -38,6 +39,7 @@ com.raeesmart.backend
 │   ├── MunicipalidadRepository.java
 │   ├── PuntoRecoleccionRepository.java
 │   └── CategoriaRAEERepository.java
+│   └── ReporteIARepository.java
 │
 ├── model/ (entidades JPA)
 │       ├── Enums 

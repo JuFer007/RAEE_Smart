@@ -25,3 +25,11 @@ model_weights/*.h5
 Thumbs.db
 .idea/
 .vscode/
+
+#appMobile
+app-movil/.expo/
+# Datasets de entrenamiento del módulo de IA
+ia-service/training/dataset/
+ia-service/training/datasets/
+ia-service/dataset/
+ia-service/datasets/
