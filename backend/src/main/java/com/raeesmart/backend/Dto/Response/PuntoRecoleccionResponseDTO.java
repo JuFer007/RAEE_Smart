@@ -1,18 +1,18 @@
-package com.raeesmart.backend.Dto.Request;
+package com.raeesmart.backend.Dto.Response;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.web.multipart.MultipartFile;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 
-public class EntregaRequestDTO {
-    private Long usuarioId;
-    private MultipartFile foto;
+public class PuntoRecoleccionResponseDTO {
+    private Long id;
+    private String nombre;
     private Double latitud;
     private Double longitud;
+    private String horarioAtencion;
 }

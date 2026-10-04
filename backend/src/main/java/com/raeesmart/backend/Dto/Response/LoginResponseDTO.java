@@ -1,5 +1,4 @@
 package com.raeesmart.backend.Dto.Response;
-import com.raeesmart.backend.Model.Enums.TipoRAEE;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,8 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 
-public class ClasificacionResponseDTO {
-    private TipoRAEE tipoDetectado;
-    private Double confianza;
-    private Integer tiempoInferenciaMs;
+public class LoginResponseDTO {
+    private String token;
+    private UsuarioResponseDTO usuario;
 }
