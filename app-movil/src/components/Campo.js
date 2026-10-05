@@ -7,6 +7,7 @@ export default function Campo({
   icono,
   placeholder,
   valor,
+  value,
   onChangeText,
   secureTextEntry = false,
   keyboardType = 'default',
@@ -23,7 +24,7 @@ export default function Campo({
         style={[estilos.input, multilinea && estilos.multilinea]}
         placeholder={placeholder}
         placeholderTextColor={COLORS.mutIcon}
-        value={valor}
+        value={valor ?? value}
         onChangeText={onChangeText}
         secureTextEntry={secureTextEntry && !visible}
         keyboardType={keyboardType}
@@ -35,7 +36,7 @@ export default function Campo({
       />
       {secureTextEntry ? (
         <TouchableOpacity onPress={() => setVisible(!visible)} hitSlop={8}>
-          <Ionicons name={visible ? 'eye-off-outline' : 'eye-outline'} size={16} color={COLORS.mutIcon} />
+          <Ionicons name={visible ? 'eye-off-outline' : 'eye-outline'} size={18} color={COLORS.mutIcon} />
         </TouchableOpacity>
       ) : null}
     </View>
@@ -44,7 +45,7 @@ export default function Campo({
 
 const estilos = StyleSheet.create({
   campo: {
-    height: 48,
+    height: 50,
     paddingHorizontal: 14,
     flexDirection: 'row',
     alignItems: 'center',
@@ -60,7 +61,7 @@ const estilos = StyleSheet.create({
     flex: 1,
     ...TIPOGRAFIA.small,
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 14,
     color: COLORS.inkField,
     padding: 0,
   },

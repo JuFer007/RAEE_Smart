@@ -2,18 +2,18 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import MapaPuntos from '../components/MapaPuntos';
-import Encabezado, { BotonIcono } from '../components/Encabezado';
+import Encabezado from '../components/Encabezado';
+import useEntradaAnimada from '../hooks/useEntradaAnimada';
 import useLocation from '../hooks/useLocation';
 import usePuntos from '../hooks/usePuntos';
-import { esDemo } from '../utils/demo';
-import { COLORS, ESPACIOS, RADIOS, SOMBRAS, TIPOGRAFIA } from '../theme';
+import { COLORS, ESPACIOS, RADIOS, SOMBRAS, TIPOGRAFIA, FUENTES } from '../theme';
 import { distanciaKm } from '../utils/fecha';
 
-export default function MapaScreen() {
-  const modoDemo = esDemo();
-  const { ubicacion } = useLocation(!modoDemo);
+export default function MapaScreen({ navigation }) {
+  const { ubicacion } = useLocation();
   const { puntos, cargando, error, recargar } = usePuntos(ubicacion);
   const [indice, setIndice] = useState(0);
+  const [entrada] = useEntradaAnimada({ eje: 'y', distancia: -18, escala: 0.99 });
 
   const activo = puntos[indice] || puntos[0];
 
@@ -22,10 +22,25 @@ export default function MapaScreen() {
     setIndice((i) => (i + delta + puntos.length) % puntos.length);
   }
 
+  function seleccionar(p) {
+    const i = puntos.findIndex((x) => String(x.id) === String(p.id));
+    if (i >= 0) setIndice(i);
+  }
+
   return (
     <View style={styles.fondo}>
       <View style={styles.encabezadoZona}>
-        <Encabezado titulo="Mapa de puntos de acopio" derecha={<BotonIcono nombre="search-outline" size={19} />} />
+        <Encabezado
+          titulo="Mapa de acopio"
+          derecha={
+            <View style={styles.chipCabecera}>
+              <Ionicons name="location" size={12} color={COLORS.primaryText} />
+              <Text style={styles.chipCabeceraTexto}>
+                {cargando && !puntos.length ? '—' : puntos.length}
+              </Text>
+            </View>
+          }
+        />
       </View>
 
       <View style={styles.mapaZona}>
@@ -33,40 +48,22 @@ export default function MapaScreen() {
           puntos={puntos}
           ubicacion={ubicacion}
           seleccionado={activo}
-          onSelect={(p) => setIndice(puntos.findIndex((x) => String(x.id) === String(p.id)))}
+          onSelect={seleccionar}
           alto={999}
           radio={0}
         />
 
-        {activo ? (
-          <View style={styles.tarjetaFlotante}>
-            <Ionicons name="location-outline" size={20} color={COLORS.primaryText} />
-            <View style={styles.flotanteTextos}>
-              <Text style={styles.flotanteNombre} numberOfLines={1}>
-                {activo.nombre}
-              </Text>
-              <Text style={styles.flotanteDetalle} numberOfLines={1}>
-                {activo.direccion}
-              </Text>
-              {activo.distanciaM != null ? (
-                <Text style={styles.flotanteDistancia}>A {distanciaKm(activo.distanciaM)}</Text>
-              ) : null}
-            </View>
-            <View style={styles.flanteControles}>
-              <TouchableOpacity onPress={() => mover(-1)} hitSlop={8}>
-                <Ionicons name="chevron-back" size={18} color={COLORS.mutSoft} />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => mover(1)} hitSlop={8}>
-                <Ionicons name="chevron-forward" size={18} color={COLORS.primaryText} />
-              </TouchableOpacity>
-            </View>
+        {!ubicacion && !cargando ? (
+          <View style={styles.avisoUbicacion}>
+            <Ionicons name="navigate-circle-outline" size={14} color={COLORS.info} />
+            <Text style={styles.avisoUbicacionTexto}>Activa tu ubicación para ver qué punto te queda más cerca</Text>
           </View>
         ) : null}
 
         {cargando ? (
           <View style={styles.cargando}>
             <ActivityIndicator size="small" color={COLORS.primary} />
-            <Text style={styles.cargandoTexto}>Buscando puntos cercanos...</Text>
+            <Text style={styles.cargandoTexto}>Buscando puntos cercanos…</Text>
           </View>
         ) : null}
 
@@ -76,33 +73,160 @@ export default function MapaScreen() {
             <Text style={styles.errorChipTexto}>No pudimos cargar los puntos · Reintentar</Text>
           </TouchableOpacity>
         ) : null}
+
+        {activo ? (
+          <View style={[styles.tarjetaFlotante, entrada]}>
+            <View style={styles.tarjetaCabecera}>
+              <View style={styles.tarjetaContador}>
+                <Text style={styles.tarjetaContadorTexto}>
+                  {indice + 1}/{puntos.length}
+                </Text>
+              </View>
+              <View style={styles.tarjetaCabeceraTexto}>
+                <Text style={styles.flotanteNombre} numberOfLines={1}>
+                  {activo.nombre}
+                </Text>
+                {activo.distanciaM != null ? (
+                  <View style={styles.distancia}>
+                    <Ionicons name="walk-outline" size={11} color={COLORS.primaryText} />
+                    <Text style={styles.distanciaTexto}>A {distanciaKm(activo.distanciaM)}</Text>
+                  </View>
+                ) : null}
+              </View>
+              <View style={styles.navegacion}>
+                <BotonCircular nombre="chevron-back" onPress={() => mover(-1)} />
+                <BotonCircular nombre="chevron-forward" onPress={() => mover(1)} />
+              </View>
+            </View>
+
+            <View style={styles.tarjetaLinea}>
+              <Ionicons name="pin-outline" size={13} color={COLORS.mutIcon} />
+              <Text style={styles.tarjetaDetalle} numberOfLines={2}>
+                {activo.direccion}
+              </Text>
+            </View>
+
+            {activo.horarioAtencion ? (
+              <View style={styles.tarjetaLinea}>
+                <Ionicons name="time-outline" size={13} color={COLORS.mutIcon} />
+                <Text style={styles.tarjetaDetalle} numberOfLines={2}>
+                  {activo.horarioAtencion}
+                </Text>
+              </View>
+            ) : null}
+
+            <TouchableOpacity
+              style={styles.tarjetaAccion}
+              activeOpacity={0.8}
+              onPress={() => navigation.navigate('Horarios')}
+            >
+              <Ionicons name="calendar-outline" size={14} color={COLORS.white} />
+              <Text style={styles.tarjetaAccionTexto}>Ver horarios de atención</Text>
+              <Ionicons name="chevron-forward" size={14} color={COLORS.white} />
+            </TouchableOpacity>
+          </View>
+        ) : null}
       </View>
     </View>
   );
 }
 
+function BotonCircular({ nombre, onPress }) {
+  return (
+    <TouchableOpacity style={styles.botonCircular} activeOpacity={0.7} onPress={onPress}>
+      <Ionicons name={nombre} size={16} color={COLORS.primaryText} />
+    </TouchableOpacity>
+  );
+}
+
 const styles = StyleSheet.create({
   fondo: { flex: 1, backgroundColor: COLORS.bgTop },
-  encabezadoZona: { paddingHorizontal: ESPACIOS.page, paddingTop: ESPACIOS.sm },
-  mapaZona: { flex: 1, minHeight: 340, overflow: 'hidden' },
-  tarjetaFlotante: {
-    position: 'absolute',
-    left: 34,
-    right: 34,
-    bottom: 93,
+  encabezadoZona: { paddingHorizontal: ESPACIOS.page, paddingTop: ESPACIOS.md },
+
+  chipCabecera: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    backgroundColor: COLORS.surface,
+    gap: 4,
+    backgroundColor: COLORS.primaryPale,
+    borderWidth: 1,
+    borderColor: COLORS.primaryRing,
+    borderRadius: RADIOS.pill,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  chipCabeceraTexto: { ...TIPOGRAFIA.micro, fontSize: 11.5, fontFamily: FUENTES.dmBold, color: COLORS.primaryText },
+
+  mapaZona: { flex: 1, minHeight: 340, overflow: 'hidden' },
+
+  avisoUbicacion: {
+    position: 'absolute',
+    top: 12,
+    alignSelf: 'center',
+    left: ESPACIOS.page,
+    right: ESPACIOS.page,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    borderWidth: 1,
+    borderColor: COLORS.lineSoft,
     borderRadius: RADIOS.md,
-    padding: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+  },
+  avisoUbicacionTexto: { ...TIPOGRAFIA.micro, fontSize: 11, color: COLORS.inkItem, flex: 1 },
+
+  tarjetaFlotante: {
+    position: 'absolute',
+    left: ESPACIOS.page,
+    right: ESPACIOS.page,
+    bottom: 20,
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIOS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.lineSoft,
+    padding: 14,
+    gap: 9,
     ...SOMBRAS.flotante,
   },
-  flotanteTextos: { flex: 1 },
-  flotanteNombre: { ...TIPOGRAFIA.micro, fontSize: 11, fontFamily: 'DMSans_600SemiBold', color: '#23574C' },
-  flotanteDetalle: { ...TIPOGRAFIA.micro, fontSize: 10, color: '#7F9890', marginTop: 3 },
-  flotanteDistancia: { ...TIPOGRAFIA.micro, fontSize: 10, color: '#7F9890', marginTop: 3 },
-  flanteControles: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  tarjetaCabecera: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  tarjetaContador: {
+    backgroundColor: COLORS.primary,
+    borderRadius: RADIOS.sm,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  tarjetaContadorTexto: { ...TIPOGRAFIA.micro, fontSize: 11, fontFamily: FUENTES.dmBold, color: COLORS.white },
+  tarjetaCabeceraTexto: { flex: 1 },
+  flotanteNombre: { ...TIPOGRAFIA.micro, fontSize: 13, fontFamily: FUENTES.dmBold, color: COLORS.inkItem },
+  distancia: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 4 },
+  distanciaTexto: { ...TIPOGRAFIA.micro, fontSize: 10.5, fontFamily: FUENTES.dmSemi, color: COLORS.primaryText },
+
+  navegacion: { flexDirection: 'row', gap: 6 },
+  botonCircular: {
+    width: 32,
+    height: 32,
+    borderRadius: 11,
+    backgroundColor: COLORS.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  tarjetaLinea: { flexDirection: 'row', alignItems: 'flex-start', gap: 7 },
+  tarjetaDetalle: { ...TIPOGRAFIA.micro, fontSize: 11.5, lineHeight: 16, color: COLORS.mut, flex: 1 },
+
+  tarjetaAccion: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    backgroundColor: COLORS.primary,
+    borderRadius: RADIOS.boton,
+    paddingVertical: 11,
+    paddingHorizontal: 13,
+    marginTop: 2,
+  },
+  tarjetaAccionTexto: { ...TIPOGRAFIA.micro, fontSize: 12, fontFamily: FUENTES.dmBold, color: COLORS.white, flex: 1 },
+
   cargando: {
     position: 'absolute',
     top: 14,
@@ -116,9 +240,10 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
   },
   cargandoTexto: { ...TIPOGRAFIA.micro, fontSize: 10 },
+
   errorChip: {
     position: 'absolute',
-    bottom: 24,
+    bottom: 20,
     alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',

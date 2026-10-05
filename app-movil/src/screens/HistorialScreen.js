@@ -2,10 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Encabezado from '../components/Encabezado';
+import ModalEnProceso from '../components/ModalEnProceso';
 import { Chip } from '../components/Tarjeta';
 import { useAuth } from '../context/AuthContext';
 import * as entregaService from '../services/entregaService';
-import { obtenerEstado, obtenerInfoTipo, COLORS, ESPACIOS, RADIOS, TIPOGRAFIA } from '../theme';
+import { obtenerEstado, obtenerInfoTipo, COLORS, ESPACIOS, RADIOS, TIPOGRAFIA, FUENTES } from '../theme';
 import { formatearFechaHora } from '../utils/fecha';
 
 const FILTROS = ['Todas', 'Certificadas', 'En proceso'];
@@ -16,6 +17,7 @@ export default function HistorialScreen({ navigation }) {
   const [filtro, setFiltro] = useState('Todas');
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
+  const [enProceso, setEnProceso] = useState(null);
 
   const cargar = useCallback(async () => {
     try {
@@ -38,6 +40,16 @@ export default function HistorialScreen({ navigation }) {
     if (filtro === 'En proceso') return e.estado !== 'CONFIRMADA';
     return true;
   });
+
+  const certificada = (entrega) => entrega.estado === 'CONFIRMADA' && Boolean(entrega.certificadoCodigoQr);
+
+  function abrirEntrega(entrega) {
+    if (certificada(entrega)) {
+      navigation.navigate('Certificado', { entrega });
+    } else {
+      setEnProceso(entrega);
+    }
+  }
 
   return (
     <View style={styles.fondo}>
@@ -65,11 +77,18 @@ export default function HistorialScreen({ navigation }) {
           )
         }
         renderItem={({ item }) => (
-          <FilaEntrega
-            entrega={item}
-            onPress={() => navigation.navigate('Certificado', { entrega: item })}
-          />
+          <FilaEntrega entrega={item} onPress={() => abrirEntrega(item)} />
         )}
+      />
+
+      <ModalEnProceso
+        visible={Boolean(enProceso)}
+        entrega={enProceso}
+        onCerrar={() => setEnProceso(null)}
+        onVerPuntos={() => {
+          setEnProceso(null);
+          navigation.navigate('Horarios');
+        }}
       />
     </View>
   );
@@ -78,11 +97,12 @@ export default function HistorialScreen({ navigation }) {
 function FilaEntrega({ entrega, onPress }) {
   const info = obtenerInfoTipo(entrega.tipoRaee);
   const estado = obtenerEstado(entrega.estado);
+  const lista = entrega.estado === 'CONFIRMADA' && Boolean(entrega.certificadoCodigoQr);
 
   return (
     <TouchableOpacity style={styles.item} onPress={onPress} activeOpacity={0.85}>
       <View style={styles.itemIcono}>
-        <Ionicons name={info.icono} size={22} color={COLORS.primary} />
+        <Ionicons name={info.icono} size={22} color={COLORS.secondary} />
       </View>
       <View style={styles.itemTextos}>
         <Text style={styles.itemNombre} numberOfLines={1}>
@@ -95,19 +115,25 @@ function FilaEntrega({ entrega, onPress }) {
             : entrega.puntoRecoleccionNombre || 'Punto por asignar'}
         </Text>
       </View>
-      <View style={[styles.itemEstado, { backgroundColor: estado.bg }]}>
-        <Text style={[styles.itemEstadoTexto, { color: estado.color }]}>{estado.label}</Text>
+      <View style={styles.itemDerecha}>
+        <View style={[styles.itemEstado, { backgroundColor: estado.bg }]}>
+          <Text style={[styles.itemEstadoTexto, { color: estado.color }]}>{estado.label}</Text>
+        </View>
+        <Ionicons
+          name={lista ? 'qr-code-outline' : 'information-circle-outline'}
+          size={16}
+          color={lista ? COLORS.primaryText : COLORS.mutSoft}
+        />
       </View>
-      <Ionicons name="chevron-forward" size={17} color={COLORS.mutSoft} />
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   fondo: { flex: 1, backgroundColor: COLORS.bgTop },
-  encabezadoZona: { paddingHorizontal: ESPACIOS.page, paddingTop: ESPACIOS.sm },
-  filtros: { flexDirection: 'row', gap: 7, marginBottom: ESPACIOS.sm },
-  lista: { paddingHorizontal: ESPACIOS.page, paddingBottom: ESPACIOS.xl, gap: 9 },
+  encabezadoZona: { paddingHorizontal: ESPACIOS.page, paddingTop: ESPACIOS.md },
+  filtros: { flexDirection: 'row', gap: 8, marginBottom: ESPACIOS.md },
+  lista: { paddingHorizontal: ESPACIOS.page, paddingBottom: ESPACIOS.xl, gap: 10 },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -116,21 +142,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.lineSoft,
     borderRadius: RADIOS.boton,
-    padding: 10,
+    padding: 12,
   },
   itemIcono: {
-    width: 35,
-    height: 35,
-    borderRadius: 9,
+    width: 42,
+    height: 42,
+    borderRadius: 11,
     backgroundColor: COLORS.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   itemTextos: { flex: 1 },
-  itemNombre: { ...TIPOGRAFIA.micro, fontSize: 11, fontFamily: 'DMSans_600SemiBold', color: '#22594D' },
-  itemDetalle: { ...TIPOGRAFIA.micro, fontSize: 9, color: '#869E95', marginTop: 3 },
-  itemEstado: { alignSelf: 'flex-start', borderRadius: 9, paddingHorizontal: 7, paddingVertical: 4 },
-  itemEstadoTexto: { ...TIPOGRAFIA.micro, fontSize: 8, fontFamily: 'DMSans_600SemiBold' },
+  itemDerecha: { alignItems: 'flex-end', gap: 6 },
+  itemNombre: { ...TIPOGRAFIA.micro, fontSize: 14, fontFamily: FUENTES.dmSemi, color: COLORS.inkItem },
+  itemDetalle: { ...TIPOGRAFIA.micro, fontSize: 11, color: '#869E95', marginTop: 3 },
+  itemEstado: { alignSelf: 'flex-start', borderRadius: 9, paddingHorizontal: 9, paddingVertical: 5 },
+  itemEstadoTexto: { ...TIPOGRAFIA.micro, fontSize: 10, fontFamily: FUENTES.dmSemi },
   vacio: { alignItems: 'center', gap: ESPACIOS.sm, marginTop: ESPACIOS.xxl },
   vacioTexto: { ...TIPOGRAFIA.small, textAlign: 'center' },
 });

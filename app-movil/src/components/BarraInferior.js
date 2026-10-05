@@ -11,6 +11,8 @@ const ICONOS = {
   Perfil: { on: 'person', off: 'person-outline' },
 };
 
+const INACTIVO = '#8BA39B';
+
 export default function BarraInferior({ state, descriptors, navigation }) {
   const insets = useSafeAreaInsets();
   const safe = Math.max(insets.bottom, 8);
@@ -44,12 +46,14 @@ export default function BarraInferior({ state, descriptors, navigation }) {
             }}
             style={estilos.item}
           >
-            <Ionicons
-              name={activo ? iconos.on : iconos.off}
-              size={20}
-              color={activo ? COLORS.primaryNav : '#8BA39B'}
-            />
-            <Text style={[activo ? estilos.labelActivo : estilos.label, { color: activo ? COLORS.primaryNav : '#8BA39B' }]}>
+            <View style={[estilos.icono, activo && estilos.iconoActivo]}>
+              <Ionicons
+                name={activo ? iconos.on : iconos.off}
+                size={activo ? 16 : 21}
+                color={activo ? COLORS.white : INACTIVO}
+              />
+            </View>
+            <Text style={[activo ? estilos.labelActivo : estilos.label, { color: activo ? COLORS.primaryNav : INACTIVO }]}>
               {label}
             </Text>
           </TouchableOpacity>
@@ -62,13 +66,15 @@ export default function BarraInferior({ state, descriptors, navigation }) {
 const estilos = StyleSheet.create({
   barra: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255,255,255,0.96)',
+    backgroundColor: 'rgba(255,255,255,0.98)',
     borderTopWidth: 1,
     borderTopColor: COLORS.lineNav,
     paddingTop: ESPACIOS.sm,
     paddingHorizontal: 12,
   },
   item: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3 },
-  label: { ...TIPOGRAFIA.tab, color: '#8BA39B' },
-  labelActivo: { ...TIPOGRAFIA.tabActiva, color: COLORS.primaryNav },
+  icono: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  iconoActivo: { backgroundColor: COLORS.primaryNav },
+  label: { ...TIPOGRAFIA.tab, fontSize: 10 },
+  labelActivo: { ...TIPOGRAFIA.tabActiva, fontSize: 10 },
 });

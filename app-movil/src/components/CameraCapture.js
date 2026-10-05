@@ -7,7 +7,7 @@ import { COLORS, TIPOGRAFIA } from '../theme';
 
 const INTERIOR = 72;
 
-export default function CameraCapture({ onCaptura, analizando = false, hint, tip }) {
+export default function CameraCapture({ onCaptura, analizando = false, tip }) {
   const [listo, setListo] = useState(true);
   const camara = useRef(null);
   const [permiso, pedirPermiso] = useCameraPermissions();
@@ -40,8 +40,6 @@ export default function CameraCapture({ onCaptura, analizando = false, hint, tip
 
   return (
     <View style={estilos.contenedor}>
-      <Text style={estilos.hint}>{hint}</Text>
-
       <View style={estilos.marco}>
         {esWeb || !permiso?.granted ? (
           <LinearGradient
@@ -73,34 +71,30 @@ export default function CameraCapture({ onCaptura, analizando = false, hint, tip
         <View style={[estilos.esquina, estilos.tr]} />
         <View style={[estilos.esquina, estilos.bl]} />
         <View style={[estilos.esquina, estilos.br]} />
+
+        <View style={estilos.controles}>
+          <View style={estilos.botonGaleria}>
+            <Ionicons name="images-outline" size={20} color={COLORS.white} />
+          </View>
+          <TouchableOpacity
+            onPress={disparar}
+            activeOpacity={0.85}
+            disabled={!listo || analizando}
+            style={[estilos.disparador, (analizando || !listo) && { opacity: 0.5 }]}
+          >
+            <View style={estilos.disparadorInterno} />
+          </TouchableOpacity>
+          <View style={estilos.botonGaleria} />
+        </View>
       </View>
 
-      <View style={estilos.controles}>
-        <View style={estilos.botonGaleria} />
-        <TouchableOpacity
-          onPress={disparar}
-          activeOpacity={0.85}
-          disabled={!listo || analizando}
-          style={[estilos.disparador, (analizando || !listo) && { opacity: 0.5 }]}
-        >
-          <View style={estilos.disparadorInterno} />
-        </TouchableOpacity>
-        <View style={estilos.botonGaleria} />
-      </View>
-
-      <Text style={estilos.tip}>{tip}</Text>
+      {tip ? <Text style={estilos.tip}>{tip}</Text> : null}
     </View>
   );
 }
 
 const estilos = StyleSheet.create({
   contenedor: { flex: 1 },
-  hint: {
-    ...TIPOGRAFIA.small,
-    color: COLORS.cameraMuted,
-    textAlign: 'center',
-    marginVertical: 13,
-  },
   marco: {
     flex: 1,
     borderRadius: 22,
@@ -129,27 +123,36 @@ const estilos = StyleSheet.create({
   },
   esquina: {
     position: 'absolute',
-    width: 30,
-    height: 30,
+    width: 34,
+    height: 34,
     borderColor: COLORS.cameraCorner,
   },
-  tl: { top: 28, left: 25, borderTopWidth: 3, borderLeftWidth: 3, borderTopLeftRadius: 8 },
-  tr: { top: 28, right: 25, borderTopWidth: 3, borderRightWidth: 3, borderTopRightRadius: 8 },
-  bl: { bottom: 28, left: 25, borderBottomWidth: 3, borderLeftWidth: 3, borderBottomLeftRadius: 8 },
-  br: { bottom: 28, right: 25, borderBottomWidth: 3, borderRightWidth: 3, borderBottomRightRadius: 8 },
+  tl: { top: 48, left: 34, borderTopWidth: 3, borderLeftWidth: 3, borderTopLeftRadius: 8 },
+  tr: { top: 48, right: 34, borderTopWidth: 3, borderRightWidth: 3, borderTopRightRadius: 8 },
+  bl: { bottom: 150, left: 34, borderBottomWidth: 3, borderLeftWidth: 3, borderBottomLeftRadius: 8 },
+  br: { bottom: 150, right: 34, borderBottomWidth: 3, borderRightWidth: 3, borderBottomRightRadius: 8 },
   controles: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 22,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 32,
-    paddingTop: 23,
-    paddingBottom: 13,
+    paddingHorizontal: 28,
   },
-  botonGaleria: { width: 31, height: 31, borderRadius: 7, backgroundColor: COLORS.cameraGallery },
+  botonGaleria: {
+    width: 42,
+    height: 42,
+    borderRadius: 10,
+    backgroundColor: 'rgba(9,43,43,0.55)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   disparador: {
-    width: 62,
-    height: 62,
-    borderRadius: 31,
+    width: 68,
+    height: 68,
+    borderRadius: 34,
     borderWidth: 3,
     borderColor: COLORS.white,
     alignItems: 'center',
@@ -161,6 +164,7 @@ const estilos = StyleSheet.create({
     color: COLORS.cameraTip,
     textAlign: 'center',
     paddingHorizontal: 22,
+    paddingTop: 10,
     lineHeight: 16,
   },
 });

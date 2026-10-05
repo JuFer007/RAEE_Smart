@@ -1,17 +1,14 @@
 import { useState, useEffect } from 'react';
 import { solicitarPermisoYObtenerUbicacion } from '../services/geolocationService';
-import { esDemo } from '../utils/demo';
-import { UBICACION_DEMO } from '../utils/mockData';
 
 export default function useLocation(activo = true) {
-  const habilitado = activo && !esDemo();
-  const [ubicacion, setUbicacion] = useState(habilitado ? null : UBICACION_DEMO);
-  const [cargando, setCargando] = useState(habilitado);
+  const [ubicacion, setUbicacion] = useState(null);
+  const [cargando, setCargando] = useState(activo);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!habilitado) {
-      setUbicacion(UBICACION_DEMO);
+    if (!activo) {
+      setUbicacion(null);
       setCargando(false);
       return;
     }
@@ -25,7 +22,7 @@ export default function useLocation(activo = true) {
         setCargando(false);
       }
     })();
-  }, [habilitado]);
+  }, [activo]);
 
   return { ubicacion, cargando, error };
 }

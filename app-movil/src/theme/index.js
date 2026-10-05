@@ -135,16 +135,47 @@ export const SOMBRAS = {
 };
 
 export const TIPOS_RAEE = [
-  { tipo: 'CELULAR', nombre: 'Smartphone', categoria: 'Telefonía', icono: 'phone-portrait-outline' },
-  { tipo: 'LAPTOP', nombre: 'Laptop', categoria: 'Informática', icono: 'laptop-outline' },
-  { tipo: 'TELEVISOR', nombre: 'Televisor', categoria: 'Audio y video', icono: 'tv-outline' },
-  { tipo: 'REFRIGERADORA', nombre: 'Refrigeradora', categoria: 'Electrodomésticos', icono: 'snow-outline' },
-  { tipo: 'IMPRESORA', nombre: 'Impresora', categoria: 'Informática', icono: 'print-outline' },
+  {
+    tipo: 'CELULAR',
+    nombre: 'Smartphone',
+    categoria: 'Telefonía',
+    icono: 'phone-portrait-outline',
+    ejemplos: ['Celulares y smartphones', 'Tablets', 'Teléfonos fijos', 'Cargadores, cables y audífonos'],
+  },
+  {
+    tipo: 'LAPTOP',
+    nombre: 'Laptop',
+    categoria: 'Informática',
+    icono: 'laptop-outline',
+    ejemplos: ['Laptops y netbooks', 'Computadoras de escritorio', 'Tablets y agendas', 'Servidores y routers'],
+  },
+  {
+    tipo: 'TELEVISOR',
+    nombre: 'Televisor',
+    categoria: 'Audio y video',
+    icono: 'tv-outline',
+    ejemplos: ['Televisores LCD, LED y plasma', 'Monitores de computadora', 'Proyectores', 'Equipos de audio'],
+  },
+  {
+    tipo: 'REFRIGERADORA',
+    nombre: 'Refrigeradora',
+    categoria: 'Electrodomésticos',
+    icono: 'snow-outline',
+    ejemplos: ['Refrigeradoras y congeladoras', 'Aire acondicionado', 'Lavadoras y secadoras', 'Ventiladores'],
+  },
+  {
+    tipo: 'IMPRESORA',
+    nombre: 'Impresora',
+    categoria: 'Informática',
+    icono: 'print-outline',
+    ejemplos: ['Impresoras y escáneres', 'Multifuncionales', 'Tóner y cartuchos', 'Equipos de oficina'],
+  },
   {
     tipo: 'PEQUENO_ELECTRODOMESTICO',
     nombre: 'Electrodoméstico',
     categoria: 'Electrodomésticos',
     icono: 'flash-outline',
+    ejemplos: ['Licuadoras y batidoras', 'Horneas eléctricas y microondas', 'Planchas y freidoras', 'Aspiradoras'],
   },
 ];
 

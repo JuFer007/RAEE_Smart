@@ -3,6 +3,12 @@ import * as authService from '../services/authService';
 
 export const AuthContext = createContext(null);
 
+const USUARIO_PRUEBA = {
+  id: 1,
+  nombre: 'Vecino de Prueba',
+  email: 'prueba@raee.com',
+};
+
 export function AuthProvider({ children }) {
   const [usuario, setUsuario] = useState(null);
   const [cargandoSesion, setCargandoSesion] = useState(true);
@@ -25,8 +31,12 @@ export function AuthProvider({ children }) {
     setUsuario(null);
   }
 
+  function entrarEnModoPrueba() {
+    setUsuario(USUARIO_PRUEBA);
+  }
+
   return (
-    <AuthContext.Provider value={{ usuario, cargandoSesion, iniciarSesion, cerrarSesion }}>
+    <AuthContext.Provider value={{ usuario, cargandoSesion, iniciarSesion, cerrarSesion, entrarEnModoPrueba }}>
       {children}
     </AuthContext.Provider>
   );

@@ -30,8 +30,6 @@ export default function AyudaScreen({ navigation }) {
       <ScrollView contentContainerStyle={styles.contenido} showsVerticalScrollIndicator={false}>
         <Encabezado titulo="Ayuda y soporte" onBack={() => navigation.goBack()} />
 
-        <Text style={styles.intro}>Estamos aquí para ayudarte</Text>
-
         <View style={styles.rejilla}>
           {OPCIONES.map((op) => (
             <TouchableOpacity
@@ -40,7 +38,9 @@ export default function AyudaScreen({ navigation }) {
               activeOpacity={0.85}
               onPress={() => (op.faq ? setVerFaq(!verFaq) : null)}
             >
-              <Ionicons name={op.icono} size={24} color="#137952" />
+              <View style={styles.tarjetaIcono}>
+                <Ionicons name={op.icono} size={24} color="#137952" />
+              </View>
               <Text style={styles.tarjetaTitulo}>{op.titulo}</Text>
             </TouchableOpacity>
           ))}
@@ -56,15 +56,6 @@ export default function AyudaScreen({ navigation }) {
             ))}
           </View>
         ) : null}
-
-        <View style={styles.banner}>
-          <Ionicons name="leaf" size={30} color="#15814E" />
-          <View style={styles.bannerTextos}>
-            <Text style={styles.bannerTitulo}>¿Tienes otra pregunta?</Text>
-            <Text style={styles.bannerDetalle}>Escríbenos y te responderemos pronto.</Text>
-          </View>
-          <Ionicons name="arrow-forward" size={18} color="#15814E" />
-        </View>
       </ScrollView>
     </View>
   );
@@ -72,13 +63,12 @@ export default function AyudaScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   fondo: { flex: 1, backgroundColor: COLORS.bgTop },
-  contenido: { paddingHorizontal: ESPACIOS.page, paddingTop: ESPACIOS.sm, paddingBottom: ESPACIOS.xxl },
-  intro: { ...TIPOGRAFIA.bodySm, fontSize: 12, textAlign: 'center', marginBottom: 18 },
+  contenido: { paddingHorizontal: ESPACIOS.page, paddingTop: ESPACIOS.md, paddingBottom: ESPACIOS.xxl },
   rejilla: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   tarjeta: {
     width: '48%',
     flexGrow: 1,
-    minHeight: 112,
+    minHeight: 128,
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.lineSoft,
@@ -90,11 +80,19 @@ const styles = StyleSheet.create({
   },
   tarjetaTitulo: {
     ...TIPOGRAFIA.micro,
-    fontSize: 11,
-    lineHeight: 15,
+    fontSize: 13,
+    lineHeight: 17,
     textAlign: 'center',
     fontFamily: FUENTES.dmSemi,
     color: '#10544B',
+  },
+  tarjetaIcono: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: COLORS.primaryPale,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   faq: { marginTop: 12, gap: 8 },
   pregunta: {
@@ -104,20 +102,6 @@ const styles = StyleSheet.create({
     borderRadius: RADIOS.md,
     padding: 12,
   },
-  preguntaTitulo: { ...TIPOGRAFIA.micro, fontSize: 11, fontFamily: FUENTES.dmSemi, color: COLORS.inkItem, marginBottom: 4 },
-  preguntaRespuesta: { ...TIPOGRAFIA.micro, fontSize: 10, lineHeight: 15 },
-  banner: {
-    marginTop: 18,
-    backgroundColor: COLORS.primaryPale2,
-    borderWidth: 1,
-    borderColor: '#CFE9D8',
-    borderRadius: RADIOS.md,
-    padding: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  bannerTextos: { flex: 1 },
-  bannerTitulo: { ...TIPOGRAFIA.micro, fontSize: 11, fontFamily: FUENTES.dmSemi, color: '#255E4E' },
-  bannerDetalle: { ...TIPOGRAFIA.micro, fontSize: 10, color: '#6F9183', marginTop: 4 },
+  preguntaTitulo: { ...TIPOGRAFIA.micro, fontSize: 13, fontFamily: FUENTES.dmSemi, color: COLORS.inkItem, marginBottom: 4 },
+  preguntaRespuesta: { ...TIPOGRAFIA.micro, fontSize: 12, lineHeight: 17 },
 });

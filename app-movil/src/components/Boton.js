@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text, View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, ESPACIOS, RADIOS, TIPOGRAFIA } from '../theme';
+import { COLORS, ESPACIOS, TIPOGRAFIA } from '../theme';
 
 export default function Boton({
   titulo,
@@ -58,8 +58,8 @@ function colorTexto(variante) {
 
 const estilos = StyleSheet.create({
   base: {
-    minHeight: 47,
-    borderRadius: RADIOS.boton,
+    minHeight: 50,
+    borderRadius: 12,
     backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',

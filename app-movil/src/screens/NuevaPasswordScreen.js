@@ -3,15 +3,16 @@ import { View, Text, Image, KeyboardAvoidingView, Platform, StyleSheet } from 'r
 import Encabezado from '../components/Encabezado';
 import Campo from '../components/Campo';
 import Boton from '../components/Boton';
-import { useAuth } from '../context/AuthContext';
 import { COLORS, ESPACIOS, RADIOS, SOMBRAS, TIPOGRAFIA, FUENTES } from '../theme';
 
-export default function RegistroScreen({ navigation }) {
-  const { entrarEnModoPrueba } = useAuth();
-  const [nombre, setNombre] = useState('');
-  const [email, setEmail] = useState('');
+export default function NuevaPasswordScreen({ navigation, route }) {
   const [password, setPassword] = useState('');
   const [repetir, setRepetir] = useState('');
+
+  const codigo = route.params?.codigo || '';
+  const codigoOculto = codigo
+    ? `${'\u2022'.repeat(Math.max(codigo.length - 2, 0))}${codigo.slice(-2)}`
+    : '\u2014\u2014\u2014\u2014\u2014\u2014';
 
   return (
     <View style={styles.fondo}>
@@ -19,7 +20,7 @@ export default function RegistroScreen({ navigation }) {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.envoltorio}
       >
-        <Encabezado onBack={() => navigation.navigate('Login')} />
+        <Encabezado onBack={() => navigation.navigate('Recuperar')} />
 
         <View style={styles.bloque}>
           <Image
@@ -28,42 +29,29 @@ export default function RegistroScreen({ navigation }) {
             resizeMode="contain"
           />
 
-          <Text style={styles.titulo}>Crear cuenta</Text>
-          <Text style={styles.subtitulo}>Únete y dale segunda vida a tus electrónicos</Text>
+          <Text style={styles.titulo}>Nueva contraseña</Text>
+          <Text style={styles.subtitulo}>Define la contraseña que usarás para entrar a RAEE Smart</Text>
 
           <View style={styles.tarjeta}>
-            <View style={styles.campo}>
-              <Campo
-                icono="person-outline"
-                placeholder="Nombre completo"
-                value={nombre}
-                onChangeText={setNombre}
-                autoCapitalize="words"
-              />
+            <View style={styles.codigoCaja}>
+              <Text style={styles.codigoEtiqueta}>Código verificado</Text>
+              <Text style={styles.codigo}>{codigoOculto}</Text>
             </View>
-            <View style={styles.campo}>
-              <Campo
-                icono="mail-outline"
-                placeholder="Correo electrónico"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </View>
+
             <View style={styles.campo}>
               <Campo
                 icono="lock-closed-outline"
-                placeholder="Contraseña"
+                placeholder="Nueva contraseña"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
                 autoCapitalize="none"
               />
             </View>
+
             <View style={styles.campo}>
               <Campo
-                icono="lock-closed-outline"
+                icono="shield-checkmark-outline"
                 placeholder="Confirmar contraseña"
                 value={repetir}
                 onChangeText={setRepetir}
@@ -73,26 +61,15 @@ export default function RegistroScreen({ navigation }) {
             </View>
 
             <Boton
-              titulo="Registrarse"
-              onPress={() => {
-                entrarEnModoPrueba();
-                navigation.navigate('Main');
-              }}
+              titulo="Guardar contraseña"
+              iconoDerecha="checkmark"
+              onPress={() => navigation.navigate('Login')}
               style={styles.boton}
             />
-
-            <Text style={styles.cambio}>
-              ¿Ya tienes una cuenta?{' '}
-              <Text style={styles.link} onPress={() => navigation.navigate('Login')}>
-                Iniciar sesión
-              </Text>
-            </Text>
           </View>
 
-          <Text style={styles.terminos}>
-            Al registrarte aceptas los{' '}
-            <Text style={styles.link}>términos y condiciones</Text> y la{' '}
-            <Text style={styles.link}>política de privacidad</Text>.
+          <Text style={styles.volver} onPress={() => navigation.navigate('Recuperar')}>
+            ¿El código es incorrecto? Solicitar otro
           </Text>
         </View>
       </KeyboardAvoidingView>
@@ -112,26 +89,24 @@ const styles = StyleSheet.create({
     paddingBottom: ESPACIOS.md,
   },
 
-  logoImg: { width: 130, height: 63, marginBottom: ESPACIOS.md },
+  logoImg: { width: 148, height: 54, marginBottom: ESPACIOS.lg },
 
-  titulo: { ...TIPOGRAFIA.h1, fontSize: 24, textAlign: 'center' },
+  titulo: { ...TIPOGRAFIA.h1, fontSize: 23, textAlign: 'center' },
   subtitulo: {
     ...TIPOGRAFIA.small,
     fontSize: 12,
     lineHeight: 17,
     textAlign: 'center',
-    marginTop: 4,
-    marginBottom: ESPACIOS.md,
-    paddingHorizontal: ESPACIOS.lg,
+    marginTop: 6,
+    marginBottom: ESPACIOS.lg,
+    paddingHorizontal: ESPACIOS.md,
   },
 
   tarjeta: {
     width: '100%',
     maxWidth: 420,
     alignSelf: 'center',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 9,
+    gap: 10,
     padding: ESPACIOS.md,
     borderRadius: RADIOS.lg,
     backgroundColor: COLORS.surface,
@@ -141,16 +116,30 @@ const styles = StyleSheet.create({
   },
   campo: { width: '100%' },
 
-  boton: { width: '100%', marginTop: 3 },
-  cambio: { width: '100%', ...TIPOGRAFIA.small, fontSize: 12, textAlign: 'center' },
-  link: { color: COLORS.primaryText, fontFamily: FUENTES.dmBold },
+  codigoCaja: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: ESPACIOS.sm,
+    paddingVertical: 9,
+    paddingHorizontal: ESPACIOS.md,
+    marginBottom: 2,
+    borderRadius: RADIOS.md,
+    backgroundColor: COLORS.primaryPale,
+    borderWidth: 1,
+    borderColor: COLORS.primaryRing,
+  },
+  codigoEtiqueta: { ...TIPOGRAFIA.micro, fontSize: 10.5, color: COLORS.primaryText },
+  codigo: { fontFamily: FUENTES.manrope, fontSize: 14, color: COLORS.primaryDeep, letterSpacing: 2 },
 
-  terminos: {
-    ...TIPOGRAFIA.tiny,
-    fontSize: 10.5,
-    lineHeight: 15,
+  boton: { width: '100%', marginTop: 3 },
+
+  volver: {
+    ...TIPOGRAFIA.small,
+    fontSize: 12,
+    color: COLORS.mut,
     textAlign: 'center',
-    marginTop: ESPACIOS.md,
-    paddingHorizontal: ESPACIOS.lg,
+    marginTop: ESPACIOS.lg,
   },
 });

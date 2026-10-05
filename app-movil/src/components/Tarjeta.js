@@ -37,15 +37,15 @@ const estilos = StyleSheet.create({
   },
   plana: { borderColor: COLORS.lineCard },
   chip: {
-    paddingHorizontal: 13,
-    paddingVertical: 7,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
     borderRadius: RADIOS.pill,
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.lineTab,
   },
   chipActivo: { backgroundColor: '#0C9153', borderColor: '#0C9153' },
-  chipTexto: { ...TIPOGRAFIA.micro, fontSize: 10, color: '#7D968D' },
+  chipTexto: { ...TIPOGRAFIA.micro, fontSize: 12, color: '#7D968D' },
   chipTextoActivo: { color: COLORS.white, fontFamily: 'DMSans_600SemiBold' },
   etiqueta: {
     alignSelf: 'flex-start',
@@ -53,5 +53,5 @@ const estilos = StyleSheet.create({
     paddingHorizontal: 7,
     paddingVertical: 4,
   },
-  etiquetaTexto: { ...TIPOGRAFIA.micro, fontSize: 9, fontWeight: '600' },
+  etiquetaTexto: { ...TIPOGRAFIA.micro, fontSize: 10, fontWeight: '600' },
 });

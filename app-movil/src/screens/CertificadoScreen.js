@@ -4,10 +4,14 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Print from 'expo-print';
 import Encabezado from '../components/Encabezado';
 import Boton from '../components/Boton';
-import Logo from '../components/Logo';
 import QRDisplay from '../components/QRDisplay';
-import { obtenerInfoTipo, COLORS, ESPACIOS, RADIOS, TIPOGRAFIA } from '../theme';
+import { obtenerEstado, obtenerInfoTipo, COLORS, ESPACIOS, RADIOS, TIPOGRAFIA, FUENTES } from '../theme';
 import { formatearFechaHora } from '../utils/fecha';
+
+const PASOS = [
+  { clave: 'REGISTRADA', titulo: 'Registrada' },
+  { clave: 'CONFIRMADA', titulo: 'Certificada' },
+];
 
 export default function CertificadoScreen({ route, navigation }) {
   const { entrega, punto } = route.params || {};
@@ -16,11 +20,12 @@ export default function CertificadoScreen({ route, navigation }) {
   const nombrePunto = punto?.nombre || entrega?.puntoRecoleccionNombre || 'Punto por asignar';
   const direccionPunto = punto?.direccion || entrega?.puntoRecoleccionDireccion;
   const verificado = Boolean(entrega?.certificadoCodigoQr);
+  const nombre = entrega?.nombreCategoriaVisible || info.nombre;
 
   async function compartir() {
     try {
       await Share.share({
-        message: `Registré la entrega de mi ${info.nombre} en RAEE SMART. Certificado: ${
+        message: `Registré la entrega de mi ${nombre} en RAEE SMART. Certificado: ${
           entrega?.certificadoCodigoQr || 'en proceso'
         }`,
       });
@@ -46,52 +51,83 @@ export default function CertificadoScreen({ route, navigation }) {
       <ScrollView contentContainerStyle={styles.contenido} showsVerticalScrollIndicator={false}>
         <Encabezado titulo="Certificado de entrega" onBack={() => navigation.goBack()} />
 
-        <View style={styles.carnet}>
-          <View style={styles.carnetCabeza}>
-            <Logo compacto />
-            <View style={styles.verificado}>
-              <Ionicons name="shield-checkmark" size={21} color={COLORS.primaryText} />
-              <Text style={styles.verificadoTexto}>Verificado</Text>
-            </View>
+        <View style={[styles.tarjetaQr, verificado ? styles.tarjetaQrOk : styles.tarjetaQrPendiente]}>
+          <View style={styles.qrMarco}>
+            <QRDisplay contenido={entrega?.certificadoCodigoQr} tamano={158} />
+            {verificado ? (
+              <View style={styles.qrInsignia}>
+                <Ionicons name="checkmark" size={17} color={COLORS.white} />
+              </View>
+            ) : null}
           </View>
 
-          <QRDisplay contenido={entrega?.certificadoCodigoQr} tamano={155} />
+          <Text style={[styles.estado, verificado ? styles.estadoOk : styles.estadoPendiente]}>
+            {verificado ? '¡Entrega certificada!' : 'Entrega en proceso'}
+          </Text>
+          <Text style={styles.estadoDetalle}>
+            {verificado
+              ? 'Este código es único y sirve para comprobar la entrega.'
+              : 'Te avisaremos cuando el punto de acopio confirme la recepción.'}
+          </Text>
 
-          <View style={styles.carnetCheck}>
-            <Ionicons name="checkmark-circle" size={19} color="#0B9253" />
-            <Text style={styles.carnetCheckTexto}>
-              {verificado ? '¡Entrega certificada!' : 'Entrega en proceso'}
-            </Text>
+          <View style={styles.pasos}>
+            {PASOS.map((paso, i) => {
+              const activo = paso.clave === 'CONFIRMADA' ? verificado : true;
+              const esUltimo = i === PASOS.length - 1;
+              return (
+                <View key={paso.clave} style={styles.pasoFila}>
+                  <View style={styles.pasoPunto}>
+                    <View style={[styles.pasoCirculo, !activo && styles.pasoCirculoInactivo]}>
+                      <Ionicons name={activo ? 'checkmark' : 'time-outline'} size={12} color={activo ? COLORS.white : COLORS.mutSoft} />
+                    </View>
+                    {!esUltimo ? <View style={[styles.pasoLinea, !activo && styles.pasoLineaInactiva]} /> : null}
+                  </View>
+                  <Text style={[styles.pasoTexto, !activo && styles.pasoTextoInactivo]}>{paso.titulo}</Text>
+                </View>
+              );
+            })}
           </View>
+        </View>
 
-          <Text style={styles.datosTitulo}>Datos del certificado</Text>
-          <View style={styles.datos}>
-            <Dato etiqueta="Código QR" valor={entrega?.certificadoCodigoQr || 'Se genera al confirmar'} />
-            <Dato etiqueta="Aparato" valor={entrega?.nombreCategoriaVisible || info.nombre} />
-            <Dato etiqueta="Fecha" valor={formatearFechaHora(entrega?.fechaRegistro)} />
-            <Dato etiqueta="Ubicación" valor={direccionPunto || nombrePunto} />
-          </View>
+        <Text style={styles.datosTitulo}>Datos del certificado</Text>
+        <View style={styles.datos}>
+          <Dato icono="qr-code-outline" etiqueta="Código" valor={entrega?.certificadoCodigoQr || 'Se genera al confirmar'} mono />
+          <Dato icono={info.icono} etiqueta="Aparato" valor={nombre} />
+          <Dato icono="pricetag-outline" etiqueta="Categoría" valor={info.categoria} />
+          <Dato icono="calendar-outline" etiqueta="Fecha" valor={formatearFechaHora(entrega?.fechaRegistro)} />
+          <Dato icono="location-outline" etiqueta="Punto" valor={direccionPunto || nombrePunto} />
+          <Dato icono="flag-outline" etiqueta="Estado" valor={obtenerEstado(entrega?.estado).label} ultima />
         </View>
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
-        <Boton titulo="Descargar certificado" icono="download-outline" onPress={descargar} />
-        <Boton
-          titulo="Compartir"
-          variante="secundario"
-          icono="share-social-outline"
-          onPress={compartir}
-        />
+        <View style={styles.botones}>
+          <Boton
+            titulo="Descargar certificado"
+            icono="download-outline"
+            onPress={descargar}
+            deshabilitado={!verificado}
+          />
+          <Boton
+            titulo="Compartir"
+            variante="secundario"
+            icono="share-social-outline"
+            onPress={compartir}
+          />
+        </View>
       </ScrollView>
     </View>
   );
 }
 
-function Dato({ etiqueta, valor }) {
+function Dato({ icono, etiqueta, valor, ultima = false, mono = false }) {
   return (
-    <View style={styles.dato}>
+    <View style={[styles.dato, !ultima && styles.datoBorde]}>
+      <View style={styles.datoIcono}>
+        <Ionicons name={icono} size={13} color={COLORS.primaryText} />
+      </View>
       <Text style={styles.datoEtiqueta}>{etiqueta}</Text>
-      <Text style={styles.datoValor} numberOfLines={1}>
+      <Text style={[styles.datoValor, mono && styles.datoValorMono]} numberOfLines={2}>
         {valor}
       </Text>
     </View>
@@ -129,33 +165,87 @@ function htmlCertificado(entrega, info, nombrePunto, direccionPunto) {
 
 const styles = StyleSheet.create({
   fondo: { flex: 1, backgroundColor: COLORS.bgTop },
-  contenido: { paddingHorizontal: ESPACIOS.page, paddingTop: ESPACIOS.sm, paddingBottom: ESPACIOS.xxl },
-  carnet: {
+  contenido: { paddingHorizontal: ESPACIOS.page, paddingTop: ESPACIOS.md, paddingBottom: ESPACIOS.xxl },
+
+  tarjetaQr: {
+    alignItems: 'center',
+    borderRadius: RADIOS.lg,
+    borderWidth: 1,
+    paddingVertical: ESPACIOS.lg,
+    paddingHorizontal: ESPACIOS.lg,
+    marginBottom: ESPACIOS.xl,
+  },
+  tarjetaQrOk: { backgroundColor: COLORS.primaryPale, borderColor: COLORS.primaryRing },
+  tarjetaQrPendiente: { backgroundColor: COLORS.warningSoft, borderColor: '#F2DFB4' },
+
+  qrMarco: { position: 'relative' },
+  qrInsignia: {
+    position: 'absolute',
+    right: -8,
+    bottom: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: COLORS.primaryBright,
+    borderWidth: 3,
+    borderColor: COLORS.primaryPale,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  estado: { ...TIPOGRAFIA.h3, fontSize: 17, marginTop: 12 },
+  estadoOk: { color: COLORS.primaryText },
+  estadoPendiente: { color: COLORS.warning },
+  estadoDetalle: {
+    ...TIPOGRAFIA.micro,
+    fontSize: 11.5,
+    lineHeight: 16,
+    textAlign: 'center',
+    color: COLORS.mut,
+    marginTop: 5,
+  },
+
+  pasos: { flexDirection: 'row', gap: ESPACIOS.xl, marginTop: ESPACIOS.lg },
+  pasoFila: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  pasoPunto: { flexDirection: 'row', alignItems: 'center' },
+  pasoCirculo: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: COLORS.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pasoCirculoInactivo: { backgroundColor: COLORS.lineTab },
+  pasoLinea: { width: 22, height: 2, borderRadius: 1, backgroundColor: COLORS.primary },
+  pasoLineaInactiva: { backgroundColor: COLORS.lineTab },
+  pasoTexto: { ...TIPOGRAFIA.micro, fontSize: 11, fontFamily: FUENTES.dmSemi, color: COLORS.inkItem },
+  pasoTextoInactivo: { color: COLORS.mutSoft },
+
+  datosTitulo: { ...TIPOGRAFIA.h4, fontSize: 14, marginBottom: 10 },
+  datos: {
     backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: '#DBECE3',
-    borderRadius: RADIOS.lg,
-    padding: 17,
-    marginTop: 7,
-    marginBottom: 20,
+    borderColor: COLORS.lineCard,
+    borderRadius: RADIOS.md,
+    paddingHorizontal: 13,
+    paddingVertical: 4,
+    marginBottom: ESPACIOS.lg,
   },
-  carnetCabeza: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  verificado: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  verificadoTexto: { ...TIPOGRAFIA.micro, fontSize: 10, color: COLORS.primaryText },
-  carnetCheck: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 },
-  carnetCheckTexto: { ...TIPOGRAFIA.small, fontSize: 13, color: '#0B9253', fontFamily: 'DMSans_600SemiBold' },
-  datosTitulo: {
-    ...TIPOGRAFIA.micro,
-    fontSize: 10,
-    color: COLORS.mutSoft,
-    borderTopWidth: 1,
-    borderTopColor: '#E5F0EA',
-    paddingTop: 13,
-    marginTop: 19,
+  dato: { flexDirection: 'row', alignItems: 'center', gap: 9, paddingVertical: 11 },
+  datoBorde: { borderBottomWidth: 1, borderBottomColor: COLORS.lineInner },
+  datoIcono: {
+    width: 26,
+    height: 26,
+    borderRadius: 9,
+    backgroundColor: COLORS.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  datos: { marginTop: 10, gap: 9 },
-  dato: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
-  datoEtiqueta: { ...TIPOGRAFIA.micro, fontSize: 10, color: COLORS.mutSoft },
-  datoValor: { ...TIPOGRAFIA.micro, fontSize: 10, fontFamily: 'DMSans_600SemiBold', color: COLORS.inkItem, flexShrink: 1 },
-  error: { ...TIPOGRAFIA.micro, fontSize: 11, color: COLORS.danger, marginBottom: ESPACIOS.sm },
+  datoEtiqueta: { ...TIPOGRAFIA.micro, fontSize: 11.5, width: 68, color: COLORS.mut },
+  datoValor: { flex: 1, ...TIPOGRAFIA.micro, fontSize: 11.5, lineHeight: 16, fontFamily: FUENTES.dmSemi, color: COLORS.inkItem },
+  datoValorMono: { letterSpacing: 0.3, fontFamily: 'monospace' },
+
+  botones: { gap: 10 },
+  error: { ...TIPOGRAFIA.micro, fontSize: 12, color: COLORS.danger, marginBottom: ESPACIOS.sm },
 });

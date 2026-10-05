@@ -6,29 +6,28 @@ import MapaPuntos from '../components/MapaPuntos';
 import Boton from '../components/Boton';
 import useLocation from '../hooks/useLocation';
 import usePuntos from '../hooks/usePuntos';
-import { esDemo } from '../utils/demo';
-import { obtenerInfoTipo, COLORS, ESPACIOS, RADIOS, TIPOGRAFIA } from '../theme';
+import { COLORS, ESPACIOS, RADIOS, TIPOGRAFIA } from '../theme';
+import { USAR_DATOS_PRUEBA, completarSimulacion } from '../utils/datosPrueba';
 import { distanciaKm } from '../utils/fecha';
 
 export default function EntregaScreen({ route, navigation }) {
   const { entrega } = route.params || {};
-  const modoDemo = esDemo();
-  const { ubicacion } = useLocation(!modoDemo);
+  const { ubicacion } = useLocation();
   const { puntos } = usePuntos(ubicacion);
-  const info = obtenerInfoTipo(entrega?.tipoRaee);
   const [seleccionado, setSeleccionado] = useState(entrega?.puntoRecoleccionId ?? null);
 
   const activo = puntos.find((p) => String(p.id) === String(seleccionado)) || puntos[0];
-  const nombre = entrega?.nombreCategoriaVisible || info.nombre;
 
   function continuar() {
+    const entregaConPunto = {
+      ...entrega,
+      puntoRecoleccionId: activo?.id,
+      puntoRecoleccionNombre: activo?.nombre,
+      puntoRecoleccionDireccion: activo?.direccion,
+    };
+
     navigation.navigate('Confirmacion', {
-      entrega: {
-        ...entrega,
-        puntoRecoleccionId: activo?.id,
-        puntoRecoleccionNombre: activo?.nombre,
-        puntoRecoleccionDireccion: activo?.direccion,
-      },
+      entrega: USAR_DATOS_PRUEBA ? completarSimulacion(entregaConPunto) : entregaConPunto,
     });
   }
 
@@ -43,25 +42,21 @@ export default function EntregaScreen({ route, navigation }) {
             ubicacion={ubicacion}
             seleccionado={activo}
             onSelect={(p) => setSeleccionado(p.id)}
-            alto={240}
+            alto={170}
             radio={RADIOS.lg}
           />
         </View>
 
         <Text style={styles.label}>Ubicación del punto de entrega</Text>
         {activo ? (
-          <View style={styles.lineaUbicacion}>
-            <Ionicons name="location-outline" size={18} color={COLORS.primaryText} />
-            <View style={styles.lineaTextos}>
-              <Text style={styles.lineaTitulo}>{activo.direccion}</Text>
-              <Text style={styles.lineaDetalle}>
-                {activo.horarioAtencion}
-                {activo.distanciaM != null ? ` · A ${distanciaKm(activo.distanciaM)}` : ''}
-              </Text>
-            </View>
+          <View style={styles.caja}>
+            <Ionicons name="location" size={18} color={COLORS.primaryText} />
+            <Text style={styles.cajaTexto} numberOfLines={1}>
+              {activo.direccion}
+            </Text>
           </View>
         ) : (
-          <Text style={styles.lineaDetalle}>Buscando puntos de acopio cercanos...</Text>
+          <Text style={styles.detalle}>Buscando puntos de acopio cercanos...</Text>
         )}
 
         <Text style={[styles.label, styles.labelSeleccion]}>Selecciona un punto de acopio</Text>
@@ -80,22 +75,13 @@ export default function EntregaScreen({ route, navigation }) {
                 <Text style={styles.lugarNombre} numberOfLines={1}>
                   {p.nombre}
                 </Text>
-                <Text style={styles.lugarDetalle} numberOfLines={1}>
-                  {p.direccion}
-                  {p.distanciaM != null ? ` · ${distanciaKm(p.distanciaM)}` : ''}
-                </Text>
+                {p.distanciaM != null ? <Text style={styles.detalle}>A {distanciaKm(p.distanciaM)}</Text> : null}
               </View>
-              {esActivo ? <Ionicons name="checkmark" size={19} color="#149657" /> : null}
             </TouchableOpacity>
           );
         })}
 
-        <View style={styles.resumenAparato}>
-          <Ionicons name={info.icono} size={16} color={COLORS.primary} />
-          <Text style={styles.resumenTexto}>{nombre}</Text>
-        </View>
-
-        <Boton titulo="Continuar" onPress={continuar} />
+        <Boton titulo="Continuar" onPress={continuar} style={styles.boton} />
       </ScrollView>
     </View>
   );
@@ -103,43 +89,38 @@ export default function EntregaScreen({ route, navigation }) {
 
 const styles = StyleSheet.create({
   fondo: { flex: 1, backgroundColor: COLORS.bgTop },
-  contenido: { paddingHorizontal: ESPACIOS.page, paddingTop: ESPACIOS.sm, paddingBottom: ESPACIOS.xxl },
-  mapa: { marginHorizontal: -ESPACIOS.page, marginBottom: ESPACIOS.xl },
-  label: { ...TIPOGRAFIA.label, marginBottom: 9 },
-  labelSeleccion: { marginTop: 23 },
-  lineaUbicacion: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 4 },
-  lineaTextos: { flex: 1 },
-  lineaTitulo: { ...TIPOGRAFIA.micro, fontSize: 12, fontFamily: 'DMSans_600SemiBold', color: COLORS.inkItem },
-  lineaDetalle: { ...TIPOGRAFIA.micro, fontSize: 10, color: COLORS.mutSoft, marginTop: 4 },
-  lugar: {
+  contenido: { paddingHorizontal: ESPACIOS.page, paddingTop: ESPACIOS.md, paddingBottom: ESPACIOS.xxl },
+  mapa: { marginBottom: ESPACIOS.xl },
+  label: { ...TIPOGRAFIA.h4, fontSize: 14, marginBottom: 10 },
+  labelSeleccion: { marginTop: 22 },
+  caja: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    padding: 13,
-    paddingVertical: 11,
+    paddingHorizontal: 14,
+    height: 48,
+    borderRadius: RADIOS.campo,
+    borderWidth: 1,
+    borderColor: COLORS.line,
+    backgroundColor: COLORS.surface,
+  },
+  cajaTexto: { flex: 1, ...TIPOGRAFIA.small, fontSize: 13, color: COLORS.inkItem },
+  detalle: { ...TIPOGRAFIA.micro, fontSize: 12, color: COLORS.mutSoft, marginTop: 3 },
+  lugar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 14,
     borderRadius: RADIOS.boton,
     borderWidth: 1,
     borderColor: COLORS.line,
     backgroundColor: COLORS.surface,
     marginBottom: 8,
   },
-  lugarActivo: { borderColor: '#B7DEC6' },
-  radio: { width: 12, height: 12, borderRadius: 6, borderWidth: 2, borderColor: COLORS.lineTab },
-  radioActivo: { borderWidth: 3, borderColor: '#0B9253' },
+  lugarActivo: { borderColor: '#9BD3B2' },
+  radio: { width: 16, height: 16, borderRadius: 8, borderWidth: 2, borderColor: COLORS.lineTab },
+  radioActivo: { borderWidth: 5, borderColor: '#0B9253' },
   lugarTextos: { flex: 1 },
-  lugarNombre: { ...TIPOGRAFIA.micro, fontSize: 12, fontFamily: 'DMSans_600SemiBold', color: COLORS.inkItem },
-  lugarDetalle: { ...TIPOGRAFIA.micro, fontSize: 10, color: COLORS.mutSoft, marginTop: 4 },
-  resumenAparato: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    alignSelf: 'flex-start',
-    backgroundColor: COLORS.primaryPale,
-    borderRadius: RADIOS.pill,
-    paddingHorizontal: 11,
-    paddingVertical: 6,
-    marginTop: 8,
-    marginBottom: 16,
-  },
-  resumenTexto: { ...TIPOGRAFIA.micro, fontSize: 11, color: COLORS.inkItem },
+  lugarNombre: { ...TIPOGRAFIA.small, fontSize: 13, fontFamily: 'DMSans_600SemiBold', color: COLORS.inkItem },
+  boton: { marginTop: 14 },
 });

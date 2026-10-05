@@ -54,7 +54,7 @@ export default function CorreccionScreen({ route, navigation }) {
 
 const styles = StyleSheet.create({
   fondo: { flex: 1, backgroundColor: COLORS.bgTop },
-  contenido: { paddingHorizontal: ESPACIOS.page, paddingTop: ESPACIOS.sm, paddingBottom: ESPACIOS.xxl },
+  contenido: { paddingHorizontal: ESPACIOS.page, paddingTop: ESPACIOS.md, paddingBottom: ESPACIOS.xxl },
   subtitulo: { ...TIPOGRAFIA.bodySm, fontSize: 12, marginBottom: ESPACIOS.lg },
   lista: { gap: ESPACIOS.sm, marginBottom: ESPACIOS.lg },
   error: { ...TIPOGRAFIA.micro, fontSize: 11, color: COLORS.danger, marginBottom: ESPACIOS.sm },
