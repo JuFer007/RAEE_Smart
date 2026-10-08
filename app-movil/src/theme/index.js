@@ -1,4 +1,5 @@
 export const API_BASE_URL = 'http://192.168.1.100:8080/api';
+export const MAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/bright/style.json';
 
 export const FUENTES = {
   manrope: 'Manrope_800ExtraBold',

@@ -4,30 +4,29 @@
     "slug": "raee-smart",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/logo.png",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/logo.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#FFFFFF"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "pe.raeesmart.app"
     },
     "android": {
-      "package": "pe.raeesmart.app",
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#EEF2EF"
-      }
+      "package": "pe.raeesmart.app"
     },
     "web": {
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Necesitamos acceso a tu galerÃ­a para seleccionar una foto de perfil.",
+          "cameraPermission": "Necesitamos acceso a tu cÃ¡mara para tomar una foto de perfil."
+        }
+      ],
+      "@maplibre/maplibre-react-native"
     ]
   }
 }

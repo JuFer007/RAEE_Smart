@@ -1,0 +1,11 @@
+backend: 
+- que el admin pueda registrar puntos para recoleccion
+- registrar campañas y horarios segun municipalidad 
+- agregar lo de notificaciones desde el backend 
+
+
+front:
+- hacer una pantalla para mostrar datos (desde la pantalla de perfil) y tambien que redirija a esa desde el menu 
+- pantalla para cambiar contraseña (desde la pantalla de perfil) y tambien que redirija a esa desde el menu 
+- pantalla para administrar notificaciones (desde la pantalla de perfil) y tambien que redirija a esa desde el menu 
+- poder subir foto de perfil (desde la pantalla de perfil) y tambien que redirija a esa desde el menu 

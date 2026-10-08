@@ -1,16 +1,25 @@
-package com.raeesmart.backend.Controller;
+﻿package com.raeesmart.backend.Controller;
+import com.raeesmart.backend.Dto.Response.CampanaResponseDTO;
 import com.raeesmart.backend.Dto.Response.PuntoRecoleccionResponseDTO;
 import com.raeesmart.backend.Model.PuntoRecoleccion;
 import com.raeesmart.backend.Repository.PuntoRecoleccionRepository;
+import com.raeesmart.backend.Service.CampanaService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
+@RestController
+@RequestMapping("/api/municipalidades")
 public class MunicipalidadController {
     private final PuntoRecoleccionRepository puntoRecoleccionRepository;
+    private final CampanaService campanaService;
 
-    public MunicipalidadController(PuntoRecoleccionRepository puntoRecoleccionRepository) {
+    public MunicipalidadController(PuntoRecoleccionRepository puntoRecoleccionRepository,
+                                   CampanaService campanaService) {
         this.puntoRecoleccionRepository = puntoRecoleccionRepository;
+        this.campanaService = campanaService;
     }
 
     @GetMapping("/{id}/puntos")
@@ -18,6 +27,16 @@ public class MunicipalidadController {
         return puntoRecoleccionRepository.findByMunicipalidadId(id).stream()
                 .map(this::mapearAResponse)
                 .toList();
+    }
+
+    @GetMapping("/{id}/campanas")
+    public List<CampanaResponseDTO> listarCampanas(@PathVariable Long id) {
+        return campanaService.listarVigentesPublic(id);
+    }
+
+    @GetMapping("/campanas/{campanaId}")
+    public CampanaResponseDTO obtenerCampana(@PathVariable Long campanaId) {
+        return campanaService.obtenerPublic(campanaId);
     }
 
     private PuntoRecoleccionResponseDTO mapearAResponse(PuntoRecoleccion punto) {

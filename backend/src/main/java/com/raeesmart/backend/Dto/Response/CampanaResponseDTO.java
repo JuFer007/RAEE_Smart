@@ -3,19 +3,23 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.time.LocalDate;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 
-public class PuntoRecoleccionResponseDTO {
+public class CampanaResponseDTO {
     private Long id;
     private Long municipalidadId;
     private String municipalidadNombre;
-    private String nombre;
-    private Double latitud;
-    private Double longitud;
-    private String horarioAtencion;
-    private Integer capacidadDiaria;
+    private String titulo;
+    private String descripcion;
+    private String lugar;
+    private String horario;
+    private LocalDate fechaInicio;
+    private LocalDate fechaFin;
+    private Boolean activa;
+    private String estado;
 }

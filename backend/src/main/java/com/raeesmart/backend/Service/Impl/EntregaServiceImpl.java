@@ -5,6 +5,7 @@ import com.raeesmart.backend.Dto.Response.EntregaResponseDTO;
 import com.raeesmart.backend.Exception.ResourceNotFoundException;
 import com.raeesmart.backend.Model.*;
 import com.raeesmart.backend.Model.Enums.EstadoEntrega;
+import com.raeesmart.backend.Model.Enums.TipoNotificacion;
 import com.raeesmart.backend.Model.Enums.TipoRAEE;
 import com.raeesmart.backend.Repository.CategoriaRAEERepository;
 import com.raeesmart.backend.Repository.EntregaRepository;
@@ -25,14 +26,16 @@ public class EntregaServiceImpl implements EntregaService {
     private final GeolocalizacionService geolocalizacionService;
     private final CertificadoService certificadoService;
     private final AlmacenamientoService almacenamientoService;
+    private final NotificacionService notificacionService;
 
     public EntregaServiceImpl(EntregaRepository entregaRepository,
-    UsuarioRepository usuarioRepository,
-    CategoriaRAEERepository categoriaRAEERepository,
-    ClasificacionIAService clasificacionIAService,
-    GeolocalizacionService geolocalizacionService,
-    CertificadoService certificadoService,
-    AlmacenamientoService almacenamientoService) {
+                              UsuarioRepository usuarioRepository,
+                              CategoriaRAEERepository categoriaRAEERepository,
+                              ClasificacionIAService clasificacionIAService,
+                              GeolocalizacionService geolocalizacionService,
+                              CertificadoService certificadoService,
+                              AlmacenamientoService almacenamientoService,
+                              NotificacionService notificacionService) {
         this.entregaRepository = entregaRepository;
         this.usuarioRepository = usuarioRepository;
         this.categoriaRAEERepository = categoriaRAEERepository;
@@ -40,6 +43,7 @@ public class EntregaServiceImpl implements EntregaService {
         this.geolocalizacionService = geolocalizacionService;
         this.certificadoService = certificadoService;
         this.almacenamientoService = almacenamientoService;
+        this.notificacionService = notificacionService;
     }
 
     @Transactional
@@ -68,6 +72,12 @@ public class EntregaServiceImpl implements EntregaService {
         entrega.setCertificado(certificado);
         entrega.setEstado(EstadoEntrega.CONFIRMADA);
         entrega = entregaRepository.save(entrega);
+
+        notificacionService.notificarUsuario(
+                usuario,
+                TipoNotificacion.ENTREGA,
+                "Entrega confirmada",
+                "Tu entrega en " + punto.getNombre() + " fue registrada. Ya puedes ver tu certificado.");
 
         return mapearAResponse(entrega);
     }
@@ -116,7 +126,7 @@ public class EntregaServiceImpl implements EntregaService {
                 .clasificacionCorregida(entrega.getClasificacionCorregida())
                 .estado(entrega.getEstado())
                 .puntoRecoleccionNombre(entrega.getPuntoRecoleccion().getNombre())
-                .puntoRecoleccionDireccion(null) // PuntoRecoleccion no tiene campo dirección; agregar si se necesita
+                .puntoRecoleccionDireccion(null)
                 .certificadoCodigoQr(entrega.getCertificado() != null ? entrega.getCertificado().getCodigoQr() : null)
                 .fechaRegistro(entrega.getFechaRegistro())
                 .build();

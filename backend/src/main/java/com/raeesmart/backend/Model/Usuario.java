@@ -1,4 +1,4 @@
-package com.raeesmart.backend.Model;
+﻿package com.raeesmart.backend.Model;
 import com.raeesmart.backend.Model.Enums.RolUsuario;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -42,6 +42,10 @@ public class Usuario {
     @Column(name = "fecha_registro", nullable = false, updatable = false)
     private LocalDateTime fechaRegistro;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "municipalidad_id")
+    private Municipalidad municipalidad;
+
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Entrega> entregas;
 
@@ -55,3 +59,4 @@ public class Usuario {
         }
     }
 }
+

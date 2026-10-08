@@ -10,9 +10,10 @@ export const SECCIONES_MENU = [
   {
     titulo: 'Cuenta',
     opciones: [
-      { icono: 'person-outline', titulo: 'Datos personales' },
-      { icono: 'lock-closed-outline', titulo: 'Cambiar contraseña' },
+      { icono: 'lock-closed-outline', titulo: 'Cambiar contraseña', pantalla: 'CambiarPassword' },
+      { icono: 'camera-outline', titulo: 'Foto de perfil', pantalla: 'FotoPerfil' },
       { icono: 'notifications-outline', titulo: 'Notificaciones', pantalla: 'Notificaciones' },
+      { icono: 'settings-outline', titulo: 'Administrar notificaciones', pantalla: 'AdministrarNotificaciones' },
       { icono: 'help-circle-outline', titulo: 'Soporte', pantalla: 'Ayuda' },
       { icono: 'information-circle-outline', titulo: 'Acerca de RAEE Smart', pantalla: 'Acerca' },
     ],

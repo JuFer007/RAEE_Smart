@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import MapaPuntos from '../components/MapaPuntos';
+import Mapa from '../components/Mapa';
 import Encabezado from '../components/Encabezado';
+import Toast from '../components/Toast';
 import useEntradaAnimada from '../hooks/useEntradaAnimada';
 import useLocation from '../hooks/useLocation';
 import usePuntos from '../hooks/usePuntos';
+import useToast from '../hooks/useToast';
 import { COLORS, ESPACIOS, RADIOS, SOMBRAS, TIPOGRAFIA, FUENTES } from '../theme';
 import { distanciaKm } from '../utils/fecha';
 
@@ -14,6 +16,7 @@ export default function MapaScreen({ navigation }) {
   const { puntos, cargando, error, recargar } = usePuntos(ubicacion);
   const [indice, setIndice] = useState(0);
   const [entrada] = useEntradaAnimada({ eje: 'y', distancia: -18, escala: 0.99 });
+  const { toast, mostrar, ocultar } = useToast();
 
   const activo = puntos[indice] || puntos[0];
 
@@ -44,7 +47,7 @@ export default function MapaScreen({ navigation }) {
       </View>
 
       <View style={styles.mapaZona}>
-        <MapaPuntos
+        <Mapa
           puntos={puntos}
           ubicacion={ubicacion}
           seleccionado={activo}
@@ -68,7 +71,11 @@ export default function MapaScreen({ navigation }) {
         ) : null}
 
         {error ? (
-          <TouchableOpacity style={styles.errorChip} onPress={recargar} activeOpacity={0.85}>
+          <TouchableOpacity
+            style={styles.errorChip}
+            onPress={recargar}
+            activeOpacity={0.85}
+          >
             <Ionicons name="refresh-outline" size={14} color={COLORS.danger} />
             <Text style={styles.errorChipTexto}>No pudimos cargar los puntos · Reintentar</Text>
           </TouchableOpacity>
@@ -126,6 +133,15 @@ export default function MapaScreen({ navigation }) {
             </TouchableOpacity>
           </View>
         ) : null}
+        <Toast
+          visible={toast.visible}
+          mensaje={toast.mensaje}
+          tipo={toast.tipo}
+          onCerrar={ocultar}
+          duracion={toast.duracion}
+          accionTexto={toast.accionTexto}
+          onAccion={toast.onAccion}
+        />
       </View>
     </View>
   );

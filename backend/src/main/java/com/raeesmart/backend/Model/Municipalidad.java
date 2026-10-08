@@ -1,4 +1,4 @@
-package com.raeesmart.backend.Model;
+﻿package com.raeesmart.backend.Model;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -39,7 +39,13 @@ public class Municipalidad {
     @Column(nullable = false)
     private Boolean activo = false;
 
+    @Column(name = "campanas_habilitadas", nullable = false)
+    @Builder.Default
+    private Boolean campanasHabilitadas = false;
+
     @OneToMany(mappedBy = "municipalidad", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PuntoRecoleccion> puntosRecoleccion;
 
 }
+
+

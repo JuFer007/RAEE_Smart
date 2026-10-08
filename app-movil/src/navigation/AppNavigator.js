@@ -23,6 +23,9 @@ import PorQueReciclarScreen from '../screens/PorQueReciclarScreen';
 import HorariosScreen from '../screens/HorariosScreen';
 import AcercaScreen from '../screens/AcercaScreen';
 import NotificacionesScreen from '../screens/NotificacionesScreen';
+import AdministrarNotificacionesScreen from '../screens/AdministrarNotificacionesScreen';
+import CambiarPasswordScreen from '../screens/CambiarPasswordScreen';
+import FotoPerfilScreen from '../screens/FotoPerfilScreen';
 import MenuScreen from '../screens/MenuScreen';
 
 const Stack = createNativeStackNavigator();
@@ -59,6 +62,10 @@ export default function AppNavigator() {
             <Stack.Screen name="Horarios" component={HorariosScreen} options={ANIMACION} />
             <Stack.Screen name="Acerca" component={AcercaScreen} options={ANIMACION} />
             <Stack.Screen name="Notificaciones" component={NotificacionesScreen} options={ANIMACION} />
+            <Stack.Screen name="AdministrarNotificaciones" component={AdministrarNotificacionesScreen} options={ANIMACION} />
+
+            <Stack.Screen name="CambiarPassword" component={CambiarPasswordScreen} options={ANIMACION} />
+            <Stack.Screen name="FotoPerfil" component={FotoPerfilScreen} options={ANIMACION} />
             <Stack.Screen name="Menu" component={MenuScreen} options={ANIMACION} />
           </Stack.Navigator>
         </View>

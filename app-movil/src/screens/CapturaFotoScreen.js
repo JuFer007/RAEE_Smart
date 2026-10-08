@@ -47,7 +47,7 @@ export default function CapturaFotoScreen({ navigation }) {
           onBack={() => navigation.goBack()}
           claro
         />
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {error ?           <Text style={[styles.error, { color: COLORS.danger }]}>{error}</Text> : null}
       </View>
 
       <View style={styles.cuerpo}>
@@ -66,7 +66,7 @@ export default function CapturaFotoScreen({ navigation }) {
 const styles = StyleSheet.create({
   fondo: { flex: 1, backgroundColor: COLORS.cameraBg, paddingHorizontal: ESPACIOS.md },
   encabezado: { paddingBottom: 0 },
-  error: { ...TIPOGRAFIA.micro, fontSize: 12, color: '#FFC9C2', marginBottom: ESPACIOS.sm },
+  error: { ...TIPOGRAFIA.micro, fontSize: 12, color: COLORS.danger, marginBottom: ESPACIOS.sm },
   cuerpo: { flex: 1, paddingBottom: ESPACIOS.lg },
   ubicacion: {
     ...TIPOGRAFIA.micro,
