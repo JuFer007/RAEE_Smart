@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Mapa from '../components/Mapa';
 import Encabezado from '../components/Encabezado';
@@ -52,7 +52,6 @@ export default function MapaScreen({ navigation }) {
           ubicacion={ubicacion}
           seleccionado={activo}
           onSelect={seleccionar}
-          alto={999}
           radio={0}
         />
 
@@ -82,7 +81,7 @@ export default function MapaScreen({ navigation }) {
         ) : null}
 
         {activo ? (
-          <View style={[styles.tarjetaFlotante, entrada]}>
+          <Animated.View style={[styles.tarjetaFlotante, entrada]}>
             <View style={styles.tarjetaCabecera}>
               <View style={styles.tarjetaContador}>
                 <Text style={styles.tarjetaContadorTexto}>
@@ -131,7 +130,7 @@ export default function MapaScreen({ navigation }) {
               <Text style={styles.tarjetaAccionTexto}>Ver horarios de atención</Text>
               <Ionicons name="chevron-forward" size={14} color={COLORS.white} />
             </TouchableOpacity>
-          </View>
+          </Animated.View>
         ) : null}
         <Toast
           visible={toast.visible}

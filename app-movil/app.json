@@ -22,11 +22,10 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Necesitamos acceso a tu galerÃ­a para seleccionar una foto de perfil.",
-          "cameraPermission": "Necesitamos acceso a tu cÃ¡mara para tomar una foto de perfil."
+          "photosPermission": "Necesitamos acceso a tu galería para seleccionar una foto de perfil.",
+          "cameraPermission": "Necesitamos acceso a tu cámara para tomar una foto de perfil."
         }
-      ],
-      "@maplibre/maplibre-react-native"
+      ]
     ]
   }
 }
