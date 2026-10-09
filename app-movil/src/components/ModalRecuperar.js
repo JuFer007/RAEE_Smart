@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Modal,
   View,
@@ -16,10 +16,6 @@ import { COLORS, ESPACIOS, RADIOS, SOMBRAS, TIPOGRAFIA } from '../theme';
 export default function ModalRecuperar({ visible, emailInicial = '', onCancelar, onEnviar }) {
   const [email, setEmail] = useState(emailInicial);
 
-  useEffect(() => {
-    if (visible) setEmail(emailInicial);
-  }, [visible, emailInicial]);
-
   return (
     <Modal
       visible={visible}
@@ -27,6 +23,7 @@ export default function ModalRecuperar({ visible, emailInicial = '', onCancelar,
       animationType="fade"
       statusBarTranslucent
       onRequestClose={onCancelar}
+      onShow={() => setEmail(emailInicial)}
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -67,7 +64,7 @@ const styles = StyleSheet.create({
   fondo: { flex: 1 },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(6, 45, 33, 0.45)',
+    backgroundColor: COLORS.overlay,
   },
   centro: {
     flex: 1,

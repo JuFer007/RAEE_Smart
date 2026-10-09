@@ -5,12 +5,23 @@ import Encabezado from '../components/Encabezado';
 import Boton from '../components/Boton';
 import { useAuth } from '../context/AuthContext';
 import { SECCIONES_MENU } from '../utils/menu';
-import { COLORS, ESPACIOS, RADIOS, TIPOGRAFIA } from '../theme';
+import { APP } from '../utils/contenido';
+import { COLORS, ESPACIOS, RADIOS, TIPOGRAFIA, FUENTES } from '../theme';
 
 const SECCIONES = SECCIONES_MENU;
 
 export default function PerfilScreen({ navigation }) {
   const { usuario, cerrarSesion } = useAuth();
+
+  async function salir() {
+    const raiz = navigation.getParent();
+    await cerrarSesion();
+    if (raiz) {
+      raiz.reset({ index: 0, routes: [{ name: 'Login' }] });
+    } else {
+      navigation.navigate('Login');
+    }
+  }
 
   return (
     <View style={styles.fondo}>
@@ -22,7 +33,9 @@ export default function PerfilScreen({ navigation }) {
 
         <View style={styles.cabeza}>
           <View style={styles.avatar}>
-            <Ionicons name="person" size={34} color={COLORS.white} />
+            <Text style={styles.avatarInicial}>
+              {(usuario?.nombre || 'V').trim().charAt(0).toUpperCase()}
+            </Text>
           </View>
           <View style={styles.cabezaTextos}>
             <Text style={styles.nombre}>{usuario?.nombre}</Text>
@@ -51,9 +64,9 @@ export default function PerfilScreen({ navigation }) {
           </View>
         ))}
 
-        <Boton titulo="Cerrar sesión" icono="log-out-outline" onPress={cerrarSesion} />
+        <Boton titulo="Cerrar sesión" icono="log-out-outline" onPress={salir} />
 
-        <Text style={styles.version}>RAEE Smart · versión 1.0.0</Text>
+        <Text style={styles.version}>RAEE Smart · versión {APP.version}</Text>
       </ScrollView>
     </View>
   );
@@ -67,14 +80,15 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: COLORS.ink,
+    backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  avatarInicial: { fontFamily: FUENTES.manrope, fontSize: 26, color: COLORS.white },
   cabezaTextos: { flex: 1 },
   seccion: { ...TIPOGRAFIA.label, color: COLORS.primaryText, marginBottom: ESPACIOS.sm, marginLeft: 2 },
   nombre: { ...TIPOGRAFIA.h3, fontSize: 17, marginBottom: 4 },
-  correo: { ...TIPOGRAFIA.micro, fontSize: 13, color: '#829B91' },
+  correo: { ...TIPOGRAFIA.micro, fontSize: 13, color: COLORS.mutSoft },
   lista: {
     backgroundColor: COLORS.surface,
     borderWidth: 1,
@@ -92,6 +106,6 @@ const styles = StyleSheet.create({
     borderBottomColor: COLORS.lineInner,
   },
   filaUltima: { borderBottomWidth: 0 },
-  filaTitulo: { flex: 1, ...TIPOGRAFIA.small, fontSize: 14, color: '#285B51' },
+  filaTitulo: { flex: 1, ...TIPOGRAFIA.small, fontSize: 14, color: COLORS.inkField },
   version: { ...TIPOGRAFIA.micro, fontSize: 10, textAlign: 'center', marginTop: ESPACIOS.lg },
 });

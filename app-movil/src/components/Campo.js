@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, ESPACIOS, RADIOS, TIPOGRAFIA } from '../theme';
 
@@ -13,6 +13,7 @@ export default function Campo({
   keyboardType = 'default',
   multilinea = false,
   autoCapitalize = 'sentences',
+  maxLength,
 }) {
   const [foco, setFoco] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -33,6 +34,7 @@ export default function Campo({
         multiline={multilinea}
         onFocus={() => setFoco(true)}
         onBlur={() => setFoco(false)}
+        maxLength={maxLength}
       />
       {secureTextEntry ? (
         <TouchableOpacity onPress={() => setVisible(!visible)} hitSlop={8}>

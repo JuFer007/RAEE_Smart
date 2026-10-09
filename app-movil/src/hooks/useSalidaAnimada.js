@@ -1,32 +1,45 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { UNSTABLE_usePreventRemove as usePreventRemove } from '@react-navigation/native';
 
 /**
  * Intercepta el regreso de una pantalla (botón, gesto o hardware) para que la
  * animación de salida termine antes de quitarla de la pila.
- * Las navegaciones hacia adelante no se animan.
+ * Usa `usePreventRemove` para que native-stack no la quite nativamente antes
+ * de que la animación termine. Las navegaciones hacia adelante no se animan.
  */
 export default function useSalidaAnimada(navigation, salir, activo = true) {
-  const dejarPasar = useRef(false);
+  const [prevenir, setPrevenir] = useState(activo);
+  const accionPendiente = useRef(null);
+  const animando = useRef(false);
 
   useEffect(() => {
-    if (!activo) return undefined;
+    if (accionPendiente.current) return;
+    setPrevenir(activo);
+  }, [activo]);
 
-    return navigation.addListener('beforeRemove', (e) => {
-      const tipo = e.data.action.type;
-      if (tipo !== 'GO_BACK' && tipo !== 'POP') return;
+  usePreventRemove(prevenir, ({ data }) => {
+    const tipo = data.action.type;
 
-      // La acción que re-despachamos al terminar la animación debe pasar libre.
-      if (dejarPasar.current) {
-        dejarPasar.current = false;
-        return;
-      }
+    if (tipo !== 'GO_BACK' && tipo !== 'POP') {
+      accionPendiente.current = data.action;
+      setPrevenir(false);
+      return;
+    }
 
-      e.preventDefault();
+    if (animando.current) return;
+    animando.current = true;
 
-      salir(() => {
-        dejarPasar.current = true;
-        navigation.dispatch(e.data.action);
-      });
+    salir(() => {
+      accionPendiente.current = data.action;
+      setPrevenir(false);
     });
-  }, [navigation, salir, activo]);
+  });
+
+  useEffect(() => {
+    if (prevenir || !accionPendiente.current) return;
+
+    const pendiente = accionPendiente.current;
+    accionPendiente.current = null;
+    navigation.dispatch(pendiente);
+  }, [prevenir, navigation]);
 }

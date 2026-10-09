@@ -1,4 +1,4 @@
-﻿package com.raeesmart.backend.Dto.Request;
+package com.raeesmart.backend.Dto.Request;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Email;
@@ -42,6 +42,5 @@ public class MunicipalidadRequestDTO {
     private String contactoEmail;
 
     private Boolean activo;
-
     private Boolean campanasHabilitadas;
 }

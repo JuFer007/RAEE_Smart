@@ -2,7 +2,7 @@ import React from 'react';
 import { Modal, View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Boton from './Boton';
-import { COLORS, ESPACIOS, RADIOS, SOMBRAS, TIPOGRAFIA, FUENTES } from '../theme';
+import { COLORS, ESPACIOS, RADIOS, SOMBRAS, TIPOGRAFIA } from '../theme';
 
 export default function ErrorModal({
   visible = false,
@@ -27,7 +27,7 @@ export default function ErrorModal({
         <Pressable style={styles.overlay} onPress={onCerrar} />
         <View style={styles.centro}>
           <View style={styles.tarjeta}>
-            <View style={styles.badge}>
+            <View style={[styles.badge, tipo === 'warning' && styles.badgeWarning]}>
               <Ionicons
                 name={icono}
                 size={22}
@@ -54,17 +54,20 @@ const styles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(6,45,33,0.45)',
+    backgroundColor: COLORS.overlay,
   },
   centro: {
     width: '100%',
+    maxWidth: 400,
+    alignSelf: 'center',
     paddingHorizontal: ESPACIOS.page,
     zIndex: 1,
   },
   tarjeta: {
+    width: '100%',
     backgroundColor: COLORS.surface,
     borderRadius: RADIOS.xl,
-    padding: 18,
+    padding: 20,
     alignItems: 'center',
     gap: 10,
     ...SOMBRAS.flotante,
@@ -77,11 +80,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  badgeWarning: { backgroundColor: COLORS.warningSoft },
   titulo: {
-    ...TIPOGRAFIA.base,
-    fontFamily: FUENTES.dmBold,
-    fontSize: 15,
-    color: COLORS.inkItem,
+    ...TIPOGRAFIA.h3,
+    fontSize: 17,
+    color: COLORS.inkField,
     textAlign: 'center',
   },
   subtitulo: {

@@ -17,8 +17,8 @@ export default function CorreccionScreen({ route, navigation }) {
       setGuardando(true);
       setError('');
       const actualizada = await entregaService.corregirClasificacion(entrega.id, seleccionado);
-      navigation.replace('Resultado', { entrega: actualizada });
-    } catch (e) {
+      navigation.replace('Resultado', { entrega: actualizada, modo: route.params?.modo });
+    } catch (_e) {
       setError('No pudimos guardar la corrección. Intenta nuevamente.');
     } finally {
       setGuardando(false);

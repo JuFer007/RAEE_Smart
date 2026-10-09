@@ -9,14 +9,15 @@ import * as entregaService from '../services/entregaService';
 import { USAR_DATOS_PRUEBA } from '../utils/datosPrueba';
 import { COLORS, ESPACIOS, TIPOGRAFIA } from '../theme';
 
-export default function CapturaFotoScreen({ navigation }) {
+export default function CapturaFotoScreen({ route, navigation }) {
   const { usuario } = useAuth();
   const { ubicacion, cargando: cargandoUbicacion } = useLocation();
   const [analizando, setAnalizando] = useState(false);
   const [error, setError] = useState('');
+  const identificarSolo = route.params?.modo === 'identificar';
 
   async function manejarFoto(uri) {
-    if (!ubicacion && !USAR_DATOS_PRUEBA) {
+    if (!identificarSolo && !ubicacion && !USAR_DATOS_PRUEBA) {
       setError('Activa el GPS para registrar la entrega');
       return;
     }
@@ -24,6 +25,13 @@ export default function CapturaFotoScreen({ navigation }) {
     try {
       setError('');
       setAnalizando(true);
+
+      if (identificarSolo) {
+        const identificado = await entregaService.identificarAparato({ fotoUri: uri });
+        navigation.replace('Resultado', { entrega: identificado, modo: 'identificar' });
+        return;
+      }
+
       const entrega = await entregaService.registrarEntrega({
         usuarioId: usuario.id,
         fotoUri: uri,
@@ -31,7 +39,7 @@ export default function CapturaFotoScreen({ navigation }) {
         longitud: ubicacion?.longitud,
       });
       navigation.replace('Resultado', { entrega });
-    } catch (e) {
+    } catch (_e) {
       setError('No se pudo identificar el aparato. Intenta nuevamente.');
     } finally {
       setAnalizando(false);
@@ -43,7 +51,11 @@ export default function CapturaFotoScreen({ navigation }) {
       <View style={styles.encabezado}>
         <Encabezado
           titulo="Identifica tu aparato"
-          subtitulo="Toma una foto clara del dispositivo"
+          subtitulo={
+            identificarSolo
+              ? 'Toma una foto y te decimos qué tipo de RAEE es'
+              : 'Toma una foto clara del dispositivo'
+          }
           onBack={() => navigation.goBack()}
           claro
         />

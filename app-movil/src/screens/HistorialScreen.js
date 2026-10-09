@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Encabezado from '../components/Encabezado';
 import ModalEnProceso from '../components/ModalEnProceso';
+import Boton from '../components/Boton';
 import { Chip } from '../components/Tarjeta';
 import { useAuth } from '../context/AuthContext';
 import * as entregaService from '../services/entregaService';
@@ -24,7 +25,7 @@ export default function HistorialScreen({ navigation }) {
       setError(null);
       const data = await entregaService.listarHistorial(usuario.id);
       setEntregas(data);
-    } catch (e) {
+    } catch (_e) {
       setError('No pudimos cargar tus entregas');
     } finally {
       setCargando(false);
@@ -32,8 +33,22 @@ export default function HistorialScreen({ navigation }) {
   }, [usuario.id]);
 
   useEffect(() => {
-    cargar();
-  }, [cargar]);
+    let activo = true;
+    entregaService
+      .listarHistorial(usuario.id)
+      .then((data) => {
+        if (activo) setEntregas(data);
+      })
+      .catch(() => {
+        if (activo) setError('No pudimos cargar tus entregas');
+      })
+      .finally(() => {
+        if (activo) setCargando(false);
+      });
+    return () => {
+      activo = false;
+    };
+  }, [usuario.id]);
 
   const visibles = entregas.filter((e) => {
     if (filtro === 'Certificadas') return e.estado === 'CONFIRMADA';
@@ -69,10 +84,26 @@ export default function HistorialScreen({ navigation }) {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={cargando} onRefresh={cargar} tintColor={COLORS.primary} />}
         ListEmptyComponent={
-          cargando ? null : (
+          cargando ? (
+            <ActivityIndicator size="large" color={COLORS.primary} style={styles.cargando} />
+          ) : error ? (
             <View style={styles.vacio}>
-              <Ionicons name="file-tray-outline" size={30} color={COLORS.mut} />
-              <Text style={styles.vacioTexto}>{error || 'Todavía no tienes entregas registradas'}</Text>
+              <Ionicons name="cloud-offline-outline" size={32} color={COLORS.mut} />
+              <Text style={styles.vacioTexto}>{error}</Text>
+              <Boton
+                titulo="Reintentar"
+                variante="fantasma"
+                ancho={false}
+                onPress={() => {
+                  setCargando(true);
+                  cargar();
+                }}
+              />
+            </View>
+          ) : (
+            <View style={styles.vacio}>
+              <Ionicons name="leaf-outline" size={32} color={COLORS.mut} />
+              <Text style={styles.vacioTexto}>Todavía no has registrado entregas</Text>
             </View>
           )
         }
@@ -155,9 +186,10 @@ const styles = StyleSheet.create({
   itemTextos: { flex: 1 },
   itemDerecha: { alignItems: 'flex-end', gap: 6 },
   itemNombre: { ...TIPOGRAFIA.micro, fontSize: 14, fontFamily: FUENTES.dmSemi, color: COLORS.inkItem },
-  itemDetalle: { ...TIPOGRAFIA.micro, fontSize: 11, color: '#869E95', marginTop: 3 },
+  itemDetalle: { ...TIPOGRAFIA.micro, fontSize: 11, color: COLORS.mut, marginTop: 3 },
   itemEstado: { alignSelf: 'flex-start', borderRadius: 9, paddingHorizontal: 9, paddingVertical: 5 },
   itemEstadoTexto: { ...TIPOGRAFIA.micro, fontSize: 10, fontFamily: FUENTES.dmSemi },
-  vacio: { alignItems: 'center', gap: ESPACIOS.sm, marginTop: ESPACIOS.xxl },
+  vacio: { alignItems: 'center', gap: ESPACIOS.md, marginTop: ESPACIOS.xxl },
   vacioTexto: { ...TIPOGRAFIA.small, textAlign: 'center' },
+  cargando: { marginTop: ESPACIOS.xxl },
 });

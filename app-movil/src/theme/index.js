@@ -81,6 +81,11 @@ export const COLORS = {
   warningSoft: '#FFF2D9',
   danger: '#B3261E',
   dangerSoft: '#FBE9E7',
+  infoSoft: '#E4EEFD',
+
+  overlay: 'rgba(11, 22, 19, 0.6)',
+  gradA: '#087C4B',
+  gradB: '#0A9D5A',
 };
 
 export const ESPACIOS = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 28, page: 22 };
@@ -151,11 +156,25 @@ export const TIPOS_RAEE = [
     ejemplos: ['Laptops y netbooks', 'Computadoras de escritorio', 'Tablets y agendas', 'Servidores y routers'],
   },
   {
+    tipo: 'TABLET',
+    nombre: 'Tablet',
+    categoria: 'Informática',
+    icono: 'tablet-portrait-outline',
+    ejemplos: ['Tablets y e-readers', 'Pantallas táctiles', 'Agendas digitales', 'Consolas portátiles'],
+  },
+  {
     tipo: 'TELEVISOR',
     nombre: 'Televisor',
     categoria: 'Audio y video',
     icono: 'tv-outline',
     ejemplos: ['Televisores LCD, LED y plasma', 'Monitores de computadora', 'Proyectores', 'Equipos de audio'],
+  },
+  {
+    tipo: 'EQUIPO_DE_SONIDO',
+    nombre: 'Equipo de sonido',
+    categoria: 'Audio y video',
+    icono: 'musical-notes-outline',
+    ejemplos: ['Parlantes y equipos de sonido', 'Minicomponentes', 'Amplificadores', 'Micrófonos y mezcladoras'],
   },
   {
     tipo: 'REFRIGERADORA',
@@ -181,7 +200,7 @@ export const TIPOS_RAEE = [
 ];
 
 export const ESTADOS_ENTREGA = {
-  REGISTRADA: { label: 'Registrada', color: COLORS.info, bg: '#E4EEFD' },
+  REGISTRADA: { label: 'Registrada', color: COLORS.info, bg: COLORS.infoSoft },
   EN_PROCESO: { label: 'En proceso', color: COLORS.warning, bg: COLORS.warningSoft },
   CONFIRMADA: { label: 'Certificada', color: COLORS.primaryText, bg: COLORS.primarySoft2 },
   RECHAZADA: { label: 'Rechazada', color: COLORS.danger, bg: COLORS.dangerSoft },

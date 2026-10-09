@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, Image, ScrollView, RefreshControl, TouchableOpacity, StyleSheet } from 'react-native';
+import React from 'react';
+import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,55 +8,26 @@ import MapaPuntos from '../components/MapaPuntos';
 import usePuntos from '../hooks/usePuntos';
 import useLocation from '../hooks/useLocation';
 import { useAuth } from '../context/AuthContext';
-import * as entregaService from '../services/entregaService';
 import { avisosNuevos } from '../utils/contenido';
+import { USAR_DATOS_PRUEBA } from '../utils/datosPrueba';
+import { avisosNuevosPrueba } from '../utils/usuarioPrueba';
 import { COLORS, ESPACIOS, RADIOS, SOMBRAS, TIPOGRAFIA, FUENTES } from '../theme';
-
-const META_ANUAL = 5;
 
 export default function HomeScreen({ navigation }) {
   const { usuario } = useAuth();
   const insets = useSafeAreaInsets();
   const { ubicacion } = useLocation();
-  const { puntos, recargar } = usePuntos(ubicacion);
-  const [refrescando, setRefrescando] = useState(false);
-  const [entregados, setEntregados] = useState(0);
+  const { puntos, cargando, error } = usePuntos(ubicacion);
 
-  const nombre = (usuario?.nombre || '').trim().split(' ')[0] || 'Vecino';
-  const progreso = { entregados, meta: META_ANUAL };
-  const porcentaje = Math.min(100, Math.round((entregados / META_ANUAL) * 100));
-  const metaCumplida = entregados >= META_ANUAL;
-  const mensajeProgreso = metaCumplida
-    ? '¡Meta cumplida este año!'
-    : entregados === 0
-      ? 'Empieza con tu primer aparato'
-      : '¡Vas por buen camino!';
-
-  const onRefresh = useCallback(async () => {
-    setRefrescando(true);
-    await recargar();
-    setRefrescando(false);
-  }, [recargar]);
-
-  useEffect(() => {
-    if (!usuario?.id) return undefined;
-
-    let vigente = true;
-    (async () => {
-      try {
-        const data = await entregaService.listarHistorial(usuario.id);
-        if (!vigente) return;
-        const anio = new Date().getFullYear();
-        setEntregados((data || []).filter((e) => new Date(e.fechaRegistro).getFullYear() === anio).length);
-      } catch (e) {
-        if (vigente) setEntregados(0);
-      }
-    })();
-
-    return () => {
-      vigente = false;
-    };
-  }, [usuario?.id]);
+  const hora = new Date().getHours();
+  const saludo = hora < 12 ? 'Buenos días' : hora < 19 ? 'Buenas tardes' : 'Buenas noches';
+  const nombre = (usuario?.nombre || '').trim().split(' ')[0] || 'vecino';
+  const nuevos = USAR_DATOS_PRUEBA ? avisosNuevosPrueba() : avisosNuevos();
+  const textoPuntos = error
+    ? 'No pudimos cargar los puntos'
+    : cargando && puntos.length === 0
+      ? 'Cargando puntos cercanos…'
+      : `${puntos.length} punto${puntos.length > 1 ? 's' : ''} disponible${puntos.length > 1 ? 's' : ''} cerca de ti`;
 
   function verTodos() {
     navigation.navigate('Mapa');
@@ -64,11 +35,7 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.fondo}>
-      <ScrollView
-        contentContainerStyle={styles.contenido}
-        showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refrescando} onRefresh={onRefresh} tintColor={COLORS.primary} />}
-      >
+      <View style={styles.contenido}>
         <View style={[styles.topbar, { marginTop: insets.top + 8 }]}>
           <BotonIcono nombre="menu-outline" size={22} onPress={() => navigation.navigate('Menu')} />
           <View style={styles.topbarLogo}>
@@ -81,30 +48,30 @@ export default function HomeScreen({ navigation }) {
           <BotonIcono
             nombre="notifications-outline"
             size={20}
-            contador={avisosNuevos()}
+            contador={nuevos}
             onPress={() => navigation.navigate('Notificaciones')}
           />
         </View>
 
         <View style={styles.saludo}>
-          <Text style={styles.saludoTitulo}>¡Hola, {nombre}!</Text>
+          <Text style={styles.saludoTitulo}>{saludo}, {nombre}.</Text>
           <Text style={styles.saludoTexto}>Juntos por un Chiclayo más limpio</Text>
         </View>
 
         <TouchableOpacity activeOpacity={0.9} onPress={() => navigation.navigate('CapturaFoto')}>
           <LinearGradient
-            colors={['#087C4B', '#0A9D5A']}
+            colors={[COLORS.gradA, COLORS.gradB]}
             start={{ x: 0, y: 0.5 }}
             end={{ x: 1, y: 0.5 }}
             style={styles.hero}
           >
             <View style={styles.heroIcono}>
-              <Ionicons name="leaf" size={20} color={COLORS.white} />
+              <Ionicons name="leaf" size={21} color={COLORS.white} />
             </View>
 
             <View style={styles.heroTextos}>
-              <Text style={styles.heroTitulo}>Entrega tus RAEE</Text>
-              <Text style={styles.heroSub}>Recibe tu certificado digital al instante</Text>
+              <Text style={styles.heroTitulo}>Registrar entrega</Text>
+              <Text style={styles.heroSub}>Identifica tu RAEE y obtén tu certificado digital</Text>
             </View>
 
             <View style={styles.heroFlecha}>
@@ -118,19 +85,19 @@ export default function HomeScreen({ navigation }) {
             icono="scan-outline"
             titulo="Identificar"
             detalle="Tu aparato"
-            onPress={() => navigation.navigate('CapturaFoto')}
+            onPress={() => navigation.navigate('CapturaFoto', { modo: 'identificar' })}
+          />
+          <AccionRapida
+            icono="qr-code-outline"
+            titulo="Certificados"
+            detalle="Mis entregas"
+            onPress={() => navigation.navigate('Historial')}
           />
           <AccionRapida
             icono="location-outline"
-            titulo="Registrar"
-            detalle="Tu entrega"
-            onPress={() => navigation.navigate('CapturaFoto')}
-          />
-          <AccionRapida
-            icono="document-text-outline"
-            titulo="Certificados"
-            detalle="Ver todos"
-            onPress={() => navigation.navigate('Historial')}
+            titulo="Puntos"
+            detalle="Mapa cercano"
+            onPress={verTodos}
           />
         </View>
 
@@ -138,11 +105,7 @@ export default function HomeScreen({ navigation }) {
           <View style={styles.bloqueEncabezado}>
             <View>
               <Text style={styles.bloqueTitulo}>Puntos de acopio cercanos</Text>
-              {puntos.length > 0 ? (
-                <Text style={styles.bloqueSub}>
-                  {puntos.length} punto{puntos.length > 1 ? 's' : ''} disponible{puntos.length > 1 ? 's' : ''}
-                </Text>
-              ) : null}
+              <Text style={styles.bloqueSub}>{textoPuntos}</Text>
             </View>
             <TouchableOpacity style={styles.verTodos} onPress={verTodos} activeOpacity={0.7}>
               <Text style={styles.verTodosTexto}>Ver todos</Text>
@@ -151,37 +114,10 @@ export default function HomeScreen({ navigation }) {
           </View>
 
           <TouchableOpacity style={styles.tarjetaMapa} activeOpacity={0.9} onPress={verTodos}>
-            <MapaPuntos puntos={puntos} ubicacion={ubicacion} alto={156} />
+            <MapaPuntos puntos={puntos} ubicacion={ubicacion} alto="100%" />
           </TouchableOpacity>
         </View>
-
-        <View style={styles.bloque}>
-          <View style={styles.bloqueEncabezado}>
-            <Text style={styles.bloqueTitulo}>Tu progreso</Text>
-            <Text style={styles.progresoMeta}>{progreso.entregados} de {progreso.meta}</Text>
-          </View>
-
-          <View style={styles.tarjetaProgreso}>
-            <View style={styles.barra}>
-              <View style={[styles.barraRelleno, { width: `${porcentaje}%` }]} />
-            </View>
-
-            <View style={styles.progresoPie}>
-              <Text style={styles.progresoTitulo}>{mensajeProgreso}</Text>
-              <Text style={styles.progresoDetalle}>
-                {progreso.entregados === 0
-                  ? 'Registra tu primera entrega y empieza a sumar puntos.'
-                  : `Has entregado ${progreso.entregados} aparato${progreso.entregados > 1 ? 's' : ''} este año.`}
-              </Text>
-            </View>
-
-            <View style={styles.progresoInsignia}>
-              <Ionicons name={metaCumplida ? 'trophy' : 'leaf'} size={17} color={COLORS.primaryText} />
-              <Text style={styles.progresoInsigniaTexto}>{porcentaje}%</Text>
-            </View>
-          </View>
-        </View>
-      </ScrollView>
+      </View>
     </View>
   );
 }
@@ -204,7 +140,7 @@ function AccionRapida({ icono, titulo, detalle, onPress }) {
 
 const styles = StyleSheet.create({
   fondo: { flex: 1, backgroundColor: COLORS.bgTop },
-  contenido: { paddingHorizontal: ESPACIOS.page, paddingBottom: ESPACIOS.xxl },
+  contenido: { flex: 1, paddingHorizontal: ESPACIOS.page, paddingBottom: ESPACIOS.md },
   topbar: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: ESPACIOS.lg },
   topbarLogo: { flex: 1, alignItems: 'center' },
   logoImg: { width: 100, height: 48 },
@@ -270,7 +206,7 @@ const styles = StyleSheet.create({
   },
   accionDetalle: { ...TIPOGRAFIA.micro, fontSize: 10, marginTop: 2 },
 
-  bloque: { marginBottom: ESPACIOS.xl },
+  bloque: { flex: 1, minHeight: 0 },
   bloqueEncabezado: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -283,41 +219,12 @@ const styles = StyleSheet.create({
   verTodosTexto: { ...TIPOGRAFIA.micro, fontSize: 12, fontWeight: '700', color: COLORS.primaryText },
 
   tarjetaMapa: {
+    flex: 1,
+    minHeight: 0,
     borderRadius: RADIOS.md,
     overflow: 'hidden',
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.lineSoft,
   },
-
-  progresoMeta: { ...TIPOGRAFIA.micro, fontSize: 12, color: COLORS.primaryText, fontWeight: '700' },
-  tarjetaProgreso: {
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.lineSoft,
-    borderRadius: RADIOS.md,
-    padding: ESPACIOS.lg,
-  },
-  barra: {
-    height: 9,
-    borderRadius: 5,
-    backgroundColor: COLORS.primarySoft,
-    overflow: 'hidden',
-  },
-  barraRelleno: { height: '100%', borderRadius: 5, backgroundColor: COLORS.primary },
-  progresoPie: { marginTop: ESPACIOS.md },
-  progresoTitulo: { ...TIPOGRAFIA.micro, fontSize: 12.5, fontFamily: FUENTES.dmSemi, color: COLORS.inkItem },
-  progresoDetalle: { ...TIPOGRAFIA.micro, fontSize: 11.5, marginTop: 4 },
-  progresoInsignia: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    alignSelf: 'flex-start',
-    marginTop: ESPACIOS.md,
-    backgroundColor: COLORS.primaryPale,
-    borderRadius: RADIOS.pill,
-    paddingHorizontal: 11,
-    paddingVertical: 6,
-  },
-  progresoInsigniaTexto: { ...TIPOGRAFIA.micro, fontSize: 12, fontFamily: FUENTES.dmSemi, color: COLORS.primaryText },
 });

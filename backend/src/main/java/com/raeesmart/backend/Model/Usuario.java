@@ -1,4 +1,4 @@
-﻿package com.raeesmart.backend.Model;
+package com.raeesmart.backend.Model;
 import com.raeesmart.backend.Model.Enums.RolUsuario;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -59,4 +59,3 @@ public class Usuario {
         }
     }
 }
-

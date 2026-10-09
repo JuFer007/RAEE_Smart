@@ -14,6 +14,7 @@ public class PuntoRecoleccionResponseDTO {
     private Long municipalidadId;
     private String municipalidadNombre;
     private String nombre;
+    private String direccion;
     private Double latitud;
     private Double longitud;
     private String horarioAtencion;

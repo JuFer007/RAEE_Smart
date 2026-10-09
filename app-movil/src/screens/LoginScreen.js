@@ -1,28 +1,59 @@
 import React, { useState } from 'react';
-import { View, Text, Image, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, Image, Keyboard, Pressable, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Encabezado from '../components/Encabezado';
 import Campo from '../components/Campo';
 import Boton from '../components/Boton';
 import ModalRecuperar from '../components/ModalRecuperar';
+import Toast from '../components/Toast';
 import { useAuth } from '../context/AuthContext';
+import useToast from '../hooks/useToast';
+import { USAR_DATOS_PRUEBA } from '../utils/datosPrueba';
+import { CREDENCIALES_PRUEBA } from '../utils/usuarioPrueba';
 import { COLORS, ESPACIOS, RADIOS, SOMBRAS, TIPOGRAFIA, FUENTES } from '../theme';
 
 export default function LoginScreen({ navigation }) {
-  const { entrarEnModoPrueba } = useAuth();
+  const { iniciarSesion } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [recordar, setRecordar] = useState(true);
   const [modalRecuperar, setModalRecuperar] = useState(false);
+  const [cargando, setCargando] = useState(false);
+  const { toast, ocultar } = useToast();
+
+  function validar() {
+    const correo = email.trim();
+    if (!correo && !password) return 'Ingresa tu correo y tu contraseña.';
+    if (!correo) return 'Ingresa tu correo electrónico.';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) return 'Escribe un correo electrónico válido.';
+    if (!password) return 'Ingresa tu contraseña.';
+    return null;
+  }
+
+  async function entrar() {
+    const mensaje = validar();
+    if (mensaje) {
+      toast.warning(mensaje);
+      return;
+    }
+
+    try {
+      setCargando(true);
+      await iniciarSesion(email.trim(), password);
+      navigation.navigate('Main');
+    } catch (e) {
+      toast.error(e.normalizado || e.message || 'Intenta nuevamente en unos segundos.');
+    } finally {
+      setCargando(false);
+    }
+  }
 
   return (
     <View style={styles.fondo}>
-      <ScrollView
-        contentContainerStyle={styles.contenido}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <Encabezado onBack={() => navigation.navigate('Bienvenida')} />
+      <Pressable style={styles.contenido} onPress={Keyboard.dismiss}>
+        <Encabezado
+          onBack={() => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate('Bienvenida'))}
+        />
 
         <View style={styles.bloque}>
           <Image
@@ -71,12 +102,16 @@ export default function LoginScreen({ navigation }) {
 
             <Boton
               titulo="Iniciar sesión"
-              onPress={() => {
-                entrarEnModoPrueba();
-                navigation.navigate('Main');
-              }}
+              onPress={entrar}
+              deshabilitado={cargando}
               style={styles.boton}
             />
+
+            {USAR_DATOS_PRUEBA ? (
+              <Text style={styles.prueba}>
+                Cuenta de prueba: {CREDENCIALES_PRUEBA.email} · {CREDENCIALES_PRUEBA.password}
+              </Text>
+            ) : null}
 
             <View style={styles.separador}>
               <View style={styles.linea} />
@@ -94,7 +129,7 @@ export default function LoginScreen({ navigation }) {
             />
           </View>
         </View>
-      </ScrollView>
+      </Pressable>
 
       <ModalRecuperar
         visible={modalRecuperar}
@@ -105,13 +140,23 @@ export default function LoginScreen({ navigation }) {
           navigation.navigate('Recuperar', { email: correo });
         }}
       />
+
+      <Toast
+        visible={toast.visible}
+        mensaje={toast.mensaje}
+        tipo={toast.tipo}
+        onCerrar={ocultar}
+        duracion={toast.duracion}
+        accionTexto={toast.accionTexto}
+        onAccion={toast.onAccion}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   fondo: { flex: 1, backgroundColor: COLORS.bg, overflow: 'hidden' },
-  contenido: { paddingHorizontal: ESPACIOS.page, paddingTop: ESPACIOS.md, paddingBottom: ESPACIOS.xxl, flexGrow: 1 },
+  contenido: { flex: 1, paddingHorizontal: ESPACIOS.page, paddingTop: ESPACIOS.md },
   bloque: { flex: 1, alignItems: 'center', justifyContent: 'center', width: '100%' },
 
   logoImg: { width: 130, height: 63, marginBottom: ESPACIOS.md },
@@ -162,6 +207,7 @@ const styles = StyleSheet.create({
   olvido: { ...TIPOGRAFIA.link, fontSize: 12 },
 
   boton: { marginTop: 2 },
+  prueba: { ...TIPOGRAFIA.micro, fontSize: 10.5, color: '#869E95', textAlign: 'center' },
 
   separador: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   linea: { flex: 1, height: 1, backgroundColor: COLORS.lineCard },

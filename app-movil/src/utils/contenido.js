@@ -76,36 +76,75 @@ export const CONSECJOS = [
 
 export const AVISOS = [
   {
-    icono: 'sparkles-outline',
+    id: 1,
     titulo: 'Bienvenido a RAEE Smart',
     detalle: 'Registra la entrega de tus aparatos, obtén tu certificado digital y suma puntos por cada entrega.',
-    nuevo: true,
+    tipo: 'GENERAL',
+    leida: false,
+    fechaCreacion: '2026-09-01T09:00:00',
   },
   {
-    icono: 'camera-outline',
+    id: 2,
     titulo: 'Toma una foto del aparato al entregarlo',
     detalle: 'La foto ayuda a identificar el tipo de RAEE y agiliza la certificación en el punto de acopio.',
-    nuevo: true,
+    tipo: 'ENTREGA',
+    leida: true,
+    fechaCreacion: '2026-09-03T10:00:00',
   },
   {
-    icono: 'map-outline',
+    id: 3,
     titulo: 'Revisa los horarios de los puntos',
     detalle: 'Cada punto de acopio tiene su propio horario de atención. Consérvalo en Horarios y campañas.',
+    tipo: 'HORARIO',
+    leida: false,
+    fechaCreacion: '2026-09-05T08:00:00',
   },
   {
-    icono: 'leaf-outline',
-    titulo: 'Un residuo electrónico no va a la basura común',
-    detalle: 'Puedes dejarlo en el punto de acopio más cercano a tu casa desde la pestaña Mapa.',
+    id: 4,
+    titulo: 'Campaña municipal de recolección',
+    detalle: 'Este mes hay recolección especial en distintas zonas de Chiclayo y Lambayeque.',
+    tipo: 'CAMPANA',
+    leida: false,
+    fechaCreacion: '2026-09-08T12:00:00',
   },
 ];
 
 export function avisosNuevos() {
-  return AVISOS.filter((aviso) => aviso.nuevo).length;
+  return AVISOS.filter((aviso) => !aviso.leida).length;
 }
-
-export const CAMPANAS = [];
 
 export const SIN_CAMPANAS =
   'Por ahora no hay campañas programadas. Consulta los horarios de los puntos de acopio para entregar tus residuos.';
+
+export const CAMPANAS = [
+  {
+    id: 1,
+    municipalidadId: 1,
+    municipalidadNombre: 'Municipalidad Provincial de Chiclayo',
+    titulo: 'Gran campaña de recolección de RAEE',
+    descripcion:
+      'Recolección gratuita de residuos electrónicos: celulares, computadoras, televisores, electrodomésticos y más.',
+    lugar: 'Parque Principal de Chiclayo',
+    horario: '9:00 a 15:00',
+    fechaInicio: '2026-10-10T09:00:00',
+    fechaFin: '2026-10-12T15:00:00',
+    activa: true,
+    estado: 'VIGENTE',
+  },
+  {
+    id: 2,
+    municipalidadId: 12,
+    municipalidadNombre: 'Municipalidad Provincial de Lambayeque',
+    titulo: 'Ecoferia de intercambio por macetas',
+    descripcion:
+      'Entrega tu aparato en desuso y llévate una maceta con plantas nativas de la región.',
+    lugar: 'Plaza de Armas de Lambayeque',
+    horario: '10:00 a 16:00',
+    fechaInicio: '2026-10-25T10:00:00',
+    fechaFin: '2026-10-25T16:00:00',
+    activa: true,
+    estado: 'VIGENTE',
+  },
+];
 
 export const TIPS_HORARIOS = 'Los horarios pueden cambiar en días festivos.';

@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Mapa from '../components/Mapa';
 import Encabezado from '../components/Encabezado';
 import Toast from '../components/Toast';
+import SelectorMunicipalidad from '../components/SelectorMunicipalidad';
 import useEntradaAnimada from '../hooks/useEntradaAnimada';
 import useLocation from '../hooks/useLocation';
 import usePuntos from '../hooks/usePuntos';
@@ -11,23 +12,53 @@ import useToast from '../hooks/useToast';
 import { COLORS, ESPACIOS, RADIOS, SOMBRAS, TIPOGRAFIA, FUENTES } from '../theme';
 import { distanciaKm } from '../utils/fecha';
 
+const PREFIJO_MUNICIPALIDAD = /^Municipalidad\s+(Provincial|Distrital)\s+de\s+/i;
+
+function municipalidadDe(punto) {
+  if (!punto) return '';
+  return String(punto.municipalidadNombre || punto.nombre || '')
+    .replace(PREFIJO_MUNICIPALIDAD, '')
+    .trim();
+}
+
 export default function MapaScreen({ navigation }) {
   const { ubicacion } = useLocation();
   const { puntos, cargando, error, recargar } = usePuntos(ubicacion);
-  const [indice, setIndice] = useState(0);
   const [entrada] = useEntradaAnimada({ eje: 'y', distancia: -18, escala: 0.99 });
-  const { toast, mostrar, ocultar } = useToast();
+  const { toast, ocultar } = useToast();
+  const [filtro, setFiltro] = useState('Todas');
+  const [activo, setActivo] = useState(null);
 
-  const activo = puntos[indice] || puntos[0];
+  const municipalidades = useMemo(() => {
+    const vistas = new Set();
+    puntos.forEach((p) => {
+      const nombre = municipalidadDe(p);
+      if (nombre) vistas.add(nombre);
+    });
+    return ['Todas', ...Array.from(vistas).sort((a, b) => a.localeCompare(b, 'es'))];
+  }, [puntos]);
+
+  const visibles = useMemo(
+    () => (filtro === 'Todas' ? puntos : puntos.filter((p) => municipalidadDe(p) === filtro)),
+    [puntos, filtro]
+  );
+
+  const posicion = activo ? visibles.findIndex((p) => String(p.id) === String(activo.id)) : -1;
 
   function mover(delta) {
-    if (!puntos.length) return;
-    setIndice((i) => (i + delta + puntos.length) % puntos.length);
+    if (!visibles.length) return;
+    const base = posicion >= 0 ? posicion : 0;
+    setActivo(visibles[(base + delta + visibles.length) % visibles.length]);
   }
 
   function seleccionar(p) {
-    const i = puntos.findIndex((x) => String(x.id) === String(p.id));
-    if (i >= 0) setIndice(i);
+    const encontrado = visibles.find((x) => String(x.id) === String(p.id));
+    if (encontrado) setActivo(encontrado);
+  }
+
+  function seleccionFiltro(m) {
+    setFiltro(m);
+    setActivo(null);
   }
 
   return (
@@ -39,16 +70,26 @@ export default function MapaScreen({ navigation }) {
             <View style={styles.chipCabecera}>
               <Ionicons name="location" size={12} color={COLORS.primaryText} />
               <Text style={styles.chipCabeceraTexto}>
-                {cargando && !puntos.length ? '—' : puntos.length}
+                {cargando && !puntos.length ? '—' : visibles.length}
               </Text>
             </View>
           }
         />
+
+        {municipalidades.length > 1 ? (
+          <View style={styles.selectorZona}>
+            <SelectorMunicipalidad
+              opciones={municipalidades}
+              valor={filtro}
+              onChange={seleccionFiltro}
+            />
+          </View>
+        ) : null}
       </View>
 
       <View style={styles.mapaZona}>
         <Mapa
-          puntos={puntos}
+          puntos={visibles}
           ubicacion={ubicacion}
           seleccionado={activo}
           onSelect={seleccionar}
@@ -85,7 +126,7 @@ export default function MapaScreen({ navigation }) {
             <View style={styles.tarjetaCabecera}>
               <View style={styles.tarjetaContador}>
                 <Text style={styles.tarjetaContadorTexto}>
-                  {indice + 1}/{puntos.length}
+                  {posicion + 1}/{visibles.length}
                 </Text>
               </View>
               <View style={styles.tarjetaCabeceraTexto}>
@@ -124,7 +165,7 @@ export default function MapaScreen({ navigation }) {
             <TouchableOpacity
               style={styles.tarjetaAccion}
               activeOpacity={0.8}
-              onPress={() => navigation.navigate('Horarios')}
+              onPress={() => navigation.navigate('Horarios', { punto: activo })}
             >
               <Ionicons name="calendar-outline" size={14} color={COLORS.white} />
               <Text style={styles.tarjetaAccionTexto}>Ver horarios de atención</Text>
@@ -157,6 +198,8 @@ function BotonCircular({ nombre, onPress }) {
 const styles = StyleSheet.create({
   fondo: { flex: 1, backgroundColor: COLORS.bgTop },
   encabezadoZona: { paddingHorizontal: ESPACIOS.page, paddingTop: ESPACIOS.md },
+
+  selectorZona: { marginTop: ESPACIOS.sm, marginBottom: ESPACIOS.sm },
 
   chipCabecera: {
     flexDirection: 'row',

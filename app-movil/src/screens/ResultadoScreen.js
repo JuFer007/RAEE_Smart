@@ -8,10 +8,15 @@ import { Etiqueta } from '../components/Tarjeta';
 import { obtenerInfoTipo, COLORS, ESPACIOS, RADIOS, TIPOGRAFIA } from '../theme';
 
 export default function ResultadoScreen({ route, navigation }) {
-  const { entrega } = route.params || {};
+  const { entrega, modo } = route.params || {};
   const info = obtenerInfoTipo(entrega?.tipoRaee);
   const confianza = Math.round((entrega?.confianzaIa || 0) * 100);
   const nombre = entrega?.nombreCategoriaVisible || info.nombre;
+  const identificarSolo = modo === 'identificar';
+
+  function volverTomarFoto() {
+    navigation.navigate('CapturaFoto', identificarSolo ? { modo: 'identificar' } : undefined);
+  }
 
   return (
     <View style={styles.fondo}>
@@ -46,16 +51,20 @@ export default function ResultadoScreen({ route, navigation }) {
         </View>
 
         <View style={styles.botones}>
-          <Boton titulo="Continuar" onPress={() => navigation.navigate('Entrega', { entrega })} />
+          <Boton
+            titulo={identificarSolo ? 'Registrar esta entrega' : 'Continuar'}
+            icono={identificarSolo ? 'arrow-forward-circle-outline' : undefined}
+            onPress={() => navigation.navigate('Entrega', { entrega })}
+          />
           <Boton
             titulo="Volver a tomar foto"
             variante="secundario"
-            onPress={() => navigation.navigate('CapturaFoto')}
+            onPress={volverTomarFoto}
           />
           <Boton
             titulo="¿No es correcto? Corregir categoría"
             variante="enlace"
-            onPress={() => navigation.navigate('Correccion', { entrega })}
+            onPress={() => navigation.navigate('Correccion', { entrega, modo })}
           />
         </View>
       </ScrollView>

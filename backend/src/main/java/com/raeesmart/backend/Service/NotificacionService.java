@@ -1,4 +1,4 @@
-﻿package com.raeesmart.backend.Service;
+package com.raeesmart.backend.Service;
 import com.raeesmart.backend.Dto.Response.NotificacionResponseDTO;
 import com.raeesmart.backend.Model.Enums.TipoNotificacion;
 import com.raeesmart.backend.Model.Usuario;
@@ -15,4 +15,3 @@ public interface NotificacionService {
     void crearParaUsuariosDeMunicipalidad(Long municipalidadId, TipoNotificacion tipo, String titulo, String detalle);
     List<NotificacionResponseDTO> listarDeUsuarioId(Long usuarioId);
 }
-

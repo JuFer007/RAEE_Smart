@@ -1,4 +1,4 @@
-﻿package com.raeesmart.backend.Dto.Response;
+package com.raeesmart.backend.Dto.Response;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

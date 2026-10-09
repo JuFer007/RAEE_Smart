@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, Share, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Encabezado from '../components/Encabezado';
 import Boton from '../components/Boton';
@@ -11,16 +11,14 @@ export default function ConfirmacionScreen({ route, navigation }) {
   const info = obtenerInfoTipo(entrega?.tipoRaee);
   const nombre = entrega?.nombreCategoriaVisible || info.nombre;
 
-  async function compartir() {
-    try {
-      await Share.share({ message: `Registré la entrega de mi ${nombre} en RAEE SMART.` });
-    } catch (e) {}
+  function irAlInicio() {
+    navigation.navigate('Main', { screen: 'Inicio' });
   }
 
   return (
     <View style={styles.fondo}>
       <ScrollView contentContainerStyle={styles.contenido} showsVerticalScrollIndicator={false}>
-        <Encabezado titulo="Confirmación de entrega" onBack={() => navigation.navigate('Main')} />
+        <Encabezado titulo="Confirmación de entrega" onBack={() => navigation.goBack()} />
 
         <View style={styles.centro}>
           <View style={styles.anillo}>
@@ -50,7 +48,7 @@ export default function ConfirmacionScreen({ route, navigation }) {
             titulo="Ver certificado digital"
             onPress={() => navigation.navigate('Certificado', { entrega })}
           />
-          <Boton titulo="Compartir" variante="secundario" onPress={compartir} />
+          <Boton titulo="Volver al inicio" variante="secundario" icono="home-outline" onPress={irAlInicio} />
         </View>
       </ScrollView>
     </View>

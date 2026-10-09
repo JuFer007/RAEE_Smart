@@ -37,6 +37,7 @@ public class AuthController {
                 .nombre(request.getNombre())
                 .email(request.getEmail())
                 .password(request.getPassword())
+                .dni(request.getDni())
                 .telefono(request.getTelefono())
                 .rolUsuario(RolUsuario.CIUDADANO)
                 .build();
@@ -68,6 +69,7 @@ public class AuthController {
                 .id(usuario.getId())
                 .nombre(usuario.getNombre())
                 .email(usuario.getEmail())
+                .dni(usuario.getDni())
                 .telefono(usuario.getTelefono())
                 .rol(usuario.getRolUsuario())
                 .build();

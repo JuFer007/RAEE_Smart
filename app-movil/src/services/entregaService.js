@@ -1,11 +1,26 @@
 import api from './api';
 import {
   USAR_DATOS_PRUEBA,
-  completarSimulacion,
   corregirSimulacion,
   historialSimulado,
   simularEntrega,
 } from '../utils/datosPrueba';
+
+export async function identificarAparato({ fotoUri }) {
+  if (USAR_DATOS_PRUEBA) return simularEntrega();
+
+  const formData = new FormData();
+  formData.append('foto', {
+    uri: fotoUri,
+    name: 'raee.jpg',
+    type: 'image/jpeg',
+  });
+
+  const { data } = await api.post('/clasificaciones', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data;
+}
 
 export async function registrarEntrega({ usuarioId, fotoUri, latitud, longitud }) {
   if (USAR_DATOS_PRUEBA) return simularEntrega();
@@ -42,7 +57,7 @@ export async function obtenerEntrega(entregaId) {
 }
 
 export async function listarHistorial(usuarioId) {
-  if (USAR_DATOS_PRUEBA) return historialSimulado();
+  if (USAR_DATOS_PRUEBA) return historialSimulado(usuarioId);
   const { data } = await api.get(`/usuarios/${usuarioId}/entregas`);
   return data;
 }

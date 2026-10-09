@@ -78,7 +78,7 @@ function Dato({ icono, etiqueta, valor }) {
 
 const styles = StyleSheet.create({
   fondo: { flex: 1 },
-  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(6, 45, 33, 0.45)' },
+  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: COLORS.overlay },
   centro: {
     flex: 1,
     alignItems: 'center',

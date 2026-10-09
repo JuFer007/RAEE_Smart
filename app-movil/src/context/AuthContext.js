@@ -1,13 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import * as authService from '../services/authService';
+import { USUARIO_PRUEBA } from '../utils/usuarioPrueba';
 
 export const AuthContext = createContext(null);
-
-const USUARIO_PRUEBA = {
-  id: 1,
-  nombre: 'Vecino de Prueba',
-  email: 'prueba@raee.com',
-};
 
 export function AuthProvider({ children }) {
   const [usuario, setUsuario] = useState(null);
@@ -31,7 +26,8 @@ export function AuthProvider({ children }) {
     setUsuario(null);
   }
 
-  function entrarEnModoPrueba() {
+  async function entrarEnModoPrueba() {
+    await authService.guardarSesion(USUARIO_PRUEBA);
     setUsuario(USUARIO_PRUEBA);
   }
 

@@ -1,4 +1,4 @@
-﻿package com.raeesmart.backend.Controller;
+package com.raeesmart.backend.Controller;
 import com.raeesmart.backend.Dto.Response.CampanaResponseDTO;
 import com.raeesmart.backend.Dto.Response.PuntoRecoleccionResponseDTO;
 import com.raeesmart.backend.Model.PuntoRecoleccion;
@@ -39,13 +39,17 @@ public class MunicipalidadController {
         return campanaService.obtenerPublic(campanaId);
     }
 
-    private PuntoRecoleccionResponseDTO mapearAResponse(PuntoRecoleccion punto) {
+private PuntoRecoleccionResponseDTO mapearAResponse(PuntoRecoleccion punto) {
         return PuntoRecoleccionResponseDTO.builder()
                 .id(punto.getId())
+                .municipalidadId(punto.getMunicipalidad().getId())
+                .municipalidadNombre(punto.getMunicipalidad().getNombre())
                 .nombre(punto.getNombre())
+                .direccion(punto.getDireccion())
                 .latitud(punto.getLatitud())
                 .longitud(punto.getLongitud())
                 .horarioAtencion(punto.getHorarioAtencion())
+                .capacidadDiaria(punto.getCapacidadDiaria())
                 .build();
     }
 }

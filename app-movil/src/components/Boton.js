@@ -1,7 +1,7 @@
 import React from 'react';
-import { Text, View, TouchableOpacity, StyleSheet } from 'react-native';
+import { Text, ActivityIndicator, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, ESPACIOS, TIPOGRAFIA } from '../theme';
+import { COLORS, ESPACIOS, RADIOS, TIPOGRAFIA } from '../theme';
 
 export default function Boton({
   titulo,
@@ -10,11 +10,17 @@ export default function Boton({
   icono,
   iconoDerecha,
   deshabilitado = false,
+  disabled,
+  cargando = false,
   ancho = true,
   style,
 }) {
+  const espera = deshabilitado || disabled;
   const color = colorTexto(variante);
-  const contenido = (
+
+  const contenido = cargando ? (
+    <ActivityIndicator size="small" color={color} />
+  ) : (
     <>
       {icono ? <Ionicons name={icono} size={17} color={color} /> : null}
       <Text style={[estilos.texto, { color }]}>{titulo}</Text>
@@ -24,7 +30,12 @@ export default function Boton({
 
   if (variante === 'enlace') {
     return (
-      <TouchableOpacity onPress={onPress} style={[estilos.enlace, style]} activeOpacity={0.7}>
+      <TouchableOpacity
+        onPress={onPress}
+        disabled={espera || cargando}
+        style={[estilos.enlace, style]}
+        activeOpacity={0.7}
+      >
         {contenido}
       </TouchableOpacity>
     );
@@ -33,14 +44,14 @@ export default function Boton({
   return (
     <TouchableOpacity
       onPress={onPress}
-      disabled={deshabilitado}
+      disabled={espera || cargando}
       activeOpacity={0.85}
       style={[
         estilos.base,
         ancho && estilos.ancho,
         variante === 'secundario' && estilos.secundario,
         variante === 'fantasma' && estilos.fantasma,
-        deshabilitado && estilos.deshabilitado,
+        (espera || cargando) && estilos.deshabilitado,
         style,
       ]}
     >
@@ -59,7 +70,7 @@ function colorTexto(variante) {
 const estilos = StyleSheet.create({
   base: {
     minHeight: 50,
-    borderRadius: 12,
+    borderRadius: RADIOS.boton,
     backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',

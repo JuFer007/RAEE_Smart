@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import Svg, { Rect, Path, G, Circle } from 'react-native-svg';
 import { COLORS, RADIOS } from '../theme';
-import { proyectar } from '../utils/geo';
+import { crearProyeccion } from '../utils/geo';
 
 const ANCHO = 300;
 const ALTO = 300;
@@ -17,11 +17,11 @@ export default function MapaPuntos({
   radio = 0,
 }) {
   const { pines, usuario } = useMemo(() => {
-    const items = ubicacion ? [...puntos, { id: '__yo', ...ubicacion }] : puntos;
-    const proyectados = proyectar(items, ANCHO, ALTO);
+    if (!puntos.length) return { pines: [], usuario: null };
+    const { proyectar: p } = crearProyeccion(puntos, ANCHO, ALTO);
     return {
-      pines: proyectados.filter((p) => p.id !== '__yo'),
-      usuario: proyectados.find((p) => p.id === '__yo'),
+      pines: puntos.map(p),
+      usuario: ubicacion ? p(ubicacion) : null,
     };
   }, [puntos, ubicacion]);
 

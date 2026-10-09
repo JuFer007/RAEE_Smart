@@ -1,4 +1,4 @@
-﻿package com.raeesmart.backend.Repository;
+package com.raeesmart.backend.Repository;
 import com.raeesmart.backend.Model.Enums.RolUsuario;
 import com.raeesmart.backend.Model.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;

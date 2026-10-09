@@ -126,7 +126,7 @@ public class EntregaServiceImpl implements EntregaService {
                 .clasificacionCorregida(entrega.getClasificacionCorregida())
                 .estado(entrega.getEstado())
                 .puntoRecoleccionNombre(entrega.getPuntoRecoleccion().getNombre())
-                .puntoRecoleccionDireccion(null)
+                .puntoRecoleccionDireccion(entrega.getPuntoRecoleccion().getDireccion())
                 .certificadoCodigoQr(entrega.getCertificado() != null ? entrega.getCertificado().getCodigoQr() : null)
                 .fechaRegistro(entrega.getFechaRegistro())
                 .build();

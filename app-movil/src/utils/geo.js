@@ -21,22 +21,39 @@ export function ordenarPorDistancia(puntos, ubicacion) {
     .sort((a, b) => (a.distanciaM ?? Infinity) - (b.distanciaM ?? Infinity));
 }
 
-export function proyectar(coordenadas, ancho, alto, margen = 0.14) {
-  if (!coordenadas.length) return [];
+export function crearProyeccion(coordenadas, ancho, alto, margen = 0.14) {
+  if (!coordenadas.length) return { proyectar: (c) => c };
   const lats = coordenadas.map((c) => c.latitud);
   const lngs = coordenadas.map((c) => c.longitud);
-  const minLat = Math.min(...lats);
-  const maxLat = Math.max(...lats);
-  const minLng = Math.min(...lngs);
-  const maxLng = Math.max(...lngs);
-  const rangoLat = maxLat - minLat || 0.01;
-  const rangoLng = maxLng - minLng || 0.01;
+  let minLat = Math.min(...lats);
+  let maxLat = Math.max(...lats);
+  let minLng = Math.min(...lngs);
+  let maxLng = Math.max(...lngs);
+
+  if (minLat === maxLat) {
+    minLat -= 0.005;
+    maxLat += 0.005;
+  }
+  if (minLng === maxLng) {
+    minLng -= 0.005;
+    maxLng += 0.005;
+  }
+
+  const rangoLat = maxLat - minLat;
+  const rangoLng = maxLng - minLng;
   const utilW = ancho * (1 - margen * 2);
   const utilH = alto * (1 - margen * 2);
 
-  return coordenadas.map((c) => ({
-    ...c,
-    x: margen * ancho + ((c.longitud - minLng) / rangoLng) * utilW,
-    y: margen * alto + ((maxLat - c.latitud) / rangoLat) * utilH,
-  }));
+  return {
+    proyectar: (c) => ({
+      ...c,
+      x: margen * ancho + ((c.longitud - minLng) / rangoLng) * utilW,
+      y: margen * alto + ((maxLat - c.latitud) / rangoLat) * utilH,
+    }),
+  };
+}
+
+export function proyectar(coordenadas, ancho, alto, margen = 0.14) {
+  const { proyectar: p } = crearProyeccion(coordenadas, ancho, alto, margen);
+  return coordenadas.map(p);
 }

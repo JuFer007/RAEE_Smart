@@ -24,6 +24,9 @@ public class PuntoRecoleccion {
     @Column(nullable = false, length = 150)
     private String nombre;
 
+    @Column(length = 200)
+    private String direccion;
+
     @Column(nullable = false)
     private Double latitud;
 

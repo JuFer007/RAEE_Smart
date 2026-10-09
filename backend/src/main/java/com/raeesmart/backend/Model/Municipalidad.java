@@ -47,5 +47,3 @@ public class Municipalidad {
     private List<PuntoRecoleccion> puntosRecoleccion;
 
 }
-
-

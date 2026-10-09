@@ -1,4 +1,4 @@
-﻿package com.raeesmart.backend.Controller;
+package com.raeesmart.backend.Controller;
 import com.raeesmart.backend.Dto.Response.NotificacionResponseDTO;
 import com.raeesmart.backend.Service.NotificacionService;
 import org.springframework.http.ResponseEntity;
