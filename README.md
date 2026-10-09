@@ -248,19 +248,21 @@
 ## Flujo de la aplicación
 
 <p align="center">
-  <img src="capturas/bienvenida.png" alt="Bienvenida" width="110" style="border-radius: 12px;">
+  <img src="capturas/bienvenida.png" alt="Bienvenida" width="180" style="border-radius: 12px;">
   <span style="font-size:20px">&nbsp;→&nbsp;</span>
-  <img src="capturas/login.png" alt="Inicio de sesión" width="110" style="border-radius: 12px;">
+  <img src="capturas/login.png" alt="Inicio de sesión" width="180" style="border-radius: 12px;">
   <span style="font-size:20px">&nbsp;→&nbsp;</span>
-  <img src="capturas/home.png" alt="Inicio" width="110" style="border-radius: 12px;">
+  <img src="capturas/home.png" alt="Inicio" width="180" style="border-radius: 12px;">
+  <br><br>
+  <span style="font-size:20px">&nbsp;↓&nbsp;</span>
+  <br><br>
+  <img src="capturas/tomarFoto.png" alt="Tomar foto" width="180" style="border-radius: 12px;">
   <span style="font-size:20px">&nbsp;→&nbsp;</span>
-  <img src="capturas/tomarFoto.png" alt="Tomar foto" width="110" style="border-radius: 12px;">
+  <img src="capturas/deteccionDeDispositivo.png" alt="Detección con IA" width="180" style="border-radius: 12px;">
   <span style="font-size:20px">&nbsp;→&nbsp;</span>
-  <img src="capturas/deteccionDeDispositivo.png" alt="Detección con IA" width="110" style="border-radius: 12px;">
+  <img src="capturas/elegirPuntoEntrega.png" alt="Elegir punto de entrega" width="180" style="border-radius: 12px;">
   <span style="font-size:20px">&nbsp;→&nbsp;</span>
-  <img src="capturas/elegirPuntoEntrega.png" alt="Elegir punto de entrega" width="110" style="border-radius: 12px;">
-  <span style="font-size:20px">&nbsp;→&nbsp;</span>
-  <img src="capturas/qrCertificado.png" alt="Certificado QR" width="110" style="border-radius: 12px;">
+  <img src="capturas/qrCertificado.png" alt="Certificado QR" width="180" style="border-radius: 12px;">
 </p>
 
 1. **Bienvenida**: se muestra la pantalla inicial de la aplicación.
