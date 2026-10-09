@@ -16,21 +16,16 @@
 
 ## Capturas de la aplicación móvil
 
-### 1. Bienvenida
+<h3 align="center">1. Bienvenida y acceso</h3>
+<p align="center"><em>Pantalla de bienvenida, inicio de sesión y registro de una cuenta nueva.</em></p>
 
+<div align="center">
 <table>
   <tr>
     <td align="center">
       <img src="capturas/bienvenida.png" alt="Pantalla de bienvenida" width="200" style="border-radius: 16px;">
       <br><sub><b>Pantalla de bienvenida</b></sub>
     </td>
-  </tr>
-</table>
-
-### 2. Acceso a la cuenta
-
-<table>
-  <tr>
     <td align="center">
       <img src="capturas/login.png" alt="Inicio de sesión" width="200" style="border-radius: 16px;">
       <br><sub><b>Inicio de sesión</b></sub>
@@ -41,13 +36,18 @@
     </td>
   </tr>
 </table>
+</div>
 
-### 3. Recuperar contraseña
+---
 
+<h3 align="center">2. Recuperar contraseña</h3>
+<p align="center"><em>Flujo para restablecer la contraseña a través del correo electrónico y un código de verificación.</em></p>
+
+<div align="center">
 <table>
   <tr>
     <td align="center">
-      <img src="capturas/ingresarCorreoOlvidasteTuContraseña.png" alt="Ingreso de correo" width="200" style="border-radius: 16px;">
+      <img src="capturas/ingresarCorreoOlvidasteTuContraseña.png" alt="Ingreso del correo" width="200" style="border-radius: 16px;">
       <br><sub><b>Ingreso del correo</b></sub>
     </td>
     <td align="center">
@@ -60,9 +60,14 @@
     </td>
   </tr>
 </table>
+</div>
 
-### 4. Inicio y navegación
+---
 
+<h3 align="center">3. Inicio y ubicación</h3>
+<p align="center"><em>Pantalla principal de la app, menú de navegación y solicitud del permiso de ubicación.</em></p>
+
+<div align="center">
 <table>
   <tr>
     <td align="center">
@@ -73,55 +78,56 @@
       <img src="capturas/menu.png" alt="Menú de navegación" width="200" style="border-radius: 16px;">
       <br><sub><b>Menú de navegación</b></sub>
     </td>
-  </tr>
-</table>
-
-### 5. Permiso de ubicación
-
-<table>
-  <tr>
     <td align="center">
       <img src="capturas/permitirAccesoDeUbicacion.png" alt="Permiso de ubicación" width="200" style="border-radius: 16px;">
-      <br><sub><b>Solicitud de acceso a la ubicación</b></sub>
+      <br><sub><b>Permiso de ubicación</b></sub>
     </td>
   </tr>
 </table>
+</div>
 
-### 6. Reciclaje con IA
+---
 
+<h3 align="center">4. Reciclaje con IA</h3>
+<p align="center"><em>Captura del dispositivo, clasificación automática con IA y opción de corregir la categoría en caso de error.</em></p>
+
+<div align="center">
 <table>
   <tr>
     <td align="center">
-      <img src="capturas/tomarFoto.png" alt="Tomar foto del dispositivo" width="200" style="border-radius: 16px;">
+      <img src="capturas/tomarFoto.png" alt="Captura del dispositivo" width="200" style="border-radius: 16px;">
       <br><sub><b>Captura del dispositivo</b></sub>
     </td>
     <td align="center">
-      <img src="capturas/deteccionDeDispositivo.png" alt="Detección con IA" width="200" style="border-radius: 16px;">
+      <img src="capturas/deteccionDeDispositivo.png" alt="Detección y clasificación con IA" width="200" style="border-radius: 16px;">
       <br><sub><b>Detección y clasificación con IA</b></sub>
     </td>
     <td align="center">
-      <img src="capturas/elegirCategoriaEnCasoHayaError.png" alt="Elegir categoría manualmente" width="200" style="border-radius: 16px;">
-      <br><sub><b>Corrección manual de la categoría</b></sub>
+      <img src="capturas/elegirCategoriaEnCasoHayaError.png" alt="Corrección de categoría" width="200" style="border-radius: 16px;">
+      <br><sub><b>Corrección de categoría</b></sub>
     </td>
-  </tr>
-  <tr>
     <td align="center">
-      <img src="capturas/registrarEntrego.png" alt="Registrar entrega" width="200" style="border-radius: 16px;">
+      <img src="capturas/registrarEntrego.png" alt="Registro de la entrega" width="200" style="border-radius: 16px;">
       <br><sub><b>Registro de la entrega</b></sub>
     </td>
   </tr>
 </table>
+</div>
 
-### 7. Puntos de entrega
+---
 
+<h3 align="center">5. Puntos de entrega</h3>
+<p align="center"><em>Selección del punto de entrega, mapa de ubicaciones, información del punto y sus horarios y campañas.</em></p>
+
+<div align="center">
 <table>
   <tr>
     <td align="center">
-      <img src="capturas/elegirPuntoEntrega.png" alt="Elegir punto de entrega" width="200" style="border-radius: 16px;">
+      <img src="capturas/elegirPuntoEntrega.png" alt="Selección del punto de entrega" width="200" style="border-radius: 16px;">
       <br><sub><b>Selección del punto de entrega</b></sub>
     </td>
     <td align="center">
-      <img src="capturas/mapaConUbicaciones.jpeg" alt="Mapa con ubicaciones" width="200" style="border-radius: 16px;">
+      <img src="capturas/mapaConUbicaciones.jpeg" alt="Mapa con puntos de entrega" width="200" style="border-radius: 16px;">
       <br><sub><b>Mapa con puntos de entrega</b></sub>
     </td>
     <td align="center">
@@ -130,41 +136,51 @@
     </td>
   </tr>
   <tr>
-    <td align="center">
-      <img src="capturas/infoHorariosYCampañasDeUnPuntoDeEntrega.jpeg" alt="Horarios y campañas de un punto de entrega" width="200" style="border-radius: 16px;">
-      <br><sub><b>Horarios y campañas de un punto de entrega</b></sub>
-    </td>
-    <td align="center">
-      <img src="capturas/infoHorariosYCamapñas.png" alt="Información de horarios y campañas" width="200" style="border-radius: 16px;">
-      <br><sub><b>Información de horarios y campañas</b></sub>
+    <td colspan="3" align="center">
+      <table align="center">
+        <tr>
+          <td align="center">
+            <img src="capturas/infoHorariosYCampañasDeUnPuntoDeEntrega.jpeg" alt="Horarios y campañas del punto" width="200" style="border-radius: 16px;">
+            <br><sub><b>Horarios y campañas del punto</b></sub>
+          </td>
+          <td align="center">
+            <img src="capturas/infoHorariosYCamapñas.png" alt="Información de horarios y campañas" width="200" style="border-radius: 16px;">
+            <br><sub><b>Información de horarios y campañas</b></sub>
+          </td>
+        </tr>
+      </table>
     </td>
   </tr>
 </table>
+</div>
 
-### 8. Certificado digital
+---
 
+<h3 align="center">6. Certificado e historial</h3>
+<p align="center"><em>Certificado digital con código QR generado tras la entrega y el historial de entregas realizadas.</em></p>
+
+<div align="center">
 <table>
   <tr>
     <td align="center">
       <img src="capturas/qrCertificado.png" alt="Certificado con QR" width="200" style="border-radius: 16px;">
       <br><sub><b>Certificado digital con QR</b></sub>
     </td>
-  </tr>
-</table>
-
-### 9. Historial de entregas
-
-<table>
-  <tr>
     <td align="center">
       <img src="capturas/historialEntregas.png" alt="Historial de entregas" width="200" style="border-radius: 16px;">
-      <br><sub><b>Historial de entregas realizadas</b></sub>
+      <br><sub><b>Historial de entregas</b></sub>
     </td>
+    <td></td>
   </tr>
 </table>
+</div>
 
-### 10. Notificaciones
+---
 
+<h3 align="center">7. Notificaciones y perfil</h3>
+<p align="center"><em>Lista y administración de notificaciones, datos del perfil, edición de foto y cambio de contraseña.</em></p>
+
+<div align="center">
 <table>
   <tr>
     <td align="center">
@@ -175,30 +191,36 @@
       <img src="capturas/administrarNotificaciones.png" alt="Administrar notificaciones" width="200" style="border-radius: 16px;">
       <br><sub><b>Administración de notificaciones</b></sub>
     </td>
-  </tr>
-</table>
-
-### 11. Perfil de usuario
-
-<table>
-  <tr>
     <td align="center">
       <img src="capturas/perfilUsuario.png" alt="Perfil de usuario" width="200" style="border-radius: 16px;">
       <br><sub><b>Perfil de usuario</b></sub>
     </td>
-    <td align="center">
-      <img src="capturas/editarFotoPerfil.png" alt="Editar foto de perfil" width="200" style="border-radius: 16px;">
-      <br><sub><b>Edición de foto de perfil</b></sub>
-    </td>
-    <td align="center">
-      <img src="capturas/cambiarContraseña.png" alt="Cambiar contraseña" width="200" style="border-radius: 16px;">
-      <br><sub><b>Cambio de contraseña</b></sub>
+  </tr>
+  <tr>
+    <td colspan="3" align="center">
+      <table align="center">
+        <tr>
+          <td align="center">
+            <img src="capturas/editarFotoPerfil.png" alt="Edición de foto de perfil" width="200" style="border-radius: 16px;">
+            <br><sub><b>Edición de foto de perfil</b></sub>
+          </td>
+          <td align="center">
+            <img src="capturas/cambiarContraseña.png" alt="Cambio de contraseña" width="200" style="border-radius: 16px;">
+            <br><sub><b>Cambio de contraseña</b></sub>
+          </td>
+        </tr>
+      </table>
     </td>
   </tr>
 </table>
+</div>
 
-### 12. Información y ayuda
+---
 
+<h3 align="center">8. Información y ayuda</h3>
+<p align="center"><em>Contenido informativo sobre reciclaje, beneficios de reciclar, acerca de la aplicación y soporte.</em></p>
+
+<div align="center">
 <table>
   <tr>
     <td align="center">
@@ -206,40 +228,39 @@
       <br><sub><b>Información sobre reciclaje</b></sub>
     </td>
     <td align="center">
-      <img src="capturas/porqueReciclar.png" alt="Por qué reciclar" width="200" style="border-radius: 16px;">
+      <img src="capturas/porqueReciclar.png" alt="Beneficios de reciclar" width="200" style="border-radius: 16px;">
       <br><sub><b>Beneficios de reciclar</b></sub>
     </td>
     <td align="center">
-      <img src="capturas/acercaDeLaApp.png" alt="Acerca de la app" width="200" style="border-radius: 16px;">
+      <img src="capturas/acercaDeLaApp.png" alt="Acerca de la aplicación" width="200" style="border-radius: 16px;">
       <br><sub><b>Acerca de la aplicación</b></sub>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <img src="capturas/ayudaYSoporte.png" alt="Ayuda y soporte" width="200" style="border-radius: 16px;">
       <br><sub><b>Ayuda y soporte</b></sub>
     </td>
   </tr>
 </table>
+</div>
 
 ---
 
 ## Flujo de la aplicación
 
 <p align="center">
-  <img src="capturas/bienvenida.png" alt="Bienvenida" width="80" style="border-radius: 12px;">
+  <img src="capturas/bienvenida.png" alt="Bienvenida" width="110" style="border-radius: 12px;">
   <span style="font-size:20px">&nbsp;→&nbsp;</span>
-  <img src="capturas/login.png" alt="Inicio de sesión" width="80" style="border-radius: 12px;">
+  <img src="capturas/login.png" alt="Inicio de sesión" width="110" style="border-radius: 12px;">
   <span style="font-size:20px">&nbsp;→&nbsp;</span>
-  <img src="capturas/home.png" alt="Inicio" width="80" style="border-radius: 12px;">
+  <img src="capturas/home.png" alt="Inicio" width="110" style="border-radius: 12px;">
   <span style="font-size:20px">&nbsp;→&nbsp;</span>
-  <img src="capturas/tomarFoto.png" alt="Tomar foto" width="80" style="border-radius: 12px;">
+  <img src="capturas/tomarFoto.png" alt="Tomar foto" width="110" style="border-radius: 12px;">
   <span style="font-size:20px">&nbsp;→&nbsp;</span>
-  <img src="capturas/deteccionDeDispositivo.png" alt="Detección con IA" width="80" style="border-radius: 12px;">
+  <img src="capturas/deteccionDeDispositivo.png" alt="Detección con IA" width="110" style="border-radius: 12px;">
   <span style="font-size:20px">&nbsp;→&nbsp;</span>
-  <img src="capturas/elegirPuntoEntrega.png" alt="Elegir punto de entrega" width="80" style="border-radius: 12px;">
+  <img src="capturas/elegirPuntoEntrega.png" alt="Elegir punto de entrega" width="110" style="border-radius: 12px;">
   <span style="font-size:20px">&nbsp;→&nbsp;</span>
-  <img src="capturas/qrCertificado.png" alt="Certificado QR" width="80" style="border-radius: 12px;">
+  <img src="capturas/qrCertificado.png" alt="Certificado QR" width="110" style="border-radius: 12px;">
 </p>
 
 1. **Bienvenida**: se muestra la pantalla inicial de la aplicación.
