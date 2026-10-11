@@ -14,6 +14,56 @@
 
 ---
 
+## Aplicación móvil (Expo)
+
+### Requisitos
+
+- [Node.js](https://nodejs.org/) LTS (18 o superior) y npm.
+- [Expo Go](https://expo.dev/go) en un dispositivo físico, o un emulador/simulador:
+  - **Android**: [Android Studio](https://developer.android.com/studio) con un emulador (AVD) configurado.
+  - **iOS**: [Xcode](https://developer.apple.com/xcode/) con el simulador (solo en macOS).
+- El backend en ejecución y accesible desde la red del dispositivo (ver más abajo).
+
+### Instalación
+
+```bash
+cd app-movil
+npm install
+```
+
+### Inicio (Expo)
+
+```bash
+npm start          # inicia el servidor de desarrollo de Expo
+npm run android    # inicia y abre en el emulador de Android
+npm run ios        # inicia y abre en el simulador de iOS (macOS)
+npm run web        # inicia en el navegador
+```
+
+### Abrir en emulador o con Expo Go
+
+**Emulador / simulador:** ejecuta `npm run android` o `npm run ios`. Expo arranca Metro y abre la app automáticamente en el dispositivo virtual (debe estar iniciado).
+
+**Expo Go (dispositivo físico):**
+1. Ejecuta `npm start` y deja la terminal abierta.
+2. Asegúrate de que el teléfono y la computadora estén en la **misma red Wi-Fi**.
+3. Abre la app **Expo Go** y escanea el código QR que aparece en la terminal.
+   - Android: desde Expo Go, opción *Scan QR code*.
+   - iOS: escanea el QR con la cámara del sistema.
+4. Si la red no es accesible, usa el modo túnel: `npx expo start --tunnel`.
+
+### Conexión con el backend
+
+Configura la URL de la API en `src/theme/index.js`:
+
+```js
+export const API_BASE_URL = 'http://TU_IP_LOCAL:8080/api';
+```
+
+Usa la IP local de tu computadora (por ejemplo `192.168.1.100`). En el emulador de Android puedes usar `http://10.0.2.2:8080/api`. Para que funcione en un dispositivo físico, el backend debe escuchar en la red local.
+
+---
+
 ## Capturas de la aplicación móvil
 
 <h3 align="center">1. Bienvenida y acceso</h3>
