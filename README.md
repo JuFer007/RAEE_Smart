@@ -52,16 +52,6 @@ npm run web        # inicia en el navegador
    - iOS: escanea el QR con la cámara del sistema.
 4. Si la red no es accesible, usa el modo túnel: `npx expo start --tunnel`.
 
-### Conexión con el backend
-
-Configura la URL de la API en `src/theme/index.js`:
-
-```js
-export const API_BASE_URL = 'http://TU_IP_LOCAL:8080/api';
-```
-
-Usa la IP local de tu computadora (por ejemplo `192.168.1.100`). En el emulador de Android puedes usar `http://10.0.2.2:8080/api`. Para que funcione en un dispositivo físico, el backend debe escuchar en la red local.
-
 ---
 
 ## Capturas de la aplicación móvil
