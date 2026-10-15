@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, Share, Platform, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
 import Encabezado from '../components/Encabezado';
 import Boton from '../components/Boton';
 import QRDisplay from '../components/QRDisplay';
@@ -27,13 +28,44 @@ export default function CertificadoScreen({ route, navigation }) {
     entrega?.certificadoCodigoQr || (USAR_DATOS_PRUEBA && esConfirmada ? CODIGO_PRUEBA : '');
   const verificado = esConfirmada && Boolean(codigoQr);
 
+  async function compartir() {
+    if (!verificado) {
+      setError('El certificado se genera cuando la entrega es confirmada');
+      return;
+    }
+    try {
+      await Share.share({
+        message:
+          `Certificado de entrega RAEE Smart\n` +
+          `Categoría: ${entrega?.nombreCategoriaVisible || info.nombre}\n` +
+          `Fecha: ${formatearFechaHora(entrega?.fechaRegistro)}\n` +
+          `Punto: ${direccionPunto || nombrePunto}\n` +
+          `Código: ${codigoQr}`,
+      });
+    } catch (_e) {
+      setError('No pudimos compartir el certificado en este dispositivo');
+    }
+  }
+
   async function descargar() {
     if (!verificado) {
       setError('El certificado se genera cuando la entrega es confirmada');
       return;
     }
     try {
-      await Print.printAsync({ html: htmlCertificado(entrega, info, nombrePunto, direccionPunto, codigoQr) });
+      const html = htmlCertificado(entrega, info, nombrePunto, direccionPunto, codigoQr);
+      if (Platform.OS === 'web') {
+        await Print.printAsync({ html });
+        return;
+      }
+      const { uri } = await Print.printToFileAsync({ html });
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri, {
+          mimeType: 'application/pdf',
+          dialogTitle: 'Certificado de entrega',
+          UTI: 'com.adobe.pdf',
+        });
+      }
     } catch (_e) {
       setError('No pudimos generar el certificado en este dispositivo');
     }
@@ -95,8 +127,7 @@ export default function CertificadoScreen({ route, navigation }) {
           <Text style={styles.datosTitulo}>Datos del certificado</Text>
           <View style={styles.datos}>
             <Dato icono="qr-code-outline" etiqueta="Código" valor={codigoQr || 'Se genera al confirmar'} mono />
-            <Dato icono={info.icono} etiqueta="Aparato" valor={entrega?.nombreCategoriaVisible || info.nombre} />
-            <Dato icono="pricetag-outline" etiqueta="Categoría" valor={info.categoria} />
+            <Dato icono={info.icono} etiqueta="Categoría" valor={entrega?.nombreCategoriaVisible || info.nombre} />
             <Dato icono="calendar-outline" etiqueta="Fecha" valor={formatearFechaHora(entrega?.fechaRegistro)} />
             <Dato icono="location-outline" etiqueta="Punto" valor={direccionPunto || nombrePunto} />
             <Dato icono="flag-outline" etiqueta="Estado" valor={obtenerEstado(entrega?.estado).label} ultima />
@@ -106,12 +137,27 @@ export default function CertificadoScreen({ route, navigation }) {
         </View>
 
         <View style={styles.botones}>
-          <Boton
-            titulo="Descargar certificado"
-            icono="download-outline"
-            onPress={descargar}
-            deshabilitado={!verificado}
-          />
+          <View style={styles.filaBotones}>
+            <View style={styles.botonMitad}>
+              <Boton
+                titulo="Compartir certificado"
+                icono="share-social-outline"
+                onPress={compartir}
+                deshabilitado={!verificado}
+                style={styles.botonCompacto}
+              />
+            </View>
+            <View style={styles.botonMitad}>
+              <Boton
+                titulo="Descargar certificado"
+                variante="fantasma"
+                icono="download-outline"
+                onPress={descargar}
+                deshabilitado={!verificado}
+                style={[styles.botonCompacto, styles.botonDescarga]}
+              />
+            </View>
+          </View>
           <Boton
             titulo="Volver al inicio"
             variante="secundario"
@@ -140,9 +186,8 @@ function Dato({ icono, etiqueta, valor, ultima = false, mono = false }) {
 
 function htmlCertificado(entrega, info, nombrePunto, direccionPunto, codigoQr) {
   const filas = [
-    ['Tipo de aparato', entrega.nombreCategoriaVisible || info.nombre],
-    ['Categoría', info.categoria || info.nombre],
-    ['Fecha de entrega', formatearFechaHora(entrega.fechaRegistro)],
+    ['Categoría', entrega?.nombreCategoriaVisible || info.nombre],
+    ['Fecha de entrega', formatearFechaHora(entrega?.fechaRegistro)],
     ['Punto de entrega', nombrePunto],
     ['Dirección', direccionPunto],
     ['Código de certificado', codigoQr],
@@ -265,6 +310,10 @@ const styles = StyleSheet.create({
   datoValor: { flex: 1, ...TIPOGRAFIA.micro, fontSize: 11.5, lineHeight: 16, fontFamily: FUENTES.dmSemi, color: COLORS.inkItem },
   datoValorMono: { letterSpacing: 0.3, fontFamily: 'monospace' },
 
-  botones: { gap: 9, marginTop: 'auto' },
+  botones: { gap: 9, marginTop: ESPACIOS.lg },
+  filaBotones: { flexDirection: 'row', gap: 9 },
+  botonMitad: { flex: 1, minWidth: 0 },
+  botonCompacto: { paddingHorizontal: 8 },
+  botonDescarga: { backgroundColor: COLORS.primarySoft, minHeight: 50 },
   error: { ...TIPOGRAFIA.micro, fontSize: 12, color: COLORS.danger, marginBottom: ESPACIOS.sm },
 });

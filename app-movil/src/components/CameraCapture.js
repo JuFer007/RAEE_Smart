@@ -1,21 +1,29 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, Platform, StyleSheet } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import ModalPermiso from './ModalPermiso';
 import { COLORS, TIPOGRAFIA } from '../theme';
 
 const INTERIOR = 72;
 
-export default function CameraCapture({ onCaptura, analizando = false, tip }) {
+export default function CameraCapture({ onCaptura, analizando = false, tip, etiqueta = null }) {
   const [listo, setListo] = useState(true);
   const camara = useRef(null);
   const [permiso, pedirPermiso] = useCameraPermissions();
+  const [analizandoPrev, setAnalizandoPrev] = useState(analizando);
   const esWeb = Platform.OS === 'web';
+  const mostrarPermiso = !esWeb && permiso != null && !permiso.granted;
 
-  useEffect(() => {
+  if (analizando !== analizandoPrev) {
+    setAnalizandoPrev(analizando);
     if (!analizando) setListo(true);
-  }, [analizando]);
+  }
+
+  async function pedir() {
+    await pedirPermiso();
+  }
 
   async function disparar() {
     if (!listo || analizando) return;
@@ -86,9 +94,19 @@ export default function CameraCapture({ onCaptura, analizando = false, tip }) {
           </TouchableOpacity>
           <View style={estilos.botonGaleria} />
         </View>
+        {etiqueta ? <Text style={estilos.etiqueta}>{etiqueta}</Text> : null}
       </View>
 
       {tip ? <Text style={estilos.tip}>{tip}</Text> : null}
+
+      <ModalPermiso
+        visible={mostrarPermiso}
+        icono="camera-outline"
+        titulo="Permiso de cámara"
+        mensaje="Necesitamos acceso a tu cámara para tomarle una foto al aparato e identificar qué tipo de RAEE es."
+        textoBoton="Permitir cámara"
+        onPermitir={pedir}
+      />
     </View>
   );
 }
@@ -166,5 +184,15 @@ const estilos = StyleSheet.create({
     paddingHorizontal: 22,
     paddingTop: 10,
     lineHeight: 16,
+  },
+  etiqueta: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 100,
+    ...TIPOGRAFIA.micro,
+    fontSize: 11,
+    color: COLORS.cameraMuted,
+    textAlign: 'center',
   },
 });

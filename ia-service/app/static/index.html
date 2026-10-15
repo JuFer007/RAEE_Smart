@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAEE Smart · Clasificador IA</title>
+  <link rel="icon" type="image/png" href="/static/favicon.png" />
+  <link rel="apple-touch-icon" href="/static/favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div class="brand">
+        <img class="brand__logo" src="/static/logo.png" alt="RAEE Smart" />
+      </div>
+
+      <div class="status" id="status" data-state="loading">
+        <span class="status__dot"></span>
+        <div class="status__text">
+          <strong class="status__title" id="status-title">Conectando…</strong>
+          <span class="status__sub" id="status-sub">Verificando servicio de IA</span>
+        </div>
+        <span class="badge" id="mode-badge" hidden></span>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="card upload-card">
+        <div class="card__head">
+          <span class="eyebrow">Paso 1</span>
+          <h2>Reconocimiento de residuos</h2>
+          <p class="muted">Sube una foto del aparato electrónico y la IA estimará su categoría RAEE.</p>
+        </div>
+
+        <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Subir imagen">
+          <input type="file" id="file-input" accept="image/*" hidden />
+
+          <div class="dropzone__empty" id="dropzone-empty">
+            <svg class="dropzone__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 16V4" />
+              <path d="m7 9 5-5 5 5" />
+              <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+            </svg>
+            <p class="dropzone__title">Arrastra tu foto aquí</p>
+            <p class="muted small">o <span class="link">haz clic para elegir un archivo</span></p>
+            <p class="muted tiny">Formatos: JPG, PNG · Máx. 8 MB</p>
+          </div>
+
+          <div class="preview" id="preview" hidden>
+            <img id="preview-img" alt="Previsualización de la imagen" />
+            <button type="button" class="preview__remove" id="preview-remove" aria-label="Quitar imagen">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+            <div class="preview__meta">
+              <span class="preview__name" id="preview-name"></span>
+              <span class="preview__size" id="preview-size"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn--primary" id="btn-clasificar" disabled>
+            <span class="btn__label">Clasificar imagen</span>
+            <span class="spinner" hidden></span>
+          </button>
+          <button class="btn btn--ghost" id="btn-limpiar" disabled>Limpiar</button>
+        </div>
+      </section>
+
+      <section class="card result-card">
+        <div class="card__head">
+          <span class="eyebrow">Paso 2</span>
+          <h2>Resultado del análisis</h2>
+          <p class="muted">Predicción del modelo MobileNetV2 entrenado para RAEE.</p>
+        </div>
+
+        <div class="result-empty" id="result-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.5-3.5" />
+          </svg>
+          <p class="muted">Aún no hay resultados. Sube una imagen y pulsa <strong>Clasificar</strong>.</p>
+        </div>
+
+        <div class="result-error" id="result-error" hidden>
+          <p id="result-error-msg"></p>
+        </div>
+
+        <div class="result" id="result" hidden>
+          <div class="result__hero">
+            <span class="result__label">Categoría detectada</span>
+            <h3 class="result__category" id="result-category">—</h3>
+            <div class="confidence">
+              <div class="confidence__bar"><span id="result-conf-bar"></span></div>
+              <span class="confidence__value" id="result-conf">—</span>
+            </div>
+          </div>
+
+          <div class="top3">
+            <span class="top3__title">Otras probabilidades</span>
+            <ul id="top3-list"></ul>
+          </div>
+
+          <div class="result__footer">
+            <div class="meta">
+              <span class="meta__label">Tiempo de inferencia</span>
+              <span class="meta__value" id="result-time">—</span>
+            </div>
+            <div class="meta">
+              <span class="meta__label">Modo</span>
+              <span class="meta__value" id="result-mode">—</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>RAEE Smart · Clasificación de residuos eléctricos y electrónicos con IA</span>
+    </footer>
+  </div>
+
+  <div class="overlay" id="overlay" hidden>
+    <div class="overlay__box">
+      <span class="spinner spinner--lg"></span>
+      <p>Analizando la imagen…</p>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

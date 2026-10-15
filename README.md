@@ -14,43 +14,49 @@
 
 ---
 
-## Aplicación móvil (Expo)
+## Descripción
 
-### Requisitos
+**RAEE Smart** es una plataforma para la gestión y el reciclaje de **Residuos de Aparatos
+Eléctricos y Electrónicos (RAEE)**. El ciudadano registra la entrega de un aparato desde la
+app móvil, un servicio de IA clasifica la foto en una de las **8 categorías RAEE**, se asigna
+el punto de acopio municipal y se genera un **certificado digital con código QR**. La
+municipalidad da seguimiento a las entregas desde un panel web.
 
-- [Node.js](https://nodejs.org/) LTS (18 o superior) y npm.
-- [Expo Go](https://expo.dev/go) en un dispositivo físico, o un emulador/simulador:
-  - **Android**: [Android Studio](https://developer.android.com/studio) con un emulador (AVD) configurado.
-  - **iOS**: [Xcode](https://developer.apple.com/xcode/) con el simulador (solo en macOS).
-- El backend en ejecución y accesible desde la red del dispositivo (ver más abajo).
+## Estructura del proyecto
 
-### Instalación
-
-```bash
-cd app-movil
-npm install
+```
+RAEE_Smart/
+├── app-movil/        # App móvil del ciudadano (React Native + Expo)
+├── backend/          # API REST y lógica de negocio (Spring Boot + PostgreSQL/PostGIS)
+├── ia-service/       # Microservicio de clasificación de imágenes (FastAPI + TensorFlow)
+├── web-panel/        # Panel municipal (React + Vite)
+├── capturas/         # Capturas de pantalla de la app móvil
+└── arquitecturaDelSistema.md   # Detalle de la arquitectura del sistema
 ```
 
-### Inicio (Expo)
+## Tecnologías
 
-```bash
-npm start          # inicia el servidor de desarrollo de Expo
-npm run android    # inicia y abre en el emulador de Android
-npm run ios        # inicia y abre en el simulador de iOS (macOS)
-npm run web        # inicia en el navegador
-```
+| Módulo | Tecnologías |
+|---|---|
+| **App móvil** | React Native, Expo, React Navigation, Axios |
+| **Backend** | Java 17, Spring Boot 3, Spring Security (JWT), JPA/Hibernate, PostgreSQL + PostGIS, Maven |
+| **Servicio de IA** | Python, FastAPI, TensorFlow (MobileNetV2), Uvicorn |
+| **Panel municipal** | React, Vite |
 
-### Abrir en emulador o con Expo Go
+---
 
-**Emulador / simulador:** ejecuta `npm run android` o `npm run ios`. Expo arranca Metro y abre la app automáticamente en el dispositivo virtual (debe estar iniciado).
+## Captura del servicio de IA
 
-**Expo Go (dispositivo físico):**
-1. Ejecuta `npm start` y deja la terminal abierta.
-2. Asegúrate de que el teléfono y la computadora estén en la **misma red Wi-Fi**.
-3. Abre la app **Expo Go** y escanea el código QR que aparece en la terminal.
-   - Android: desde Expo Go, opción *Scan QR code*.
-   - iOS: escanea el QR con la cámara del sistema.
-4. Si la red no es accesible, usa el modo túnel: `npx expo start --tunnel`.
+<div align="center">
+<table>
+  <tr>
+    <td align="center">
+      <img src="capturas/serivicioIA.png" alt="Vista del servicio de IA" width="720" style="border-radius: 16px;">
+      <br><sub><b>Vista de reconocimiento de imágenes con IA</b></sub>
+    </td>
+  </tr>
+</table>
+</div>
 
 ---
 
@@ -313,3 +319,121 @@ npm run web        # inicia en el navegador
 6. **Punto de entrega**: se selecciona el punto de entrega, se consultan sus horarios y campañas y se registra la entrega.
 7. **Certificado digital**: al confirmar la entrega se genera un certificado digital con código QR.
 8. **Historial, notificaciones y perfil**: las entregas quedan registradas en el historial; el usuario recibe notificaciones de campañas y horarios y puede administrarlas, así como editar su foto de perfil o cambiar su contraseña.
+
+---
+
+## Aplicación móvil (Expo)
+
+### Requisitos
+
+- [Node.js](https://nodejs.org/) LTS (18 o superior) y npm.
+- [Expo Go](https://expo.dev/go) en un dispositivo físico, o un emulador/simulador:
+  - **Android**: [Android Studio](https://developer.android.com/studio) con un emulador (AVD) configurado.
+  - **iOS**: [Xcode](https://developer.apple.com/xcode/) con el simulador (solo en macOS).
+- El backend en ejecución y accesible desde la red del dispositivo (ver más abajo).
+
+### Instalación
+
+```bash
+cd app-movil
+npm install
+```
+
+### Inicio (Expo)
+
+```bash
+npm start          # inicia el servidor de desarrollo de Expo
+npm run android    # inicia y abre en el emulador de Android
+npm run ios        # inicia y abre en el simulador de iOS (macOS)
+npm run web        # inicia en el navegador
+```
+
+### Abrir en emulador o con Expo Go
+
+**Emulador / simulador:** ejecuta `npm run android` o `npm run ios`. Expo arranca Metro y abre la app automáticamente en el dispositivo virtual (debe estar iniciado).
+
+**Expo Go (dispositivo físico):**
+1. Ejecuta `npm start` y deja la terminal abierta.
+2. Asegúrate de que el teléfono y la computadora estén en la **misma red Wi-Fi**.
+3. Abre la app **Expo Go** y escanea el código QR que aparece en la terminal.
+   - Android: desde Expo Go, opción *Scan QR code*.
+   - iOS: escanea el QR con la cámara del sistema.
+4. Si la red no es accesible, usa el modo túnel: `npx expo start --tunnel`.
+
+---
+
+## Servicio de IA (FastAPI)
+
+Microservicio en FastAPI que clasifica las fotos de los aparatos en una de las 8 categorías RAEE (`CELULAR`, `EQUIPO_DE_SONIDO`, `IMPRESORA`, `LAPTOP`, `PEQUENO_ELECTRODOMESTICO`, `REFRIGERADORA`, `TABLET`, `TELEVISOR`) y expone una vista web para probar la clasificación. Si no encuentra el modelo entrenado en `model_weights/raee_mobilenetv2_v1.h5`, arranca automáticamente en **modo simulado**.
+
+### Requisitos
+
+- [Python](https://www.python.org/) 3.10 o superior y pip.
+
+### Instalación
+
+Todos los comandos se ejecutan **desde la carpeta `ia-service`**.
+
+```bash
+cd ia-service
+python -m venv venv
+source venv/bin/activate          # En Windows PowerShell: .\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+> En Windows, si `Activate.ps1` da error de *execution policy*, ejecuta una vez:
+> `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`
+
+> **Atajo Windows:** ejecuta `run_demo.bat` (doble clic o `.\run_demo.bat`). Crea la venv, instala las dependencias si faltan y arranca la demo.
+
+### Inicio de la API
+
+```bash
+uvicorn app.main:app --reload --port 8000
+```
+
+- API y documentación (Swagger): http://127.0.0.1:8000/docs
+- Estado del servicio: http://127.0.0.1:8000/estado
+
+### Vista amigable de reconocimiento (demo)
+
+Página para subir una foto, previsualizarla y clasificarla. Se sirve en http://127.0.0.1:8010.
+
+**Windows (un solo comando):**
+
+```powershell
+.\run_demo.bat
+```
+
+**Forma manual:**
+
+```bash
+python demo.py
+```
+
+### Modo simulado forzado (sin usar el modelo)
+
+```bash
+# Linux / macOS
+export RAEE_IA_MODO_SIMULADO=true
+# Windows PowerShell
+$env:RAEE_IA_MODO_SIMULADO="true"
+
+uvicorn app.main:app --reload --port 8000
+```
+
+También puedes cambiar la ruta del modelo con las variables `RAEE_IA_RUTA_MODELO` y `RAEE_IA_RUTA_CATEGORIAS`.
+
+### Conexión con el backend Java
+
+En el `application.properties` del backend:
+
+```
+raeesmart.ia.base-url=http://localhost:8000
+```
+
+---
+
+<div align="center">
+  <sub>Proyecto RAEE SMART · Innovación y Transformación Digital (26389) · UTP Chiclayo 2026</sub>
+</div>

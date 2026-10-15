@@ -4,10 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Encabezado from '../components/Encabezado';
 import Campo from '../components/Campo';
 import Boton from '../components/Boton';
-import ModalRecuperar from '../components/ModalRecuperar';
-import Toast from '../components/Toast';
 import { useAuth } from '../context/AuthContext';
-import useToast from '../hooks/useToast';
 import { USAR_DATOS_PRUEBA } from '../utils/datosPrueba';
 import { CREDENCIALES_PRUEBA } from '../utils/usuarioPrueba';
 import { COLORS, ESPACIOS, RADIOS, SOMBRAS, TIPOGRAFIA, FUENTES } from '../theme';
@@ -17,32 +14,36 @@ export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [recordar, setRecordar] = useState(true);
-  const [modalRecuperar, setModalRecuperar] = useState(false);
   const [cargando, setCargando] = useState(false);
-  const { toast, ocultar } = useToast();
+  const [errores, setErrores] = useState({});
+  const [errorGeneral, setErrorGeneral] = useState('');
+
+  function limpiar(campo) {
+    setErrores((prev) => (prev[campo] ? { ...prev, [campo]: '' } : prev));
+    setErrorGeneral('');
+  }
 
   function validar() {
+    const e = {};
     const correo = email.trim();
-    if (!correo && !password) return 'Ingresa tu correo y tu contraseña.';
-    if (!correo) return 'Ingresa tu correo electrónico.';
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) return 'Escribe un correo electrónico válido.';
-    if (!password) return 'Ingresa tu contraseña.';
-    return null;
+    if (!correo) e.email = 'Ingresa tu correo electrónico.';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) e.email = 'Escribe un correo electrónico válido.';
+    if (!password) e.password = 'Ingresa tu contraseña.';
+    return e;
   }
 
   async function entrar() {
-    const mensaje = validar();
-    if (mensaje) {
-      toast.warning(mensaje);
-      return;
-    }
+    const e = validar();
+    setErrores(e);
+    setErrorGeneral('');
+    if (Object.values(e).some(Boolean)) return;
 
     try {
       setCargando(true);
       await iniciarSesion(email.trim(), password);
       navigation.navigate('Main');
-    } catch (e) {
-      toast.error(e.normalizado || e.message || 'Intenta nuevamente en unos segundos.');
+    } catch (err) {
+      setErrorGeneral(err.normalizado || err.message || 'Intenta nuevamente en unos segundos.');
     } finally {
       setCargando(false);
     }
@@ -66,22 +67,30 @@ export default function LoginScreen({ navigation }) {
           <Text style={styles.subtitulo}>Entra y sigue dando segunda vida a tus electrónicos</Text>
 
           <View style={styles.tarjeta}>
-            <Campo
-              icono="mail-outline"
-              placeholder="Correo electrónico"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-            <Campo
-              icono="lock-closed-outline"
-              placeholder="Contraseña"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoCapitalize="none"
-            />
+            <View style={styles.campo}>
+              <Campo
+                icono="mail-outline"
+                placeholder="Correo electrónico"
+                value={email}
+                onChangeText={(t) => { setEmail(t); limpiar('email'); }}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                error={Boolean(errores.email)}
+              />
+              {errores.email ? <Text style={styles.errorTexto}>{errores.email}</Text> : null}
+            </View>
+            <View style={styles.campo}>
+              <Campo
+                icono="lock-closed-outline"
+                placeholder="Contraseña"
+                value={password}
+                onChangeText={(t) => { setPassword(t); limpiar('password'); }}
+                secureTextEntry
+                autoCapitalize="none"
+                error={Boolean(errores.password)}
+              />
+              {errores.password ? <Text style={styles.errorTexto}>{errores.password}</Text> : null}
+            </View>
 
             <View style={styles.filaRecordar}>
               <TouchableOpacity
@@ -95,10 +104,12 @@ export default function LoginScreen({ navigation }) {
                 <Text style={styles.checkboxTexto}>Recordar sesión</Text>
               </TouchableOpacity>
 
-              <Text style={styles.olvido} onPress={() => setModalRecuperar(true)}>
+              <Text style={styles.olvido} onPress={() => navigation.navigate('RecuperarCorreo', { email })}>
                 ¿Olvidaste tu contraseña?
               </Text>
             </View>
+
+            {errorGeneral ? <Text style={styles.errorGeneral}>{errorGeneral}</Text> : null}
 
             <Boton
               titulo="Iniciar sesión"
@@ -130,26 +141,6 @@ export default function LoginScreen({ navigation }) {
           </View>
         </View>
       </Pressable>
-
-      <ModalRecuperar
-        visible={modalRecuperar}
-        emailInicial={email}
-        onCancelar={() => setModalRecuperar(false)}
-        onEnviar={(correo) => {
-          setModalRecuperar(false);
-          navigation.navigate('Recuperar', { email: correo });
-        }}
-      />
-
-      <Toast
-        visible={toast.visible}
-        mensaje={toast.mensaje}
-        tipo={toast.tipo}
-        onCerrar={ocultar}
-        duracion={toast.duracion}
-        accionTexto={toast.accionTexto}
-        onAccion={toast.onAccion}
-      />
     </View>
   );
 }
@@ -183,6 +174,23 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.lineSoft,
     ...SOMBRAS.flotante,
+  },
+
+  campo: { width: '100%' },
+  errorTexto: {
+    ...TIPOGRAFIA.micro,
+    fontSize: 10.5,
+    color: COLORS.danger,
+    marginTop: 3,
+    marginLeft: 4,
+  },
+  errorGeneral: {
+    width: '100%',
+    ...TIPOGRAFIA.small,
+    fontSize: 12,
+    lineHeight: 16,
+    color: COLORS.danger,
+    textAlign: 'center',
   },
 
   filaRecordar: {

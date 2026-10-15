@@ -32,8 +32,7 @@ export default function ConfirmacionScreen({ route, navigation }) {
         </View>
 
         <View style={styles.resumen}>
-          <Fila icono={info.icono} etiqueta="Aparato" valor={nombre} />
-          <Fila icono="pricetag-outline" etiqueta="Categoría" valor={info.categoria} />
+          <Fila icono={info.icono} etiqueta="Categoría" valor={nombre} />
           <Fila icono="calendar-outline" etiqueta="Fecha" valor={formatearFechaHora(entrega?.fechaRegistro)} />
           <Fila
             icono="location-outline"

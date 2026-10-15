@@ -8,6 +8,7 @@ import MainTabs from './MainTabs';
 
 import BienvenidaScreen from '../screens/BienvenidaScreen';
 import LoginScreen from '../screens/LoginScreen';
+import RecuperarCorreoScreen from '../screens/RecuperarCorreoScreen';
 import RecuperarScreen from '../screens/RecuperarScreen';
 import NuevaPasswordScreen from '../screens/NuevaPasswordScreen';
 import RegistroScreen from '../screens/RegistroScreen';
@@ -47,6 +48,7 @@ export default function AppNavigator() {
             <Stack.Screen name="Bienvenida" component={BienvenidaScreen} options={{ animation: 'fade' }} />
             <Stack.Screen name="Login" component={LoginScreen} options={ANIMACION} />
             <Stack.Screen name="Registro" component={RegistroScreen} options={ANIMACION} />
+            <Stack.Screen name="RecuperarCorreo" component={RecuperarCorreoScreen} options={ANIMACION} />
             <Stack.Screen name="Recuperar" component={RecuperarScreen} options={ANIMACION} />
             <Stack.Screen name="NuevaPassword" component={NuevaPasswordScreen} options={ANIMACION} />
             <Stack.Screen name="Main" component={MainTabs} options={{ animation: 'fade' }} />

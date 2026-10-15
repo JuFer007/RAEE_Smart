@@ -26,8 +26,32 @@ export async function login(email, password) {
   return data;
 }
 
-export async function registrar(nombre, email, password, telefono) {
-  const { data } = await api.post('/auth/registro', { nombre, email, password, telefono });
+export async function registrar(nombre, email, password, telefono, dni) {
+  if (USAR_DATOS_PRUEBA) {
+    const existente = String(email || '').trim().toLowerCase();
+    if (existente === CREDENCIALES_PRUEBA.email) {
+      const error = new Error('Ya existe una cuenta con este correo');
+      error.normalizado = 'Ya existe una cuenta con este correo';
+      throw error;
+    }
+
+    const usuario = {
+      ...USUARIO_PRUEBA,
+      nombre: String(nombre || '').trim() || USUARIO_PRUEBA.nombre,
+      email: existente,
+      telefono: String(telefono || '').trim() || USUARIO_PRUEBA.telefono,
+      dni: String(dni || '').trim() || USUARIO_PRUEBA.dni,
+      fechaRegistro: new Date().toISOString(),
+    };
+    await guardarSesion(usuario);
+    return { token: 'token-prueba', usuario };
+  }
+
+  const { data } = await api.post('/auth/registro', { nombre, email, password, telefono, dni });
+  if (data?.token) {
+    await AsyncStorage.setItem('@raeesmart_token', data.token);
+    await AsyncStorage.setItem('@raeesmart_usuario', JSON.stringify(data.usuario));
+  }
   return data;
 }
 

@@ -168,6 +168,21 @@ function construirHtml(puntos, ubicacion, colores) {
     map.on('mouseleave', capa, function () { map.getCanvas().style.cursor = ''; });
   });
 
+  /* ---------- Clic fuera de un punto: ocultar su info ---------- */
+  map.on('click', function (e) {
+    var capas = ['puntos-pin', 'puntos-activo'].filter(function (l) { return map.getLayer(l); });
+    var toco = (e.features || []).some(function (f) {
+      return f.layer && capas.indexOf(f.layer.id) !== -1;
+    });
+    if (!toco && capas.length) {
+      toco = map.queryRenderedFeatures(e.point, { layers: capas }).length > 0;
+    }
+    if (toco) return;
+    activoId = null;
+    aplicarActivo();
+    enviar({ tipo: 'deselect' });
+  });
+
   /* ---------- Encuadre inicial ---------- */
   var bounds = new maplibregl.LngLatBounds(), hay = false;
   D.puntos.forEach(function (p) { bounds.extend([p.lng, p.lat]); hay = true; });
@@ -267,10 +282,11 @@ export default function Mapa({
   useEffect(() => {
     if (!esWeb) return undefined;
     const handler = (e) => {
-      if (e.source !== iframeRef.current?.contentWindow) return;
+      if (iframeRef.current && e.source && e.source !== iframeRef.current.contentWindow) return;
       try {
         const d = JSON.parse(e.data);
         if (d.tipo === 'select') alSeleccionarRef.current?.({ id: d.id });
+        else if (d.tipo === 'deselect') alSeleccionarRef.current?.(null);
       } catch (_) {}
     };
     window.addEventListener('message', handler);
@@ -307,6 +323,7 @@ export default function Mapa({
           try {
             const d = JSON.parse(e.nativeEvent.data);
             if (d.tipo === 'select') alSeleccionar?.({ id: d.id });
+            else if (d.tipo === 'deselect') alSeleccionar?.(null);
           } catch (_) {}
         }}
       />

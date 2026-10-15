@@ -17,7 +17,11 @@ export default function CorreccionScreen({ route, navigation }) {
       setGuardando(true);
       setError('');
       const actualizada = await entregaService.corregirClasificacion(entrega.id, seleccionado);
-      navigation.replace('Resultado', { entrega: actualizada, modo: route.params?.modo });
+      navigation.replace('Resultado', {
+        entrega: actualizada,
+        modo: route.params?.modo,
+        punto: route.params?.punto,
+      });
     } catch (_e) {
       setError('No pudimos guardar la corrección. Intenta nuevamente.');
     } finally {
@@ -36,7 +40,6 @@ export default function CorreccionScreen({ route, navigation }) {
             <CategoriaCard
               key={item.tipo}
               nombre={item.nombre}
-              categoria={item.categoria}
               icono={item.icono}
               seleccionado={seleccionado === item.tipo}
               onPress={() => setSeleccionado(item.tipo)}

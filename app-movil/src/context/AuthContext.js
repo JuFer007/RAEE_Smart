@@ -21,6 +21,18 @@ export function AuthProvider({ children }) {
     setUsuario(data.usuario);
   }
 
+  async function registrar(datos) {
+    const data = await authService.registrar(
+      datos.nombre,
+      datos.email,
+      datos.password,
+      datos.telefono,
+      datos.dni
+    );
+    setUsuario(data.usuario);
+    return data;
+  }
+
   async function cerrarSesion() {
     await authService.logout();
     setUsuario(null);
@@ -32,7 +44,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ usuario, cargandoSesion, iniciarSesion, cerrarSesion, entrarEnModoPrueba }}>
+    <AuthContext.Provider value={{ usuario, cargandoSesion, iniciarSesion, registrar, cerrarSesion, entrarEnModoPrueba }}>
       {children}
     </AuthContext.Provider>
   );

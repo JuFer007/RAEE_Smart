@@ -19,7 +19,7 @@ export const ENTREGAS_PRUEBA = [
     id: 'e1',
     usuarioId: USUARIO_PRUEBA.id,
     tipoRaee: 'CELULAR',
-    nombreCategoriaVisible: 'Smartphone',
+    nombreCategoriaVisible: 'Celular',
     fechaRegistro: '2026-08-21T10:24:00',
     estado: 'CONFIRMADA',
     certificadoCodigoQr: 'RAEE-2026-CHC-8F3K2P',
@@ -58,18 +58,7 @@ export const ENTREGAS_PRUEBA = [
     certificadoCodigoQr: 'RAEE-2026-CHC-1Q7W5N',
     puntoRecoleccionNombre: 'Municipalidad de Pimentel',
     puntoRecoleccionDireccion: 'Plaza de Armas de Pimentel',
-  },
-  {
-    id: 'e5',
-    usuarioId: USUARIO_PRUEBA.id,
-    tipoRaee: 'IMPRESORA',
-    nombreCategoriaVisible: 'Impresora multifuncional',
-    fechaRegistro: '2025-11-12T17:30:00',
-    estado: 'CONFIRMADA',
-    certificadoCodigoQr: 'RAEE-2025-CHC-6L2H8R',
-    puntoRecoleccionNombre: 'Municipalidad de Reque',
-    puntoRecoleccionDireccion: 'Plaza de Armas de Reque',
-  },
+  }
 ];
 
 export const NOTIFICACIONES_PRUEBA = [
@@ -84,7 +73,7 @@ export const NOTIFICACIONES_PRUEBA = [
   {
     id: 2,
     titulo: 'Entrega certificada',
-    detalle: 'Tu Smartphone entregado en Monsefú ya tiene certificado. Código RAEE-2026-CHC-8F3K2P.',
+    detalle: 'Tu celular entregado en Monsefú ya tiene certificado. Código RAEE-2026-CHC-8F3K2P.',
     tipo: 'ENTREGA',
     leida: false,
     fechaCreacion: '2026-08-21T10:30:00',

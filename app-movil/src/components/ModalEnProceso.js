@@ -2,14 +2,14 @@ import React from 'react';
 import { Modal, View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Boton from './Boton';
-import { obtenerEstado, obtenerInfoTipo, COLORS, ESPACIOS, RADIOS, SOMBRAS, TIPOGRAFIA, FUENTES } from '../theme';
+import { obtenerEstado, obtenerInfoTipo, estadoEntrega, COLORS, ESPACIOS, RADIOS, SOMBRAS, TIPOGRAFIA, FUENTES } from '../theme';
 import { formatearFechaHora } from '../utils/fecha';
 
 export default function ModalEnProceso({ visible, entrega, onCerrar, onVerPuntos }) {
   if (!entrega) return null;
 
   const info = obtenerInfoTipo(entrega.tipoRaee);
-  const estado = obtenerEstado(entrega.estado);
+  const estado = estadoEntrega(entrega.estado);
   const nombre = entrega.nombreCategoriaVisible || info.nombre;
 
   return (
@@ -29,9 +29,9 @@ export default function ModalEnProceso({ visible, entrega, onCerrar, onVerPuntos
               <Ionicons name="hourglass-outline" size={22} color={COLORS.warning} />
             </View>
 
-            <Text style={styles.titulo}>Tu entrega aún está en proceso</Text>
+            <Text style={styles.titulo}>Pendiente de entrega</Text>
             <Text style={styles.subtitulo}>
-              El certificado digital se genera cuando el punto de acopio confirma la recepción del aparato.
+              El certificado digital se genera cuando el punto de acopio confirme la recepción del aparato.
             </Text>
 
             <View style={styles.datos}>

@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Mapa from '../components/Mapa';
 import Encabezado from '../components/Encabezado';
 import Toast from '../components/Toast';
+import ModalPermiso from '../components/ModalPermiso';
 import SelectorMunicipalidad from '../components/SelectorMunicipalidad';
 import useEntradaAnimada from '../hooks/useEntradaAnimada';
 import useLocation from '../hooks/useLocation';
@@ -22,7 +23,7 @@ function municipalidadDe(punto) {
 }
 
 export default function MapaScreen({ navigation }) {
-  const { ubicacion } = useLocation();
+  const { ubicacion, sinPermiso, permitir } = useLocation(true, false);
   const { puntos, cargando, error, recargar } = usePuntos(ubicacion);
   const [entrada] = useEntradaAnimada({ eje: 'y', distancia: -18, escala: 0.99 });
   const { toast, ocultar } = useToast();
@@ -52,6 +53,10 @@ export default function MapaScreen({ navigation }) {
   }
 
   function seleccionar(p) {
+    if (!p) {
+      setActivo(null);
+      return;
+    }
     const encontrado = visibles.find((x) => String(x.id) === String(p.id));
     if (encontrado) setActivo(encontrado);
   }
@@ -65,7 +70,7 @@ export default function MapaScreen({ navigation }) {
     <View style={styles.fondo}>
       <View style={styles.encabezadoZona}>
         <Encabezado
-          titulo="Mapa de acopio"
+          titulo="Puntos de entrega"
           derecha={
             <View style={styles.chipCabecera}>
               <Ionicons name="location" size={12} color={COLORS.primaryText} />
@@ -162,15 +167,26 @@ export default function MapaScreen({ navigation }) {
               </View>
             ) : null}
 
-            <TouchableOpacity
-              style={styles.tarjetaAccion}
-              activeOpacity={0.8}
-              onPress={() => navigation.navigate('Horarios', { punto: activo })}
-            >
-              <Ionicons name="calendar-outline" size={14} color={COLORS.white} />
-              <Text style={styles.tarjetaAccionTexto}>Ver horarios de atención</Text>
-              <Ionicons name="chevron-forward" size={14} color={COLORS.white} />
-            </TouchableOpacity>
+            <View style={styles.tarjetaAcciones}>
+              <TouchableOpacity
+                style={styles.tarjetaAccion}
+                activeOpacity={0.8}
+                onPress={() => navigation.navigate('CapturaFoto', { punto: activo })}
+              >
+                <Ionicons name="checkmark-circle-outline" size={14} color={COLORS.white} />
+                <Text style={styles.tarjetaAccionTexto}>Elegir este punto</Text>
+                <Ionicons name="arrow-forward" size={14} color={COLORS.white} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.tarjetaAccionSec}
+                activeOpacity={0.8}
+                onPress={() => navigation.navigate('Horarios', { punto: activo })}
+              >
+                <Ionicons name="calendar-outline" size={14} color={COLORS.primaryText} />
+                <Text style={styles.tarjetaAccionSecTexto}>Ver horarios de atención</Text>
+              </TouchableOpacity>
+            </View>
           </Animated.View>
         ) : null}
         <Toast
@@ -181,6 +197,15 @@ export default function MapaScreen({ navigation }) {
           duracion={toast.duracion}
           accionTexto={toast.accionTexto}
           onAccion={toast.onAccion}
+        />
+
+        <ModalPermiso
+          visible={sinPermiso}
+          icono="location-outline"
+          titulo="Permiso de ubicación"
+          mensaje="Necesitamos tu ubicación para mostrarte los puntos de entrega más cercanos a ti."
+          textoBoton="Permitir ubicación"
+          onPermitir={permitir}
         />
       </View>
     </View>
@@ -284,6 +309,20 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   tarjetaAccionTexto: { ...TIPOGRAFIA.micro, fontSize: 12, fontFamily: FUENTES.dmBold, color: COLORS.white, flex: 1 },
+
+  tarjetaAcciones: { gap: 8, marginTop: 2 },
+  tarjetaAccionSec: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    borderRadius: RADIOS.boton,
+    borderWidth: 1,
+    borderColor: COLORS.secondaryBorder,
+    paddingVertical: 10,
+    paddingHorizontal: 13,
+  },
+  tarjetaAccionSecTexto: { ...TIPOGRAFIA.micro, fontSize: 12, fontFamily: FUENTES.dmBold, color: COLORS.primaryText },
 
   cargando: {
     position: 'absolute',

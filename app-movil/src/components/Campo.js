@@ -14,13 +14,14 @@ export default function Campo({
   multilinea = false,
   autoCapitalize = 'sentences',
   maxLength,
+  error = false,
 }) {
   const [foco, setFoco] = useState(false);
   const [visible, setVisible] = useState(false);
 
   return (
-    <View style={[estilos.campo, foco && estilos.foco]}>
-      {icono ? <Ionicons name={icono} size={16} color={COLORS.mutIcon} /> : null}
+    <View style={[estilos.campo, foco && estilos.foco, error && estilos.error]}>
+      {icono ? <Ionicons name={icono} size={16} color={error ? COLORS.danger : COLORS.mutIcon} /> : null}
       <TextInput
         style={[estilos.input, multilinea && estilos.multilinea]}
         placeholder={placeholder}
@@ -59,6 +60,7 @@ const estilos = StyleSheet.create({
   },
   multilinea: { height: 92, textAlignVertical: 'top', paddingTop: ESPACIOS.md },
   foco: { borderColor: '#4EAF79', boxShadow: `0px 0px 0px 3px ${COLORS.focusSoft}` },
+  error: { borderColor: COLORS.danger },
   input: {
     flex: 1,
     ...TIPOGRAFIA.small,

@@ -15,6 +15,7 @@ export default function CapturaFotoScreen({ route, navigation }) {
   const [analizando, setAnalizando] = useState(false);
   const [error, setError] = useState('');
   const identificarSolo = route.params?.modo === 'identificar';
+  const punto = route.params?.punto;
 
   async function manejarFoto(uri) {
     if (!identificarSolo && !ubicacion && !USAR_DATOS_PRUEBA) {
@@ -28,7 +29,7 @@ export default function CapturaFotoScreen({ route, navigation }) {
 
       if (identificarSolo) {
         const identificado = await entregaService.identificarAparato({ fotoUri: uri });
-        navigation.replace('Resultado', { entrega: identificado, modo: 'identificar' });
+        navigation.replace('Resultado', { entrega: identificado, modo: 'identificar', punto });
         return;
       }
 
@@ -38,7 +39,7 @@ export default function CapturaFotoScreen({ route, navigation }) {
         latitud: ubicacion?.latitud,
         longitud: ubicacion?.longitud,
       });
-      navigation.replace('Resultado', { entrega });
+      navigation.replace('Resultado', { entrega, punto });
     } catch (_e) {
       setError('No se pudo identificar el aparato. Intenta nuevamente.');
     } finally {
@@ -63,7 +64,7 @@ export default function CapturaFotoScreen({ route, navigation }) {
       </View>
 
       <View style={styles.cuerpo}>
-        <CameraCapture onCaptura={manejarFoto} analizando={analizando} />
+        <CameraCapture onCaptura={manejarFoto} analizando={analizando} etiqueta={identificarSolo ? 'Identificar' : 'Tomar foto'} />
       </View>
 
       {cargandoUbicacion && !analizando ? (

@@ -1,19 +1,10 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Encabezado from '../components/Encabezado';
-import { COLORS, ESPACIOS, RADIOS, TIPOGRAFIA, FUENTES, TIPOS_RAEE } from '../theme';
+import { COLORS, ESPACIOS, RADIOS, TIPOGRAFIA, TIPOS_RAEE } from '../theme';
 
 export default function QueReciclarScreen({ navigation }) {
-  const grupos = useMemo(() => {
-    const mapa = new Map();
-    TIPOS_RAEE.forEach((item) => {
-      if (!mapa.has(item.categoria)) mapa.set(item.categoria, []);
-      mapa.get(item.categoria).push(item);
-    });
-    return [...mapa.entries()];
-  }, []);
-
   return (
     <View style={styles.fondo}>
       <ScrollView contentContainerStyle={styles.contenido} showsVerticalScrollIndicator={false}>
@@ -29,33 +20,27 @@ export default function QueReciclarScreen({ navigation }) {
           </Text>
         </View>
 
-        {grupos.map(([categoria, items]) => (
-          <View key={categoria} style={styles.grupo}>
-            <Text style={styles.categoria}>{categoria}</Text>
-
-            <View style={styles.tarjetas}>
-              {items.map((item) => (
-                <View key={item.tipo} style={styles.tarjeta}>
-                  <View style={styles.tarjetaCabeza}>
-                    <View style={styles.icono}>
-                      <Ionicons name={item.icono} size={18} color={COLORS.primary} />
-                    </View>
-                    <Text style={styles.nombre}>{item.nombre}</Text>
-                  </View>
-
-                  <View style={styles.ejemplos}>
-                    {item.ejemplos.map((ejemplo) => (
-                      <View key={ejemplo} style={styles.ejemplo}>
-                        <View style={styles.punto} />
-                        <Text style={styles.ejemploTexto}>{ejemplo}</Text>
-                      </View>
-                    ))}
-                  </View>
+        <View style={styles.tarjetas}>
+          {TIPOS_RAEE.map((item) => (
+            <View key={item.tipo} style={styles.tarjeta}>
+              <View style={styles.tarjetaCabeza}>
+                <View style={styles.icono}>
+                  <Ionicons name={item.icono} size={18} color={COLORS.primary} />
                 </View>
-              ))}
+                <Text style={styles.nombre}>{item.nombre}</Text>
+              </View>
+
+              <View style={styles.ejemplos}>
+                {item.ejemplos.map((ejemplo) => (
+                  <View key={ejemplo} style={styles.ejemplo}>
+                    <View style={styles.punto} />
+                    <Text style={styles.ejemploTexto}>{ejemplo}</Text>
+                  </View>
+                ))}
+              </View>
             </View>
-          </View>
-        ))}
+          ))}
+        </View>
 
         <View style={styles.nota}>
           <Ionicons name="information-circle-outline" size={17} color={COLORS.info} />
@@ -93,14 +78,7 @@ const styles = StyleSheet.create({
   },
   introTexto: { ...TIPOGRAFIA.micro, fontSize: 12, lineHeight: 17, flex: 1, color: COLORS.inkItem },
 
-  grupo: { marginBottom: ESPACIOS.lg },
-  categoria: {
-    ...TIPOGRAFIA.label,
-    color: COLORS.primaryText,
-    marginBottom: ESPACIOS.sm,
-    marginLeft: 2,
-  },
-  tarjetas: { gap: 9 },
+  tarjetas: { gap: 9, marginBottom: ESPACIOS.lg },
 
   tarjeta: {
     backgroundColor: COLORS.surface,

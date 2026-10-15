@@ -1,9 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Image, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, Image, TextInput, Keyboard, Pressable, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Encabezado from '../components/Encabezado';
 import Boton from '../components/Boton';
-import ModalRecuperar from '../components/ModalRecuperar';
 import { COLORS, ESPACIOS, RADIOS, SOMBRAS, TIPOGRAFIA, FUENTES } from '../theme';
 
 const CANTIDAD = 6;
@@ -15,9 +14,8 @@ function ocultarEmail(correo) {
 }
 
 export default function RecuperarScreen({ navigation, route }) {
-  const [email, setEmail] = useState(route.params?.email || '');
+  const email = route.params?.email || '';
   const [codigo, setCodigo] = useState(Array(CANTIDAD).fill(''));
-  const [modalCorreo, setModalCorreo] = useState(false);
   const refs = useRef([]);
 
   useEffect(() => {
@@ -75,8 +73,10 @@ export default function RecuperarScreen({ navigation, route }) {
 
   return (
     <View style={styles.fondo}>
-      <View style={styles.envoltorio}>
-        <Encabezado onBack={() => navigation.navigate('Login')} />
+      <Pressable style={styles.envoltorio} onPress={Keyboard.dismiss}>
+        <Encabezado
+          onBack={() => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate('Login'))}
+        />
 
         <View style={styles.bloque}>
           <Image
@@ -96,7 +96,7 @@ export default function RecuperarScreen({ navigation, route }) {
             <TouchableOpacity
               style={styles.destino}
               activeOpacity={0.7}
-              onPress={() => setModalCorreo(true)}
+              onPress={() => navigation.navigate('RecuperarCorreo', { email })}
             >
               <Ionicons name="mail-outline" size={15} color={COLORS.primaryText} />
               <Text style={styles.destinoTexto} numberOfLines={1}>
@@ -147,19 +147,7 @@ export default function RecuperarScreen({ navigation, route }) {
             <Text style={styles.volverTexto}>Volver a iniciar sesión</Text>
           </TouchableOpacity>
         </View>
-      </View>
-
-      <ModalRecuperar
-        visible={modalCorreo}
-        emailInicial={email}
-        onCancelar={() => setModalCorreo(false)}
-        onEnviar={(correo) => {
-          setModalCorreo(false);
-          setEmail(correo);
-          setCodigo(Array(CANTIDAD).fill(''));
-          setTimeout(() => refs.current[0]?.focus(), 150);
-        }}
-      />
+      </Pressable>
     </View>
   );
 }

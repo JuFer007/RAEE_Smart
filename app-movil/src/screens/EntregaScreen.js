@@ -21,10 +21,12 @@ function municipalidadDe(punto) {
 }
 
 export default function EntregaScreen({ route, navigation }) {
-  const { entrega } = route.params || {};
+  const { entrega, punto } = route.params || {};
   const { ubicacion } = useLocation();
   const { puntos } = usePuntos(ubicacion);
-  const [seleccionado, setSeleccionado] = useState(entrega?.puntoRecoleccionId ?? null);
+  const [seleccionado, setSeleccionado] = useState(
+    punto?.id ?? entrega?.puntoRecoleccionId ?? null
+  );
   const [municipalidad, setMunicipalidad] = useState('Todas');
 
   const municipalidades = useMemo(() => {

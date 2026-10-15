@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, RADIOS, TIPOGRAFIA } from '../theme';
 
-export default function CategoriaCard({ nombre, categoria, icono, seleccionado, onPress }) {
+export default function CategoriaCard({ nombre, icono, seleccionado, onPress }) {
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -15,7 +15,6 @@ export default function CategoriaCard({ nombre, categoria, icono, seleccionado, 
       </View>
       <View style={estilos.textos}>
         <Text style={estilos.nombre}>{nombre}</Text>
-        {categoria ? <Text style={estilos.categoria}>{categoria}</Text> : null}
       </View>
       <Ionicons
         name={seleccionado ? 'checkmark-circle' : 'ellipse-outline'}
@@ -49,5 +48,4 @@ const estilos = StyleSheet.create({
   iconoActivo: { backgroundColor: COLORS.primary },
   textos: { flex: 1 },
   nombre: { ...TIPOGRAFIA.small, fontSize: 11, fontFamily: 'DMSans_600SemiBold', color: COLORS.inkItem },
-  categoria: { ...TIPOGRAFIA.micro, fontSize: 9, marginTop: 3 },
 });

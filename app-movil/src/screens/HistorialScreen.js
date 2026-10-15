@@ -7,7 +7,7 @@ import Boton from '../components/Boton';
 import { Chip } from '../components/Tarjeta';
 import { useAuth } from '../context/AuthContext';
 import * as entregaService from '../services/entregaService';
-import { obtenerEstado, obtenerInfoTipo, COLORS, ESPACIOS, RADIOS, TIPOGRAFIA, FUENTES } from '../theme';
+import { obtenerInfoTipo, estadoEntrega, COLORS, ESPACIOS, RADIOS, TIPOGRAFIA, FUENTES } from '../theme';
 import { formatearFechaHora } from '../utils/fecha';
 
 const FILTROS = ['Todas', 'Certificadas', 'En proceso'];
@@ -69,7 +69,7 @@ export default function HistorialScreen({ navigation }) {
   return (
     <View style={styles.fondo}>
       <View style={styles.encabezadoZona}>
-        <Encabezado titulo="Historial de entregas" />
+        <Encabezado titulo="Mi entrega" />
         <View style={styles.filtros}>
           {FILTROS.map((f) => (
             <Chip key={f} texto={f} activo={filtro === f} onPress={() => setFiltro(f)} />
@@ -127,7 +127,7 @@ export default function HistorialScreen({ navigation }) {
 
 function FilaEntrega({ entrega, onPress }) {
   const info = obtenerInfoTipo(entrega.tipoRaee);
-  const estado = obtenerEstado(entrega.estado);
+  const estado = estadoEntrega(entrega.estado);
   const lista = entrega.estado === 'CONFIRMADA' && Boolean(entrega.certificadoCodigoQr);
 
   return (

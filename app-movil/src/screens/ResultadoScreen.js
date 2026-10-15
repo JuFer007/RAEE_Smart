@@ -7,15 +7,21 @@ import HojaDecor from '../components/HojaDecor';
 import { Etiqueta } from '../components/Tarjeta';
 import { obtenerInfoTipo, COLORS, ESPACIOS, RADIOS, TIPOGRAFIA } from '../theme';
 
+const UMBRAL_CONFIANZA = 0.7;
+
 export default function ResultadoScreen({ route, navigation }) {
-  const { entrega, modo } = route.params || {};
+  const { entrega, modo, punto } = route.params || {};
   const info = obtenerInfoTipo(entrega?.tipoRaee);
   const confianza = Math.round((entrega?.confianzaIa || 0) * 100);
   const nombre = entrega?.nombreCategoriaVisible || info.nombre;
   const identificarSolo = modo === 'identificar';
+  const bajaConfianza = (entrega?.confianzaIa || 0) < UMBRAL_CONFIANZA && !entrega?.clasificacionCorregida;
 
   function volverTomarFoto() {
-    navigation.navigate('CapturaFoto', identificarSolo ? { modo: 'identificar' } : undefined);
+    navigation.navigate('CapturaFoto', {
+      ...(identificarSolo ? { modo: 'identificar' } : {}),
+      ...(punto ? { punto } : {}),
+    });
   }
 
   return (
@@ -41,7 +47,7 @@ export default function ResultadoScreen({ route, navigation }) {
           <View style={styles.datos}>
             <Text style={styles.linea}>
               <Text style={styles.clave}>Categoría:  </Text>
-              {entrega?.clasificacionCorregida ? info.nombre : info.categoria}
+              {nombre}
             </Text>
             <Text style={styles.linea}>
               <Text style={styles.clave}>Confianza:  </Text>
@@ -50,11 +56,26 @@ export default function ResultadoScreen({ route, navigation }) {
           </View>
         </View>
 
+        {bajaConfianza ? (
+          <View style={styles.aviso}>
+            <Ionicons name="alert-circle-outline" size={18} color={COLORS.warning} />
+            <Text style={styles.avisoTexto}>
+              La confianza de la IA es baja. Confirma que la categoría es correcta o corrígela antes de continuar.
+            </Text>
+          </View>
+        ) : null}
+
         <View style={styles.botones}>
           <Boton
-            titulo={identificarSolo ? 'Registrar esta entrega' : 'Continuar'}
+            titulo={
+              identificarSolo
+                ? 'Registrar esta entrega'
+                : bajaConfianza
+                  ? 'Confirmar y continuar'
+                  : 'Continuar'
+            }
             icono={identificarSolo ? 'arrow-forward-circle-outline' : undefined}
-            onPress={() => navigation.navigate('Entrega', { entrega })}
+            onPress={() => navigation.navigate('Entrega', { entrega, punto })}
           />
           <Boton
             titulo="Volver a tomar foto"
@@ -64,7 +85,7 @@ export default function ResultadoScreen({ route, navigation }) {
           <Boton
             titulo="¿No es correcto? Corregir categoría"
             variante="enlace"
-            onPress={() => navigation.navigate('Correccion', { entrega, modo })}
+            onPress={() => navigation.navigate('Correccion', { entrega, modo, punto })}
           />
         </View>
       </ScrollView>
@@ -92,5 +113,20 @@ const styles = StyleSheet.create({
   linea: { ...TIPOGRAFIA.small, fontSize: 14, color: '#6D8980', textAlign: 'center' },
   clave: { color: '#345B51' },
   valor: { color: COLORS.primaryText, fontFamily: 'DMSans_700Bold' },
+
+  aviso: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 9,
+    backgroundColor: COLORS.warningSoft,
+    borderWidth: 1,
+    borderColor: '#F2DFB4',
+    borderRadius: RADIOS.md,
+    paddingHorizontal: 13,
+    paddingVertical: 11,
+    marginBottom: 20,
+  },
+  avisoTexto: { flex: 1, ...TIPOGRAFIA.small, fontSize: 12.5, lineHeight: 18, color: COLORS.warning },
+
   botones: { gap: 10 },
 });

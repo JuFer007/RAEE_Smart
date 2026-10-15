@@ -142,60 +142,52 @@ export const SOMBRAS = {
 
 export const TIPOS_RAEE = [
   {
-    tipo: 'CELULAR',
-    nombre: 'Smartphone',
-    categoria: 'Telefonía',
-    icono: 'phone-portrait-outline',
-    ejemplos: ['Celulares y smartphones', 'Tablets', 'Teléfonos fijos', 'Cargadores, cables y audífonos'],
-  },
-  {
-    tipo: 'LAPTOP',
-    nombre: 'Laptop',
-    categoria: 'Informática',
-    icono: 'laptop-outline',
-    ejemplos: ['Laptops y netbooks', 'Computadoras de escritorio', 'Tablets y agendas', 'Servidores y routers'],
+    tipo: 'TELEVISOR',
+    nombre: 'Televisor',
+    icono: 'tv-outline',
+    ejemplos: ['Televisores LED, LCD y plasma', 'Monitores de computadora', 'Proyectores y pantallas'],
   },
   {
     tipo: 'TABLET',
     nombre: 'Tablet',
-    categoria: 'Informática',
     icono: 'tablet-portrait-outline',
-    ejemplos: ['Tablets y e-readers', 'Pantallas táctiles', 'Agendas digitales', 'Consolas portátiles'],
+    ejemplos: ['Tablets y e-readers', 'Agendas digitales', 'Consolas portátiles'],
   },
   {
-    tipo: 'TELEVISOR',
-    nombre: 'Televisor',
-    categoria: 'Audio y video',
-    icono: 'tv-outline',
-    ejemplos: ['Televisores LCD, LED y plasma', 'Monitores de computadora', 'Proyectores', 'Equipos de audio'],
+    tipo: 'CELULAR',
+    nombre: 'Celular',
+    icono: 'phone-portrait-outline',
+    ejemplos: ['Smartphones y teléfonos móviles', 'Cargadores y cables', 'Audífonos y accesorios'],
   },
   {
     tipo: 'EQUIPO_DE_SONIDO',
     nombre: 'Equipo de sonido',
-    categoria: 'Audio y video',
     icono: 'musical-notes-outline',
-    ejemplos: ['Parlantes y equipos de sonido', 'Minicomponentes', 'Amplificadores', 'Micrófonos y mezcladoras'],
+    ejemplos: ['Parlantes y minicomponentes', 'Amplificadores y radios', 'Micrófonos y mezcladoras'],
+  },
+  {
+    tipo: 'LAPTOP',
+    nombre: 'Laptop',
+    icono: 'laptop-outline',
+    ejemplos: ['Laptops y netbooks', 'Notebooks', 'Cargadores y accesorios'],
   },
   {
     tipo: 'REFRIGERADORA',
     nombre: 'Refrigeradora',
-    categoria: 'Electrodomésticos',
     icono: 'snow-outline',
-    ejemplos: ['Refrigeradoras y congeladoras', 'Aire acondicionado', 'Lavadoras y secadoras', 'Ventiladores'],
+    ejemplos: ['Refrigeradoras y congeladoras', 'Frigoríficos y exhibidoras'],
   },
   {
     tipo: 'IMPRESORA',
     nombre: 'Impresora',
-    categoria: 'Informática',
     icono: 'print-outline',
-    ejemplos: ['Impresoras y escáneres', 'Multifuncionales', 'Tóner y cartuchos', 'Equipos de oficina'],
+    ejemplos: ['Impresoras y multifuncionales', 'Escáneres', 'Cartuchos y tóner'],
   },
   {
     tipo: 'PEQUENO_ELECTRODOMESTICO',
-    nombre: 'Electrodoméstico',
-    categoria: 'Electrodomésticos',
+    nombre: 'Pequeño electrodoméstico',
     icono: 'flash-outline',
-    ejemplos: ['Licuadoras y batidoras', 'Horneas eléctricas y microondas', 'Planchas y freidoras', 'Aspiradoras'],
+    ejemplos: ['Licuadoras y batidoras', 'Microondas y hornos eléctricos', 'Planchas y freidoras', 'Aspiradoras y hervidoras'],
   },
 ];
 
@@ -210,7 +202,6 @@ export function obtenerInfoTipo(tipo) {
   return (
     TIPOS_RAEE.find((t) => t.tipo === tipo) || {
       nombre: tipo || 'Aparato',
-      categoria: 'Sin categoría',
       icono: 'help-circle-outline',
     }
   );
@@ -218,4 +209,10 @@ export function obtenerInfoTipo(tipo) {
 
 export function obtenerEstado(estado) {
   return ESTADOS_ENTREGA[estado] || { label: estado || '—', color: COLORS.mut, bg: COLORS.bg };
+}
+
+export function estadoEntrega(estado) {
+  if (estado === 'CONFIRMADA') return ESTADOS_ENTREGA.CONFIRMADA;
+  if (estado === 'RECHAZADA') return ESTADOS_ENTREGA.RECHAZADA;
+  return { label: 'Pendiente de entrega', color: COLORS.warning, bg: COLORS.warningSoft };
 }
