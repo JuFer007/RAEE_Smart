@@ -22,29 +22,6 @@ app móvil, un servicio de IA clasifica la foto en una de las **8 categorías RA
 el punto de acopio municipal y se genera un **certificado digital con código QR**. La
 municipalidad da seguimiento a las entregas desde un panel web.
 
-## Estructura del proyecto
-
-```
-RAEE_Smart/
-├── app-movil/        # App móvil del ciudadano (React Native + Expo)
-├── backend/          # API REST y lógica de negocio (Spring Boot + PostgreSQL/PostGIS)
-├── ia-service/       # Microservicio de clasificación de imágenes (FastAPI + TensorFlow)
-├── web-panel/        # Panel municipal (React + Vite)
-├── capturas/         # Capturas de pantalla de la app móvil
-└── arquitecturaDelSistema.md   # Detalle de la arquitectura del sistema
-```
-
-## Tecnologías
-
-| Módulo | Tecnologías |
-|---|---|
-| **App móvil** | React Native, Expo, React Navigation, Axios |
-| **Backend** | Java 17, Spring Boot 3, Spring Security (JWT), JPA/Hibernate, PostgreSQL + PostGIS, Maven |
-| **Servicio de IA** | Python, FastAPI, TensorFlow (MobileNetV2), Uvicorn |
-| **Panel municipal** | React, Vite |
-
----
-
 ## Captura del servicio de IA
 
 <div align="center">
@@ -53,6 +30,43 @@ RAEE_Smart/
     <td align="center">
       <img src="capturas/serivicioIA.png" alt="Vista del servicio de IA" width="720" style="border-radius: 16px;">
       <br><sub><b>Vista de reconocimiento de imágenes con IA</b></sub>
+    </td>
+  </tr>
+</table>
+</div>
+
+---
+
+## Capturas de la landing page
+
+<p align="center"><em>Página pública de RAEE Smart: presentación del servicio, información sobre los RAEE, cómo funciona, qué se puede entregar y los puntos de acopio en Chiclayo y Lambayeque.</em></p>
+
+<div align="center">
+<table>
+  <tr>
+    <td align="center">
+      <img src="capturas/hero%20y%20header.png" alt="Encabezado y carrusel de la landing" width="480" style="border-radius: 16px;">
+      <br><sub><b>Encabezado y carrusel principal</b></sub>
+    </td>
+    <td align="center">
+      <img src="capturas/que%20puedo%20entregar.png" alt="Qué puedes entregar" width="480" style="border-radius: 16px;">
+      <br><sub><b>Qué puedes entregar</b></sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="capturas/q%20es%20raee.png" alt="¿Qué son los RAEE?" width="480" style="border-radius: 16px;">
+      <br><sub><b>¿Qué son los RAEE?</b></sub>
+    </td>
+    <td align="center">
+      <img src="capturas/como%20funciona.png" alt="Cómo funciona" width="480" style="border-radius: 16px;">
+      <br><sub><b>Cómo funciona, en cuatro pasos</b></sub>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center">
+      <img src="capturas/puntos%20de%20entrega%20y%20header.png" alt="Puntos de entrega" width="760" style="border-radius: 16px;">
+      <br><sub><b>Puntos de entrega y mapa</b></sub>
     </td>
   </tr>
 </table>
@@ -433,7 +447,3 @@ raeesmart.ia.base-url=http://localhost:8000
 ```
 
 ---
-
-<div align="center">
-  <sub>Proyecto RAEE SMART · Innovación y Transformación Digital (26389) · UTP Chiclayo 2026</sub>
-</div>
