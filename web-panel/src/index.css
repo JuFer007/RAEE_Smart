@@ -1,0 +1,124 @@
+@import 'leaflet/dist/leaflet.css';
+
+:root {
+  --page: #e8f0ed;
+  --bg: #f8fcfa;
+  --bg-top: #fbfefd;
+  --surface: #ffffff;
+  --ink: #103b35;
+  --ink-soft: #123d39;
+  --ink-item: #22584c;
+  --mut: #709087;
+  --mut-soft: #829b92;
+  --primary: #079150;
+  --primary-deep: #087c4b;
+  --primary-text: #07884e;
+  --secondary: #126155;
+  --line: #d5e8df;
+  --line-soft: #e1eee7;
+  --grad-a: #087c4b;
+  --grad-b: #0a9d5a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  color: var(--ink);
+  background: var(--page);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: 'Manrope', system-ui, sans-serif;
+  color: var(--ink);
+  margin: 0;
+}
+
+a {
+  color: var(--primary-text);
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input,
+select {
+  font-family: inherit;
+}
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  background: linear-gradient(180deg, var(--bg-top), var(--bg) 40%, var(--bg));
+}
+
+.panel-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-content {
+  padding: 24px 28px 40px;
+  max-width: 1360px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.fade-in {
+  animation: fadeIn 0.35s ease both;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.leaflet-container {
+  background: #d9ebde;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.map-pin {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: linear-gradient(135deg, #0a9d5a, #087c4b);
+  border: 2px solid #ffffff;
+  box-shadow: 0 4px 10px rgba(6, 135, 75, 0.35);
+}
+
+.map-pin span {
+  transform: rotate(45deg);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffffff;
+}

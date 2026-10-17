@@ -1,4 +1,4 @@
-﻿package com.raeesmart.backend.Model;
+package com.raeesmart.backend.Model;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
