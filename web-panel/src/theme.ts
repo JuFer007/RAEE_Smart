@@ -1,3 +1,5 @@
+import type { EstadoInfo, TipoRaee } from './types';
+
 export const COLORS = {
   page: '#E8F0ED',
   bg: '#F8FCFA',
@@ -78,7 +80,7 @@ export const SOMBRAS = {
   card: '0 1px 2px rgba(16, 59, 53, 0.04)',
 };
 
-export const TIPOS_RAEE = [
+export const TIPOS_RAEE: TipoRaee[] = [
   { tipo: 'TELEVISOR', nombre: 'Televisor', icono: 'tv' },
   { tipo: 'TABLET', nombre: 'Tablet', icono: 'tablet' },
   { tipo: 'CELULAR', nombre: 'Celular', icono: 'phone' },
@@ -89,20 +91,20 @@ export const TIPOS_RAEE = [
   { tipo: 'PEQUENO_ELECTRODOMESTICO', nombre: 'Pequeño electrodoméstico', icono: 'bolt' },
 ];
 
-export const ESTADOS_ENTREGA = {
+export const ESTADOS_ENTREGA: Record<string, EstadoInfo> = {
   REGISTRADA: { label: 'Registrada', color: COLORS.info, bg: COLORS.infoSoft },
   EN_PROCESO: { label: 'En proceso', color: COLORS.warning, bg: COLORS.warningSoft },
   CONFIRMADA: { label: 'Certificada', color: COLORS.primaryText, bg: COLORS.primarySoft2 },
   RECHAZADA: { label: 'Rechazada', color: COLORS.danger, bg: COLORS.dangerSoft },
 };
 
-export function obtenerInfoTipo(tipo) {
+export function obtenerInfoTipo(tipo: string): TipoRaee {
   return (
-    TIPOS_RAEE.find((t) => t.tipo === tipo) || { nombre: tipo || 'Aparato', icono: 'leaf' }
+    TIPOS_RAEE.find((t) => t.tipo === tipo) || { tipo: tipo || 'OTRO', nombre: tipo || 'Aparato', icono: 'leaf' }
   );
 }
 
-export function obtenerEstado(estado) {
+export function obtenerEstado(estado: string): EstadoInfo {
   return (
     ESTADOS_ENTREGA[estado] || { label: estado || '—', color: COLORS.mut, bg: COLORS.bg }
   );

@@ -20,7 +20,7 @@ export default function Login() {
 
   if (autenticado) return <Navigate to="/panel" replace />;
 
-  const enviar = (e) => {
+  const enviar = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     if (!email.trim() || !password.trim()) {
@@ -117,7 +117,7 @@ export default function Login() {
   );
 }
 
-const styles = {
+const styles: Record<string, React.CSSProperties> = {
   pantalla: {
     display: 'grid',
     gridTemplateColumns: '1.05fr 1fr',

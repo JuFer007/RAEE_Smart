@@ -1,6 +1,6 @@
 import React from 'react';
 
-const PATHS = {
+const PATHS: Record<string, React.ReactNode> = {
   dashboard: (
     <>
       <rect x="3" y="3" width="7.5" height="7.5" rx="1.6" />
@@ -175,7 +175,14 @@ const PATHS = {
   filter: <path d="M3 5h18l-7 8v6l-4 2v-8L3 5Z" />,
 };
 
-export default function Icon({ name, size = 20, strokeWidth = 1.8, color = 'currentColor', style, ...rest }) {
+type IconProps = {
+  name: string;
+  size?: number;
+  strokeWidth?: number;
+  color?: string;
+} & Omit<React.SVGProps<SVGSVGElement>, 'name'>;
+
+export default function Icon({ name, size = 20, strokeWidth = 1.8, color = 'currentColor', style, ...rest }: IconProps) {
   const glyph = PATHS[name] || PATHS.leaf;
   return (
     <svg

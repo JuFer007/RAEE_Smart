@@ -1,11 +1,19 @@
 import React, { useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import L from 'leaflet';
+import L, { type LatLngExpression } from 'leaflet';
 import { COLORS, FUENTES, RADIOS, SOMBRAS } from '../theme';
+import type { Punto } from '../types';
 
-const CENTRO_CHICLAYO = [-6.7714, -79.8409];
+const CENTRO_CHICLAYO: LatLngExpression = [-6.7714, -79.8409];
 
-export default function MapView({ puntos = [], centro = CENTRO_CHICLAYO, zoom = 11, alto = 360 }) {
+interface MapViewProps {
+  puntos?: Punto[];
+  centro?: LatLngExpression;
+  zoom?: number;
+  alto?: number;
+}
+
+export default function MapView({ puntos = [], centro = CENTRO_CHICLAYO, zoom = 11, alto = 360 }: MapViewProps) {
   const icono = useMemo(
     () =>
       L.divIcon({
@@ -26,7 +34,7 @@ export default function MapView({ puntos = [], centro = CENTRO_CHICLAYO, zoom = 
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         {puntos.map((p) => (
-          <Marker key={p.id} position={[p.lat, p.lng]} icon={icono}>
+          <Marker key={p.id} position={[p.lat, p.lng] as LatLngExpression} icon={icono}>
             <Popup>
               <div style={styles.popup}>
                 <p style={styles.popupTitulo}>{p.nombre}</p>
@@ -51,7 +59,7 @@ export default function MapView({ puntos = [], centro = CENTRO_CHICLAYO, zoom = 
   );
 }
 
-const styles = {
+const styles: Record<string, React.CSSProperties> = {
   marco: {
     position: 'relative',
     borderRadius: RADIOS.md,

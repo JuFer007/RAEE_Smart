@@ -8,8 +8,32 @@ import capturaHome from './img/home.png';
 import capturaDeteccion from './img/deteccionDeDispositivo.png';
 import capturaMapa from './img/mapaConUbicaciones.jpeg';
 import capturaPorque from './img/porqueReciclar.png';
+import type { Punto } from '../types';
 
-export const SLIDES = [
+export interface Slide {
+  id: string;
+  etiqueta: string;
+  icono: string;
+  fondo: string;
+  captura: string;
+  titulo: string;
+  texto: string;
+  cta: { texto: string; href: string };
+}
+
+export interface Paso {
+  icono: string;
+  titulo: string;
+  texto: string;
+}
+
+export interface Categoria {
+  icono: string;
+  nombre: string;
+  texto: string;
+}
+
+export const SLIDES: Slide[] = [
   {
     id: 'portada',
     etiqueta: 'Chiclayo · Lambayeque',
@@ -56,14 +80,14 @@ export const SLIDES = [
   },
 ];
 
-export const PASOS = [
+export const PASOS: Paso[] = [
   { icono: 'scan', titulo: 'Toma una foto', texto: 'Fotografía desde la app el aparato que quieres entregar.' },
   { icono: 'bolt', titulo: 'La IA lo clasifica', texto: 'Identifica el tipo de RAEE. Si se equivoca, corriges la categoría a mano.' },
   { icono: 'location', titulo: 'Elige un punto de entrega', texto: 'Mira en el mapa los puntos de acopio cercanos, con sus horarios y campañas.' },
   { icono: 'qr', titulo: 'Recibe tu certificado', texto: 'Cuando la municipalidad confirma la recepción, la app genera tu certificado digital con código QR.' },
 ];
 
-export const CATEGORIAS = [
+export const CATEGORIAS: Categoria[] = [
   { icono: 'tv', nombre: 'Televisor', texto: 'Televisores LED, LCD y plasma, monitores y proyectores.' },
   { icono: 'laptop', nombre: 'Laptop', texto: 'Laptops, netbooks, notebooks y sus cargadores.' },
   { icono: 'phone', nombre: 'Celular', texto: 'Smartphones, cargadores, cables y audífonos.' },
@@ -74,7 +98,7 @@ export const CATEGORIAS = [
   { icono: 'bolt', nombre: 'Pequeño electrodoméstico', texto: 'Licuadoras, microondas, planchas, freidoras y aspiradoras.' },
 ];
 
-export const PUNTOS = [
+export const PUNTOS: Punto[] = [
   { id: 1, nombre: 'Municipalidad de Chiclayo', direccion: 'Plaza de Armas de Chiclayo, Chiclayo', horario: 'Lunes a viernes · 8:00 a 16:30', lat: -6.7714, lng: -79.8409 },
   { id: 2, nombre: 'Municipalidad de José Leonardo Ortiz', direccion: 'Plaza de Armas de José Leonardo Ortiz', horario: 'Lunes a viernes · 8:00 a 16:30', lat: -6.76, lng: -79.837 },
   { id: 3, nombre: 'Municipalidad de La Victoria', direccion: 'Plaza de Armas de La Victoria', horario: 'Lunes a viernes · 8:00 a 15:00', lat: -6.781, lng: -79.832 },

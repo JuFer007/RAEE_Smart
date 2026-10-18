@@ -289,13 +289,14 @@ html { scroll-behavior: smooth; }
   .ejemplos__icono { width: 27px; height: 27px; }
 
   /* Pasos */
-  .pasos { margin-top: 32px; gap: 24px; }
-  .pasos li { flex: 1 1 100%; }
-  .pasos h3 { font-size: 18px; }
+  .pasos { margin-top: 32px; gap: 20px; }
+  .pasos li { flex: 1 1 calc(50% - 10px); }
+  .pasos h3 { font-size: 17px; }
 
   /* Categorías */
   .categorias { margin-top: 28px; gap: 12px; }
-  .categorias li { flex: 1 1 100%; padding: 18px; }
+  .categorias li { flex: 1 1 calc(50% - 6px); padding: 16px; }
+  .categorias h3 { font-size: 16px; }
 
   /* Puntos */
   .puntos-grid { gap: 16px; margin-top: 24px; }

@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { SLIDES, PASOS, CATEGORIAS, PUNTOS } from './landingData.js';
-import Icon from '../components/Icon.jsx';
-import MapView from '../components/MapView.jsx';
+import { SLIDES, PASOS, CATEGORIAS, PUNTOS } from './landingData';
+import Icon from '../components/Icon';
+import MapView from '../components/MapView';
+import type { Punto } from '../types';
 import './landing.css';
 
 const INTERVALO_MS = 6000;
 
-function TelefonoMock({ src, alt, className = '' }) {
+function TelefonoMock({ src, alt, className = '' }: { src: string; alt: string; className?: string }) {
   return (
     <div className={`telefono ${className}`.trim()}>
       <div className="telefono__pantalla">
@@ -16,8 +17,8 @@ function TelefonoMock({ src, alt, className = '' }) {
   );
 }
 
-function ListaPuntos({ puntos }) {
-  const listaRef = useRef(null);
+function ListaPuntos({ puntos }: { puntos: Punto[] }) {
+  const listaRef = useRef<HTMLDivElement>(null);
   const pausaRef = useRef(false);
   const [reducir] = useState(
     () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches),
@@ -41,7 +42,7 @@ function ListaPuntos({ puntos }) {
         : 0;
     };
 
-    const paso = (ahora) => {
+    const paso = (ahora: number) => {
       const dt = Math.min((ahora - ultimo) / 1000, 0.05);
       ultimo = ahora;
       if (!ciclo) medir();
@@ -64,7 +65,7 @@ function ListaPuntos({ puntos }) {
     };
   }, [reducir]);
 
-  const fila = (p) => (
+  const fila = (p: Punto) => (
     <li key={p.id}>
       <span className="puntos-lista__icono" aria-hidden="true">
         <Icon name="location" size={18} />
@@ -115,7 +116,7 @@ function HeroCarrusel() {
     return () => clearInterval(id);
   }, [pausado, hover, reducirMovimiento]);
 
-  const ir = (i) => setActual((i + SLIDES.length) % SLIDES.length);
+  const ir = (i: number) => setActual((i + SLIDES.length) % SLIDES.length);
 
   return (
     <section
