@@ -46,6 +46,18 @@ public class Usuario {
     @JoinColumn(name = "municipalidad_id")
     private Municipalidad municipalidad;
 
+    @Builder.Default
+    private Boolean notificarPush = true;
+
+    @Builder.Default
+    private Boolean notificarCampanas = true;
+
+    @Builder.Default
+    private Boolean notificarEntregas = true;
+
+    @Builder.Default
+    private Boolean notificarRecordatorios = false;
+
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Entrega> entregas;
 

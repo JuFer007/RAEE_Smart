@@ -28,11 +28,12 @@ uvicorn app.main:app --reload --port 8000
 ```
 
 - Documentación interactiva (Swagger): http://127.0.0.1:8000/docs
-- Estado del servicio: http://127.0.0.1:8000/estado
+- Estado del servicio: http://127.0.0.1:8000/
 
-Por defecto arranca en **modo real** si encuentra el modelo en
-`model_weights/raee_mobilenetv2_v1.h5`; si no, cae automáticamente a
-**modo simulado** (resultados de ejemplo, sin modelo).
+El servicio funciona **únicamente en modo real**. Requiere el modelo
+entrenado en `model_weights/raee_mobilenetv2_v1.h5` y las categorías en
+`model_weights/categorias.json`; si no puede cargarlos, el servicio falla
+al arrancar en lugar de devolver resultados simulados.
 
 ### 3. Vista amigable de reconocimiento IA (demo)
 
@@ -57,18 +58,7 @@ python demo.py
 
 Luego abre manualmente http://127.0.0.1:8010 en el navegador.
 
-### Modo simulado forzado (sin usar el modelo)
-
-```bash
-# Linux / macOS
-export RAEE_IA_MODO_SIMULADO=true
-# Windows PowerShell
-$env:RAEE_IA_MODO_SIMULADO="true"
-
-uvicorn app.main:app --reload --port 8000
-```
-
-También puedes cambiar la ruta del modelo con las variables
+Puedes cambiar la ruta del modelo y de las categorías con las variables
 `RAEE_IA_RUTA_MODELO` y `RAEE_IA_RUTA_CATEGORIAS`.
 
 ## Entrenamiento

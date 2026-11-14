@@ -1,4 +1,5 @@
 package com.raeesmart.backend.Controller;
+import com.raeesmart.backend.Dto.Response.ContadorNotificacionesResponseDTO;
 import com.raeesmart.backend.Dto.Response.NotificacionResponseDTO;
 import com.raeesmart.backend.Service.NotificacionService;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,14 @@ public class NotificacionController {
     public List<NotificacionResponseDTO> listarMisNotificaciones() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return notificacionService.listarDeUsuario(email);
+    }
+
+    @GetMapping("/no-leidas")
+    public ContadorNotificacionesResponseDTO contarNoLeidas() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return ContadorNotificacionesResponseDTO.builder()
+                .noLeidas(notificacionService.contarNoLeidas(email))
+                .build();
     }
 
     @PatchMapping("/{id}/leer")

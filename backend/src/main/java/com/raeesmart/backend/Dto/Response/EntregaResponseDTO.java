@@ -20,8 +20,10 @@ public class EntregaResponseDTO {
     private Double confianzaIa;
     private Boolean clasificacionCorregida;
     private EstadoEntrega estado;
+    private Long puntoRecoleccionId;
     private String puntoRecoleccionNombre;
     private String puntoRecoleccionDireccion;
     private String certificadoCodigoQr;
     private LocalDateTime fechaRegistro;
+    private LocalDateTime fechaConfirmacion;
 }

@@ -6,6 +6,7 @@ import com.raeesmart.backend.Model.Entrega;
 import com.raeesmart.backend.Model.Enums.TipoRAEE;
 import com.raeesmart.backend.Repository.CategoriaRAEERepository;
 import com.raeesmart.backend.Service.CertificadoService;
+import com.raeesmart.backend.Service.EntregaService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,15 +18,19 @@ import org.springframework.web.bind.annotation.RestController;
 public class CertificadoController {
     private final CertificadoService certificadoService;
     private final CategoriaRAEERepository categoriaRAEERepository;
+    private final EntregaService entregaService;
 
     public CertificadoController(CertificadoService certificadoService,
-                                 CategoriaRAEERepository categoriaRAEERepository) {
+                                 CategoriaRAEERepository categoriaRAEERepository,
+                                 EntregaService entregaService) {
         this.certificadoService = certificadoService;
         this.categoriaRAEERepository = categoriaRAEERepository;
+        this.entregaService = entregaService;
     }
 
     @GetMapping("/entrega/{entregaId}")
     public CertificadoResponseDTO obtenerPorEntrega(@PathVariable Long entregaId) {
+        entregaService.buscarPorId(entregaId);
         return mapearAResponse(certificadoService.obtenerPorEntrega(entregaId));
     }
 

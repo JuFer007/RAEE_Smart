@@ -27,6 +27,7 @@ public class NotificacionServiceImpl implements NotificacionService {
     @Override
     public void notificarCiudadanos(TipoNotificacion tipo, String titulo, String detalle) {
         List<Notificacion> lote = usuarioRepository.findByRolUsuario(RolUsuario.CIUDADANO).stream()
+                .filter(u -> debeNotificar(u, tipo))
                 .map(u -> construir(u, tipo, titulo, detalle))
                 .toList();
         notificacionRepository.saveAll(lote);
@@ -35,6 +36,7 @@ public class NotificacionServiceImpl implements NotificacionService {
     @Transactional
     @Override
     public void notificarUsuario(Usuario usuario, TipoNotificacion tipo, String titulo, String detalle) {
+        if (!debeNotificar(usuario, tipo)) return;
         notificacionRepository.save(construir(usuario, tipo, titulo, detalle));
     }
 
@@ -76,6 +78,7 @@ public class NotificacionServiceImpl implements NotificacionService {
     public void crearParaUsuario(Long usuarioId, TipoNotificacion tipo, String titulo, String detalle) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+        if (!debeNotificar(usuario, tipo)) return;
         notificacionRepository.save(construir(usuario, tipo, titulo, detalle));
     }
 
@@ -83,6 +86,7 @@ public class NotificacionServiceImpl implements NotificacionService {
     @Override
     public void crearParaUsuariosDeMunicipalidad(Long municipalidadId, TipoNotificacion tipo, String titulo, String detalle) {
         List<Notificacion> lote = usuarioRepository.findByMunicipalidadId(municipalidadId).stream()
+                .filter(u -> debeNotificar(u, tipo))
                 .map(u -> construir(u, tipo, titulo, detalle))
                 .toList();
         if (!lote.isEmpty()) {
@@ -101,6 +105,16 @@ public class NotificacionServiceImpl implements NotificacionService {
     private Usuario buscarUsuario(String email) {
         return usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+    }
+
+    private boolean debeNotificar(Usuario usuario, TipoNotificacion tipo) {
+        if (usuario.getNotificarPush() != null && !usuario.getNotificarPush()) return false;
+        return switch (tipo) {
+            case CAMPANA -> usuario.getNotificarCampanas() == null || usuario.getNotificarCampanas();
+            case ENTREGA -> usuario.getNotificarEntregas() == null || usuario.getNotificarEntregas();
+            case HORARIO -> usuario.getNotificarRecordatorios() != null && usuario.getNotificarRecordatorios();
+            case GENERAL -> true;
+        };
     }
 
     private Notificacion construir(Usuario usuario, TipoNotificacion tipo, String titulo, String detalle) {

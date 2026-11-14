@@ -1,14 +1,17 @@
 import api from './api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  guardarSesion as guardarSesionAlmacenada,
+  limpiarSesion,
+  obtenerSesionGuardada as obtenerSesionPersistida,
+} from './sesionStorage';
 import { USAR_DATOS_PRUEBA } from '../utils/datosPrueba';
 import { CREDENCIALES_PRUEBA, USUARIO_PRUEBA } from '../utils/usuarioPrueba';
 
-export async function guardarSesion(usuario, token = 'token-prueba') {
-  await AsyncStorage.setItem('@raeesmart_token', token);
-  await AsyncStorage.setItem('@raeesmart_usuario', JSON.stringify(usuario));
+export async function guardarSesion(usuario, token = 'token-prueba', recordar = true) {
+  await guardarSesionAlmacenada(usuario, token, recordar);
 }
 
-export async function login(email, password) {
+export async function login(email, password, recordar = true) {
   if (USAR_DATOS_PRUEBA) {
     const correo = String(email || '').trim().toLowerCase();
     if (correo !== CREDENCIALES_PRUEBA.email || password !== CREDENCIALES_PRUEBA.password) {
@@ -16,13 +19,12 @@ export async function login(email, password) {
       error.normalizado = 'Correo o contraseña incorrectos';
       throw error;
     }
-    await guardarSesion(USUARIO_PRUEBA);
+    await guardarSesion(USUARIO_PRUEBA, 'token-prueba', recordar);
     return { token: 'token-prueba', usuario: USUARIO_PRUEBA };
   }
 
   const { data } = await api.post('/auth/login', { email, password });
-  await AsyncStorage.setItem('@raeesmart_token', data.token);
-  await AsyncStorage.setItem('@raeesmart_usuario', JSON.stringify(data.usuario));
+  await guardarSesion(data.usuario, data.token, recordar);
   return data;
 }
 
@@ -49,17 +51,34 @@ export async function registrar(nombre, email, password, telefono, dni) {
 
   const { data } = await api.post('/auth/registro', { nombre, email, password, telefono, dni });
   if (data?.token) {
-    await AsyncStorage.setItem('@raeesmart_token', data.token);
-    await AsyncStorage.setItem('@raeesmart_usuario', JSON.stringify(data.usuario));
+    await guardarSesion(data.usuario, data.token);
   }
   return data;
 }
 
+export async function cambiarPassword(passwordActual, passwordNueva) {
+  if (USAR_DATOS_PRUEBA) {
+    if (passwordActual !== CREDENCIALES_PRUEBA.password) {
+      const error = new Error('La contraseña actual no es correcta');
+      error.normalizado = 'La contraseña actual no es correcta';
+      throw error;
+    }
+    return { ok: true };
+  }
+
+  const { data } = await api.put('/usuarios/me/password', { passwordActual, passwordNueva });
+  return data;
+}
+
 export async function logout() {
-  await AsyncStorage.multiRemove(['@raeesmart_token', '@raeesmart_usuario']);
+  await limpiarSesion();
+}
+
+export async function obtenerSesionGuardada() {
+  return obtenerSesionPersistida();
 }
 
 export async function obtenerUsuarioGuardado() {
-  const raw = await AsyncStorage.getItem('@raeesmart_usuario');
-  return raw ? JSON.parse(raw) : null;
+  const sesion = await obtenerSesionPersistida();
+  return sesion?.usuario ?? null;
 }

@@ -11,7 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 @AllArgsConstructor
 
 public class EntregaRequestDTO {
-    private Long usuarioId;
+    private Long puntoRecoleccionId;
     private MultipartFile foto;
     private Double latitud;
     private Double longitud;

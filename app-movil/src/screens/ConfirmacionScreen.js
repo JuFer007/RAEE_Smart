@@ -10,6 +10,10 @@ export default function ConfirmacionScreen({ route, navigation }) {
   const { entrega } = route.params || {};
   const info = obtenerInfoTipo(entrega?.tipoRaee);
   const nombre = entrega?.nombreCategoriaVisible || info.nombre;
+  const confirmada = entrega?.estado === 'CONFIRMADA';
+  const rechazada = entrega?.estado === 'RECHAZADA';
+  const enProceso = entrega?.estado === 'EN_PROCESO';
+  const puedeCorregir = entrega?.id && !confirmada && !rechazada;
 
   function irAlInicio() {
     navigation.navigate('Main', { screen: 'Inicio' });
@@ -22,13 +26,39 @@ export default function ConfirmacionScreen({ route, navigation }) {
 
         <View style={styles.centro}>
           <View style={styles.anillo}>
-            <View style={styles.circulo}>
-              <Ionicons name="checkmark" size={52} color={COLORS.white} />
+            <View
+              style={[
+                styles.circulo,
+                rechazada && styles.circuloRechazada,
+                enProceso && styles.circuloProceso,
+              ]}
+            >
+              <Ionicons
+                name={rechazada ? 'close' : confirmada ? 'checkmark' : enProceso ? 'time' : 'checkmark'}
+                size={52}
+                color={COLORS.white}
+              />
             </View>
           </View>
 
-          <Text style={styles.titulo}>¡Entrega registrada!</Text>
-          <Text style={styles.copy}>Tu RAEE ha sido registrado correctamente.</Text>
+          <Text style={styles.titulo}>
+            {rechazada
+              ? 'Entrega rechazada'
+              : confirmada
+                ? '¡Entrega confirmada!'
+                : enProceso
+                  ? 'Entrega en proceso'
+                  : '¡Entrega registrada!'}
+          </Text>
+          <Text style={styles.copy}>
+            {rechazada
+              ? 'El punto de acopio rechazó la recepción. Acércate para más información.'
+              : confirmada
+                ? 'La recepción fue confirmada y tu certificado ya está disponible.'
+                : enProceso
+                  ? 'El punto de acopio está revisando tu entrega. Te avisaremos cuando se confirme la recepción y se genere tu certificado.'
+                  : 'Tu RAEE fue registrado. El punto de acopio debe confirmar la recepción para generar tu certificado.'}
+          </Text>
         </View>
 
         <View style={styles.resumen}>
@@ -44,9 +74,16 @@ export default function ConfirmacionScreen({ route, navigation }) {
 
         <View style={styles.botones}>
           <Boton
-            titulo="Ver certificado digital"
+            titulo={confirmada ? 'Ver certificado digital' : 'Ver estado del certificado'}
             onPress={() => navigation.navigate('Certificado', { entrega })}
           />
+          {puedeCorregir ? (
+            <Boton
+              titulo="¿No es correcto? Corregir categoría"
+              variante="enlace"
+              onPress={() => navigation.navigate('Correccion', { entrega })}
+            />
+          ) : null}
           <Boton titulo="Volver al inicio" variante="secundario" icono="home-outline" onPress={irAlInicio} />
         </View>
       </ScrollView>
@@ -81,6 +118,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  circuloRechazada: { backgroundColor: COLORS.danger },
+  circuloProceso: { backgroundColor: COLORS.warning },
   titulo: { ...TIPOGRAFIA.h2, fontSize: 22, color: COLORS.primaryText, marginBottom: 8 },
   copy: { ...TIPOGRAFIA.bodySm, fontSize: 13, textAlign: 'center' },
   resumen: {

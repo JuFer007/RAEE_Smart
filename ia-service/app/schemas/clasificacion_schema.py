@@ -13,5 +13,3 @@ class ClasificacionResponse(BaseModel):
     tiempo_inferencia_ms: int
 
     top3: List[PrediccionCategoria] = []
-    modo_simulado: bool = False
-    

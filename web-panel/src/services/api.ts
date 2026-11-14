@@ -1,4 +1,8 @@
-export const API_BASE_URL = 'http://localhost:8080/api';
+const hostActual =
+  typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || `http://${hostActual}:8080/api`;
 
 export function obtenerToken(): string | null {
   return localStorage.getItem('raeesmart_panel_token');

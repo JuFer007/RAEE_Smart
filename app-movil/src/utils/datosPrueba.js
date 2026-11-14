@@ -1,7 +1,13 @@
+import Constants from 'expo-constants';
 import { TIPOS_RAEE } from '../theme';
 import { ENTREGAS_PRUEBA, USUARIO_PRUEBA } from './usuarioPrueba';
 
-export const USAR_DATOS_PRUEBA = true;
+const extra = Constants.expoConfig?.extra || {};
+
+export const USAR_DATOS_PRUEBA =
+  typeof extra.usarDatosPrueba === 'boolean'
+    ? extra.usarDatosPrueba
+    : process.env.EXPO_PUBLIC_USAR_DATOS_PRUEBA === 'true';
 
 export const PUNTOS_PRUEBA = [
   {

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import * as authService from '../services/authService';
+import { configurarManejadorSesionExpirada } from '../services/api';
 import { USUARIO_PRUEBA } from '../utils/usuarioPrueba';
 
 export const AuthContext = createContext(null);
@@ -9,15 +10,29 @@ export function AuthProvider({ children }) {
   const [cargandoSesion, setCargandoSesion] = useState(true);
 
   useEffect(() => {
+    let activo = true;
+    const desuscribir = configurarManejadorSesionExpirada(() => {
+      if (activo) setUsuario(null);
+    });
+
     (async () => {
-      const guardado = await authService.obtenerUsuarioGuardado();
-      setUsuario(guardado);
+      let sesion = null;
+      try {
+        sesion = await authService.obtenerSesionGuardada();
+      } catch {}
+      if (!activo) return;
+      setUsuario(sesion?.usuario ?? null);
       setCargandoSesion(false);
     })();
+
+    return () => {
+      activo = false;
+      desuscribir();
+    };
   }, []);
 
-  async function iniciarSesion(email, password) {
-    const data = await authService.login(email, password);
+  async function iniciarSesion(email, password, recordar = true) {
+    const data = await authService.login(email, password, recordar);
     setUsuario(data.usuario);
   }
 

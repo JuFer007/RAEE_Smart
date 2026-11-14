@@ -1,12 +1,21 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Animated } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  RefreshControl,
+  StyleSheet,
+  Animated,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import Encabezado from '../components/Encabezado';
+import Boton from '../components/Boton';
 import useEntradaAnimada from '../hooks/useEntradaAnimada';
 import useSalidaAnimada from '../hooks/useSalidaAnimada';
-import { AVISOS } from '../utils/contenido';
-import { USAR_DATOS_PRUEBA } from '../utils/datosPrueba';
-import { NOTIFICACIONES_PRUEBA } from '../utils/usuarioPrueba';
+import * as notificacionService from '../services/notificacionService';
 import { formatearFechaHora } from '../utils/fecha';
 import { COLORS, ESPACIOS, RADIOS, TIPOGRAFIA, FUENTES } from '../theme';
 
@@ -22,18 +31,68 @@ function iconoDe(aviso) {
 }
 
 export default function NotificacionesScreen({ navigation }) {
-  const [leido, setLeido] = useState(false);
-  const avisos = (USAR_DATOS_PRUEBA ? NOTIFICACIONES_PRUEBA : AVISOS).map((aviso) => ({
-    ...aviso,
-    leida: leido ? true : aviso.leida,
-  }));
-  const nuevos = avisos.filter((aviso) => !aviso.leida).length;
+  const [avisos, setAvisos] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [marcando, setMarcando] = useState(false);
+  const [error, setError] = useState('');
   const [entrada, salir] = useEntradaAnimada({ eje: 'y', distancia: -22 });
   useSalidaAnimada(navigation, salir);
 
+  const cargar = useCallback(async () => {
+    try {
+      setError('');
+      setCargando(true);
+      setAvisos(await notificacionService.listarNotificaciones());
+    } catch (err) {
+      setError(err.normalizado || 'No pudimos cargar tus notificaciones');
+    } finally {
+      setCargando(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      cargar();
+    }, [cargar]),
+  );
+
+  const nuevos = avisos.filter((aviso) => !aviso.leida).length;
+
+  async function marcarTodas() {
+    if (!nuevos || marcando) return;
+    try {
+      setMarcando(true);
+      setError('');
+      await notificacionService.marcarTodasLeidas();
+      setAvisos((actuales) => actuales.map((aviso) => ({ ...aviso, leida: true })));
+    } catch (err) {
+      setError(err.normalizado || 'No pudimos marcar las notificaciones');
+    } finally {
+      setMarcando(false);
+    }
+  }
+
+  async function marcarUna(aviso) {
+    if (aviso.leida) return;
+    try {
+      await notificacionService.marcarLeida(aviso.id);
+      setAvisos((actuales) =>
+        actuales.map((item) => (item.id === aviso.id ? { ...item, leida: true } : item)),
+      );
+    } catch (err) {
+      setError(err.normalizado || 'No pudimos marcar la notificación');
+    }
+  }
+
   return (
     <View style={styles.fondo}>
-      <ScrollView contentContainerStyle={styles.contenido} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.contenido}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={cargando} onRefresh={cargar} tintColor={COLORS.primary} />
+        }
+      >
         <Encabezado titulo="Notificaciones" onBack={() => navigation.goBack()} />
 
         <Animated.View style={entrada}>
@@ -45,16 +104,46 @@ export default function NotificacionesScreen({ navigation }) {
                 : 'Estás al día con los avisos de RAEE Smart'}
             </Text>
             {nuevos > 0 ? (
-              <TouchableOpacity style={styles.marcar} onPress={() => setLeido(true)} activeOpacity={0.7}>
+              <TouchableOpacity
+                style={styles.marcar}
+                onPress={marcarTodas}
+                activeOpacity={0.7}
+                disabled={marcando}
+              >
                 <Ionicons name="checkmark-done-outline" size={15} color={COLORS.primaryText} />
                 <Text style={styles.marcarTexto}>Leídas</Text>
               </TouchableOpacity>
             ) : null}
           </View>
 
+          {error ? (
+            <View style={styles.vacio}>
+              <Ionicons name="cloud-offline-outline" size={30} color={COLORS.mut} />
+              <Text style={styles.vacioTexto}>{error}</Text>
+              <Boton titulo="Reintentar" variante="fantasma" ancho={false} onPress={cargar} />
+            </View>
+          ) : null}
+
+          {cargando && !avisos.length ? (
+            <ActivityIndicator size="large" color={COLORS.primary} style={styles.cargando} />
+          ) : null}
+
+          {!cargando && !error && !avisos.length ? (
+            <View style={styles.vacio}>
+              <Ionicons name="notifications-off-outline" size={30} color={COLORS.mut} />
+              <Text style={styles.vacioTexto}>No tienes notificaciones por ahora</Text>
+            </View>
+          ) : null}
+
           <View style={styles.lista}>
             {avisos.map((aviso) => (
-              <View key={aviso.id} style={styles.tarjeta}>
+              <TouchableOpacity
+                key={aviso.id}
+                style={styles.tarjeta}
+                onPress={() => marcarUna(aviso)}
+                activeOpacity={aviso.leida ? 1 : 0.85}
+                disabled={aviso.leida}
+              >
                 <View style={[styles.icono, !aviso.leida && styles.iconoNuevo]}>
                   <Ionicons
                     name={iconoDe(aviso)}
@@ -77,7 +166,7 @@ export default function NotificacionesScreen({ navigation }) {
                     <Text style={styles.fecha}>{formatearFechaHora(aviso.fechaCreacion)}</Text>
                   ) : null}
                 </View>
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
 
@@ -142,5 +231,8 @@ const styles = StyleSheet.create({
   detalle: { ...TIPOGRAFIA.micro, fontSize: 12, lineHeight: 17, marginTop: 4 },
   fecha: { ...TIPOGRAFIA.micro, fontSize: 10, color: COLORS.mutSoft, marginTop: 5 },
 
+  cargando: { marginVertical: ESPACIOS.xl },
+  vacio: { alignItems: 'center', gap: ESPACIOS.md, marginVertical: ESPACIOS.xl },
+  vacioTexto: { ...TIPOGRAFIA.small, fontSize: 12.5, textAlign: 'center', color: COLORS.mut },
   nota: { ...TIPOGRAFIA.micro, fontSize: 11, textAlign: 'center', marginTop: ESPACIOS.xl },
 });

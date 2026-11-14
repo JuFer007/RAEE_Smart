@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { Animated, Easing, Platform } from 'react-native';
 
 /**
@@ -12,11 +12,11 @@ export default function useEntradaAnimada({
   duracion = 300,
   duracionSalida = 220,
 } = {}) {
-  const v = useRef(new Animated.Value(0)).current;
+  const vRef = useRef(new Animated.Value(0));
   const alTerminarSalida = useRef(null);
 
   useEffect(() => {
-    const anim = Animated.timing(v, {
+    const anim = Animated.timing(vRef.current, {
       toValue: 1,
       duration: duracion,
       delay: 40,
@@ -25,13 +25,13 @@ export default function useEntradaAnimada({
     });
     anim.start();
     return () => anim.stop();
-  }, [v, duracion]);
+  }, [duracion]);
 
   const salir = useCallback(
     (alTerminar) =>
       new Promise((resolve) => {
         alTerminarSalida.current = alTerminar;
-        Animated.timing(v, {
+        Animated.timing(vRef.current, {
           toValue: 0,
           duration: duracionSalida,
           easing: Easing.inOut(Easing.cubic),
@@ -42,22 +42,31 @@ export default function useEntradaAnimada({
           resolve();
         });
       }),
-    [v, duracionSalida]
+    [duracionSalida]
   );
 
-  const desplazamiento = v.interpolate({ inputRange: [0, 1], outputRange: [distancia, 0] });
-  const escalaAnimada = v.interpolate({ inputRange: [0, 1], outputRange: [escala, 1] });
-  const opacidad = v.interpolate({ inputRange: [0, 0.75, 1], outputRange: [0, 1, 1] });
+  const [style, setStyle] = React.useState({
+    opacity: 0,
+    transform: [
+      { translateX: eje === 'x' ? distancia : 0 },
+      { translateY: eje === 'y' ? distancia : 0 },
+      { scale: 0.985 },
+    ],
+  });
 
-  return [
-    {
+  React.useEffect(() => {
+    const desplazamiento = vRef.current.interpolate({ inputRange: [0, 1], outputRange: [distancia, 0] });
+    const escalaAnimada = vRef.current.interpolate({ inputRange: [0, 1], outputRange: [escala, 1] });
+    const opacidad = vRef.current.interpolate({ inputRange: [0, 0.75, 1], outputRange: [0, 1, 1] });
+    setStyle({
       opacity: opacidad,
       transform: [
         { translateX: eje === 'x' ? desplazamiento : 0 },
         { translateY: eje === 'y' ? desplazamiento : 0 },
         { scale: escalaAnimada },
       ],
-    },
-    salir,
-  ];
+    });
+  }, [distancia, escala, eje]);
+
+  return [style, salir];
 }

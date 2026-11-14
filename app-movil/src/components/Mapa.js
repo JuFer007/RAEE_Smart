@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useEffect, useCallback } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { COLORS } from '../theme';
+import { COLORS, MAP_STYLE_URL } from '../theme';
 
 const esWeb = Platform.OS === 'web';
 const CHICLAYO = [-6.7714, -79.8408];
@@ -10,6 +10,12 @@ const latDe = (o) => o?.latitud ?? o?.coords?.latitude;
 const lngDe = (o) => o?.longitud ?? o?.coords?.longitude;
 
 function construirHtml(puntos, ubicacion, colores) {
+  const estilos = [
+    MAP_STYLE_URL,
+    'https://tiles.openfreemap.org/styles/liberty',
+    'https://tiles.openfreemap.org/styles/positron',
+  ].filter((estilo, indice, lista) => estilo && lista.indexOf(estilo) === indice);
+
   const data = JSON.stringify({
     puntos: puntos
       .filter((p) => latDe(p) != null && lngDe(p) != null)
@@ -24,6 +30,7 @@ function construirHtml(puntos, ubicacion, colores) {
         ? { lat: Number(latDe(ubicacion)), lng: Number(lngDe(ubicacion)) }
         : null,
     colores,
+    estilos,
     centro: CHICLAYO,
   }).replace(/</g, '\\u003c');
 
@@ -40,10 +47,7 @@ function construirHtml(puntos, ubicacion, colores) {
 <body><div id="map"></div>
 <script>
   var D = ${data};
-  var ESTILOS = [
-    'https://tiles.openfreemap.org/styles/liberty',
-    'https://tiles.openfreemap.org/styles/positron'
-  ];
+  var ESTILOS = D.estilos;
   var RASTER = {
     version: 8,
     sources: { base: { type: 'raster', tileSize: 256, maxzoom: 19,

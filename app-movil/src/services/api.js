@@ -1,6 +1,6 @@
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL } from '../theme';
+import { limpiarSesion, obtenerToken } from './sesionStorage';
 
 export const MENSAJES_ERROR_POR_DEFECTO = {
   SIN_CONEXION: 'No hay conexión a internet. Verifica tu red e inténtalo de nuevo.',
@@ -12,13 +12,24 @@ export const MENSAJES_ERROR_POR_DEFECTO = {
   GENERICO: 'Ocurrió un error inesperado. Inténtalo de nuevo.',
 };
 
+let manejadorSesionExpirada = null;
+
+export function configurarManejadorSesionExpirada(manejador) {
+  manejadorSesionExpirada = manejador;
+  return () => {
+    if (manejadorSesionExpirada === manejador) {
+      manejadorSesionExpirada = null;
+    }
+  };
+}
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 15000,
 });
 
 api.interceptors.request.use(async (config) => {
-  const token = await AsyncStorage.getItem('@raeesmart_token');
+  const token = await obtenerToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -44,11 +55,19 @@ api.interceptors.response.use(
 
     switch (status) {
       case 401:
+        if (String(originalRequest.url || '').includes('/auth/login')) {
+          error.normalizado =
+            error.response?.data?.mensaje ||
+            error.response?.data?.message ||
+            'Correo o contraseña incorrectos';
+          break;
+        }
+
         error.normalizado = MENSAJES_ERROR_POR_DEFECTO.NO_AUTORIZADO;
         try {
-          await AsyncStorage.removeItem('@raeesmart_token');
-          await AsyncStorage.removeItem('@raeesmart_usuario');
+          await limpiarSesion();
         } catch {}
+        manejadorSesionExpirada?.();
         break;
       case 403:
         error.normalizado = MENSAJES_ERROR_POR_DEFECTO.PROHIBIDO;

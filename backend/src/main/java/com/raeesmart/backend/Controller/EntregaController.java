@@ -21,13 +21,13 @@ public class EntregaController {
 
     @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<EntregaResponseDTO> registrarEntrega(
-            @RequestParam Long usuarioId,
+            @RequestParam(required = false) Long puntoRecoleccionId,
             @RequestParam Double latitud,
             @RequestParam Double longitud,
             @RequestParam MultipartFile foto) {
 
         EntregaRequestDTO request = EntregaRequestDTO.builder()
-                .usuarioId(usuarioId)
+                .puntoRecoleccionId(puntoRecoleccionId)
                 .latitud(latitud)
                 .longitud(longitud)
                 .foto(foto)
@@ -35,6 +35,16 @@ public class EntregaController {
 
         EntregaResponseDTO entrega = entregaService.registrarEntrega(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(entrega);
+    }
+
+    @PutMapping("/{id}/confirmar")
+    public ResponseEntity<EntregaResponseDTO> confirmarEntrega(@PathVariable Long id) {
+        return ResponseEntity.ok(entregaService.confirmarEntrega(id));
+    }
+
+    @PutMapping("/{id}/rechazar")
+    public ResponseEntity<EntregaResponseDTO> rechazarEntrega(@PathVariable Long id) {
+        return ResponseEntity.ok(entregaService.rechazarEntrega(id));
     }
 
     @PutMapping("/{id}/corregir")

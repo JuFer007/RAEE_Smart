@@ -1,6 +1,9 @@
+from pathlib import Path
+
 from fastapi import FastAPI
 
 from app.config import settings
+from app.models.mobilenet_classifier import clasificador
 from app.routers import clasificacion_router
 
 app = FastAPI(
@@ -17,10 +20,26 @@ def estado():
     return {
         "servicio": "RAEE SMART IA",
         "estado": "activo",
-        "modo_simulado": settings.MODO_SIMULADO,
+        "modelo": Path(settings.RUTA_MODELO).name,
+        "categorias": clasificador.categorias,
     }
 
 
 @app.get("/salud")
 def salud():
     return {"ok": True}
+
+
+@app.get("/categorias")
+def categorias():
+    return {
+        "categorias": clasificador.categorias,
+        "total": len(clasificador.categorias),
+    }
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run("app.main:app", host=settings.HOST, port=settings.PORT)
+

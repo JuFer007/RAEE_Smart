@@ -28,6 +28,9 @@ Thumbs.db
 
 #appMobile
 app-movil/.expo/
+
+# Archivos subidos en tiempo de ejecución
+backend/uploads/
 # Datasets de entrenamiento del módulo de IA
 ia-service/training/dataset/
 ia-service/training/datasets/

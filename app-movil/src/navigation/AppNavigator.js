@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import { COLORS } from '../theme';
@@ -26,7 +26,6 @@ import AcercaScreen from '../screens/AcercaScreen';
 import NotificacionesScreen from '../screens/NotificacionesScreen';
 import AdministrarNotificacionesScreen from '../screens/AdministrarNotificacionesScreen';
 import CambiarPasswordScreen from '../screens/CambiarPasswordScreen';
-import FotoPerfilScreen from '../screens/FotoPerfilScreen';
 import MenuScreen from '../screens/MenuScreen';
 
 const Stack = createNativeStackNavigator();
@@ -34,17 +33,33 @@ const Stack = createNativeStackNavigator();
 const ANIMACION = { animation: 'slide_from_right' };
 
 export default function AppNavigator() {
-  const { cargandoSesion } = useAuth();
+  const { cargandoSesion, usuario } = useAuth();
+  const navigationRef = useNavigationContainerRef();
+  const usuarioAnterior = useRef(usuario);
+
+  useEffect(() => {
+    if (cargandoSesion) return;
+
+    const teniaUsuario = Boolean(usuarioAnterior.current);
+    usuarioAnterior.current = usuario;
+
+    if (teniaUsuario && !usuario && navigationRef.isReady()) {
+      navigationRef.resetRoot({ index: 0, routes: [{ name: 'Login' }] });
+    }
+  }, [cargandoSesion, navigationRef, usuario]);
 
   if (cargandoSesion) {
     return null;
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <View style={styles.fondo}>
         <View style={styles.app}>
-          <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Bienvenida">
+          <Stack.Navigator
+            screenOptions={{ headerShown: false }}
+            initialRouteName={usuario ? 'Main' : 'Bienvenida'}
+          >
             <Stack.Screen name="Bienvenida" component={BienvenidaScreen} options={{ animation: 'fade' }} />
             <Stack.Screen name="Login" component={LoginScreen} options={ANIMACION} />
             <Stack.Screen name="Registro" component={RegistroScreen} options={ANIMACION} />
@@ -67,7 +82,6 @@ export default function AppNavigator() {
             <Stack.Screen name="AdministrarNotificaciones" component={AdministrarNotificacionesScreen} options={ANIMACION} />
 
             <Stack.Screen name="CambiarPassword" component={CambiarPasswordScreen} options={ANIMACION} />
-            <Stack.Screen name="FotoPerfil" component={FotoPerfilScreen} options={ANIMACION} />
             <Stack.Screen name="Menu" component={MenuScreen} options={ANIMACION} />
           </Stack.Navigator>
         </View>

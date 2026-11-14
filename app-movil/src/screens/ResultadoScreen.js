@@ -10,17 +10,35 @@ import { obtenerInfoTipo, COLORS, ESPACIOS, RADIOS, TIPOGRAFIA } from '../theme'
 const UMBRAL_CONFIANZA = 0.7;
 
 export default function ResultadoScreen({ route, navigation }) {
-  const { entrega, modo, punto } = route.params || {};
+  const { entrega, modo, punto, fotoUri, ubicacion } = route.params || {};
   const info = obtenerInfoTipo(entrega?.tipoRaee);
   const confianza = Math.round((entrega?.confianzaIa || 0) * 100);
   const nombre = entrega?.nombreCategoriaVisible || info.nombre;
   const identificarSolo = modo === 'identificar';
   const bajaConfianza = (entrega?.confianzaIa || 0) < UMBRAL_CONFIANZA && !entrega?.clasificacionCorregida;
 
+  function continuar() {
+    if (entrega?.id) {
+      navigation.navigate(entrega.estado === 'CONFIRMADA' ? 'Certificado' : 'Confirmacion', {
+        entrega,
+      });
+      return;
+    }
+
+    navigation.navigate('Entrega', {
+      entrega,
+      modo,
+      punto,
+      fotoUri,
+      ubicacion,
+    });
+  }
+
   function volverTomarFoto() {
     navigation.navigate('CapturaFoto', {
       ...(identificarSolo ? { modo: 'identificar' } : {}),
       ...(punto ? { punto } : {}),
+      ...(ubicacion ? { ubicacion } : {}),
     });
   }
 
@@ -60,7 +78,11 @@ export default function ResultadoScreen({ route, navigation }) {
           <View style={styles.aviso}>
             <Ionicons name="alert-circle-outline" size={18} color={COLORS.warning} />
             <Text style={styles.avisoTexto}>
-              La confianza de la IA es baja. Confirma que la categoría es correcta o corrígela antes de continuar.
+              {identificarSolo
+                ? 'La confianza de la IA es baja. Vuelve a tomar la foto con mejor iluminación o continúa si la categoría es correcta.'
+                : entrega?.id
+                  ? 'La confianza de la IA es baja. Puedes corregir la categoría desde esta pantalla.'
+                  : 'La confianza de la IA es baja. Confirma si la categoría es correcta o vuelve a tomar la foto. Podrás corregirla después de registrar la entrega.'}
             </Text>
           </View>
         ) : null}
@@ -68,25 +90,29 @@ export default function ResultadoScreen({ route, navigation }) {
         <View style={styles.botones}>
           <Boton
             titulo={
-              identificarSolo
-                ? 'Registrar esta entrega'
-                : bajaConfianza
-                  ? 'Confirmar y continuar'
-                  : 'Continuar'
+              entrega?.id
+                ? 'Ver confirmación'
+                : identificarSolo
+                  ? 'Registrar esta entrega'
+                  : bajaConfianza
+                    ? 'Confirmar y continuar'
+                    : 'Continuar'
             }
             icono={identificarSolo ? 'arrow-forward-circle-outline' : undefined}
-            onPress={() => navigation.navigate('Entrega', { entrega, punto })}
+            onPress={continuar}
           />
           <Boton
             titulo="Volver a tomar foto"
             variante="secundario"
             onPress={volverTomarFoto}
           />
-          <Boton
-            titulo="¿No es correcto? Corregir categoría"
-            variante="enlace"
-            onPress={() => navigation.navigate('Correccion', { entrega, modo, punto })}
-          />
+          {!identificarSolo && entrega?.id ? (
+            <Boton
+              titulo="¿No es correcto? Corregir categoría"
+              variante="enlace"
+              onPress={() => navigation.navigate('Correccion', { entrega, modo, punto })}
+            />
+          ) : null}
         </View>
       </ScrollView>
     </View>
@@ -127,6 +153,14 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   avisoTexto: { flex: 1, ...TIPOGRAFIA.small, fontSize: 12.5, lineHeight: 18, color: COLORS.warning },
+
+  error: {
+    ...TIPOGRAFIA.small,
+    fontSize: 12.5,
+    color: COLORS.danger,
+    textAlign: 'center',
+    marginBottom: 14,
+  },
 
   botones: { gap: 10 },
 });

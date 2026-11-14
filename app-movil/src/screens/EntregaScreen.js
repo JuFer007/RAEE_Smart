@@ -7,9 +7,12 @@ import Boton from '../components/Boton';
 import SelectorMunicipalidad from '../components/SelectorMunicipalidad';
 import useLocation from '../hooks/useLocation';
 import usePuntos from '../hooks/usePuntos';
+import { useAuth } from '../context/AuthContext';
+import * as entregaService from '../services/entregaService';
 import { COLORS, ESPACIOS, RADIOS, TIPOGRAFIA } from '../theme';
 import { USAR_DATOS_PRUEBA, completarSimulacion } from '../utils/datosPrueba';
 import { distanciaKm } from '../utils/fecha';
+import { normalizarCoordenadas, tieneCoordenadas } from '../utils/geo';
 
 const PREFIJO_MUNICIPALIDAD = /^Municipalidad\s+(Provincial|Distrital)\s+de\s+/i;
 
@@ -21,13 +24,20 @@ function municipalidadDe(punto) {
 }
 
 export default function EntregaScreen({ route, navigation }) {
-  const { entrega, punto } = route.params || {};
+  const { entrega, punto, fotoUri, ubicacion: ubicacionRuta } = route.params || {};
+  const { usuario } = useAuth();
   const { ubicacion } = useLocation();
-  const { puntos } = usePuntos(ubicacion);
+  const ubicacionActual = useMemo(
+    () => normalizarCoordenadas(ubicacionRuta) || normalizarCoordenadas(ubicacion),
+    [ubicacionRuta, ubicacion]
+  );
+  const { puntos, cargando } = usePuntos(ubicacionActual);
   const [seleccionado, setSeleccionado] = useState(
     punto?.id ?? entrega?.puntoRecoleccionId ?? null
   );
   const [municipalidad, setMunicipalidad] = useState('Todas');
+  const [registrando, setRegistrando] = useState(false);
+  const [error, setError] = useState('');
 
   const municipalidades = useMemo(() => {
     const vistas = new Set();
@@ -47,19 +57,58 @@ export default function EntregaScreen({ route, navigation }) {
   );
 
   const activo = visibles.find((p) => String(p.id) === String(seleccionado)) || visibles[0] || null;
-  const masCercanoId = ubicacion && puntos.length ? puntos[0].id : null;
+  const masCercanoId = ubicacionActual && puntos.length ? puntos[0].id : null;
 
-  function continuar() {
-    const entregaConPunto = {
-      ...entrega,
-      puntoRecoleccionId: activo?.id,
-      puntoRecoleccionNombre: activo?.nombre,
-      puntoRecoleccionDireccion: activo?.direccion,
-    };
+  async function continuar() {
+    if (!activo) {
+        setError('Selecciona un punto de acopio para continuar');
+        return;
+      }
+      if (!fotoUri) {
+        setError('No se encontró la foto. Vuelve a tomarla.');
+        return;
+      }
+      if (!usuario?.id) {
+        setError('Tu sesión ha expirado. Inicia sesión nuevamente.');
+        return;
+      }
+      if (!tieneCoordenadas(ubicacionActual) && !USAR_DATOS_PRUEBA) {
+        setError('Activa el GPS para registrar la entrega');
+        return;
+      }
 
-    navigation.navigate('Confirmacion', {
-      entrega: USAR_DATOS_PRUEBA ? completarSimulacion(entregaConPunto) : entregaConPunto,
-    });
+    try {
+      setError('');
+      setRegistrando(true);
+
+      if (USAR_DATOS_PRUEBA) {
+        const entregaConPunto = {
+          ...entrega,
+          puntoRecoleccionId: activo.id,
+          puntoRecoleccionNombre: activo.nombre,
+          puntoRecoleccionDireccion: activo.direccion,
+        };
+        navigation.replace('Confirmacion', {
+          entrega: completarSimulacion(entregaConPunto),
+        });
+        return;
+      }
+
+      const coordenadas = normalizarCoordenadas(ubicacionActual);
+      const latitud = coordenadas?.latitud;
+      const longitud = coordenadas?.longitud;
+      const registrada = await entregaService.registrarEntrega({
+        puntoRecoleccionId: activo.id,
+        fotoUri,
+        latitud,
+        longitud,
+      });
+      navigation.replace('Confirmacion', { entrega: registrada });
+    } catch (err) {
+      setError(err.normalizado || 'No se pudo registrar la entrega. Intenta nuevamente.');
+    } finally {
+      setRegistrando(false);
+    }
   }
 
   return (
@@ -81,7 +130,7 @@ export default function EntregaScreen({ route, navigation }) {
         <View style={styles.mapa}>
           <MapaPuntos
             puntos={visibles}
-            ubicacion={ubicacion}
+            ubicacion={ubicacionActual}
             seleccionado={activo}
             onSelect={(p) => setSeleccionado(p.id)}
             alto={170}
@@ -98,10 +147,12 @@ export default function EntregaScreen({ route, navigation }) {
             </Text>
           </View>
         ) : (
-          <Text style={styles.detalle}>Buscando puntos de acopio cercanos...</Text>
+          <Text style={styles.detalle}>
+            {cargando ? 'Buscando puntos de acopio cercanos...' : 'No hay puntos disponibles.'}
+          </Text>
         )}
 
-        {!ubicacion ? (
+        {!ubicacionActual ? (
           <View style={styles.aviso}>
             <Ionicons name="navigate-circle-outline" size={14} color={COLORS.info} />
             <Text style={styles.avisoTexto}>
@@ -142,11 +193,19 @@ export default function EntregaScreen({ route, navigation }) {
           );
         })}
 
-        {!visibles.length ? (
+        {!visibles.length && !cargando ? (
           <Text style={styles.detalle}>No hay puntos de acopio para esta municipalidad.</Text>
         ) : null}
 
-        <Boton titulo="Continuar" onPress={continuar} style={styles.boton} />
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+
+        <Boton
+          titulo="Registrar entrega"
+          onPress={continuar}
+          style={styles.boton}
+          cargando={registrando}
+          deshabilitado={!activo || registrando}
+        />
       </ScrollView>
     </View>
   );
@@ -189,6 +248,13 @@ const styles = StyleSheet.create({
   avisoTexto: { flex: 1, ...TIPOGRAFIA.micro, fontSize: 11, color: COLORS.inkItem },
 
   detalle: { ...TIPOGRAFIA.micro, fontSize: 12, color: COLORS.mutSoft, marginTop: 3 },
+  error: {
+    ...TIPOGRAFIA.micro,
+    fontSize: 11.5,
+    color: COLORS.danger,
+    textAlign: 'center',
+    marginTop: 10,
+  },
   lugar: {
     flexDirection: 'row',
     alignItems: 'center',

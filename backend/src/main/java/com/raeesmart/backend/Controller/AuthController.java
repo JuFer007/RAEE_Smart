@@ -3,6 +3,7 @@ import com.raeesmart.backend.Dto.Request.LoginRequestDTO;
 import com.raeesmart.backend.Dto.Request.RegistroRequestDTO;
 import com.raeesmart.backend.Dto.Response.LoginResponseDTO;
 import com.raeesmart.backend.Dto.Response.UsuarioResponseDTO;
+import com.raeesmart.backend.Exception.ResourceNotFoundException;
 import com.raeesmart.backend.Model.Enums.RolUsuario;
 import com.raeesmart.backend.Model.Usuario;
 import com.raeesmart.backend.Security.JwtService;
@@ -32,7 +33,7 @@ public class AuthController {
     }
 
     @PostMapping("/registro")
-    public ResponseEntity<UsuarioResponseDTO> registrar(@Valid @RequestBody RegistroRequestDTO request) {
+    public ResponseEntity<LoginResponseDTO> registrar(@Valid @RequestBody RegistroRequestDTO request) {
         Usuario usuario = Usuario.builder()
                 .nombre(request.getNombre())
                 .email(request.getEmail())
@@ -43,12 +44,24 @@ public class AuthController {
                 .build();
 
         Usuario guardado = usuarioService.registrar(usuario);
-        return ResponseEntity.status(HttpStatus.CREATED).body(mapearAResponse(guardado));
+        String token = jwtService.generarToken(guardado);
+
+        LoginResponseDTO response = LoginResponseDTO.builder()
+                .token(token)
+                .usuario(mapearAResponse(guardado))
+                .build();
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDTO> login(@Valid @RequestBody LoginRequestDTO request) {
-        Usuario usuario = usuarioService.buscarPorEmail(request.getEmail());
+        Usuario usuario;
+        try {
+            usuario = usuarioService.buscarPorEmail(request.getEmail());
+        } catch (ResourceNotFoundException ex) {
+            throw new BadCredentialsException("Correo o contraseña incorrectos");
+        }
 
         if (!passwordEncoder.matches(request.getPassword(), usuario.getPassword())) {
             throw new BadCredentialsException("Correo o contraseña incorrectos");

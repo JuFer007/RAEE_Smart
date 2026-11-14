@@ -1,5 +1,39 @@
-export const API_BASE_URL = 'http://192.168.1.100:8080/api';
-export const MAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/bright/style.json';
+import Constants from 'expo-constants';
+import { Platform } from 'react-native';
+
+const extra = Constants.expoConfig?.extra || {};
+
+function obtenerHostExpo() {
+  const hostUri =
+    Constants.expoConfig?.hostUri ||
+    Constants.expoGoConfig?.debuggerHost ||
+    Constants.manifest2?.extra?.expoGo?.debuggerHost;
+
+  if (!hostUri) return null;
+
+  const sinProtocolo = hostUri.replace(/^[a-z]+:\/\//i, '');
+  const host = sinProtocolo.split('/')[0].split(':')[0];
+  return host || null;
+}
+
+const hostExpo = obtenerHostExpo();
+const hostEsLocal = hostExpo === 'localhost' || hostExpo === '127.0.0.1';
+const hostApi =
+  Platform.OS === 'android' && (!hostExpo || hostEsLocal)
+    ? '10.0.2.2'
+    : hostExpo || 'localhost';
+const puertoBackend = extra.backendPort || '8080';
+
+const API_BASE_URL_DESARROLLO = `http://${hostApi}:${puertoBackend}/api`;
+
+export const API_BASE_URL =
+  extra.apiBaseUrl ||
+  process.env.EXPO_PUBLIC_API_URL ||
+  API_BASE_URL_DESARROLLO;
+export const MAP_STYLE_URL =
+  extra.mapStyleUrl ||
+  process.env.EXPO_PUBLIC_MAP_STYLE_URL ||
+  'https://tiles.openfreemap.org/styles/bright/style.json';
 
 export const FUENTES = {
   manrope: 'Manrope_800ExtraBold',
@@ -212,7 +246,5 @@ export function obtenerEstado(estado) {
 }
 
 export function estadoEntrega(estado) {
-  if (estado === 'CONFIRMADA') return ESTADOS_ENTREGA.CONFIRMADA;
-  if (estado === 'RECHAZADA') return ESTADOS_ENTREGA.RECHAZADA;
-  return { label: 'Pendiente de entrega', color: COLORS.warning, bg: COLORS.warningSoft };
+  return ESTADOS_ENTREGA[estado] || { label: estado || '-', color: COLORS.mut, bg: COLORS.bg };
 }

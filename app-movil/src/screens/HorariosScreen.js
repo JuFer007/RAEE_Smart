@@ -1,9 +1,11 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import Encabezado from '../components/Encabezado';
-import { CAMPANAS, SIN_CAMPANAS, TIPS_HORARIOS } from '../utils/contenido';
+import { SIN_CAMPANAS, TIPS_HORARIOS } from '../utils/contenido';
 import * as puntoService from '../services/puntoService';
+import * as campanaService from '../services/campanaService';
 import { formatearFecha } from '../utils/fecha';
 import { COLORS, ESPACIOS, RADIOS, TIPOGRAFIA } from '../theme';
 
@@ -16,40 +18,53 @@ function rangoFecha(campana) {
 export default function HorariosScreen({ route, navigation }) {
   const { punto: puntoUnico } = route.params || {};
   const [puntos, setPuntos] = useState([]);
+  const [campanas, setCampanas] = useState([]);
   const [cargando, setCargando] = useState(true);
+  const [cargandoCampanas, setCargandoCampanas] = useState(true);
   const [error, setError] = useState(null);
+  const [errorCampanas, setErrorCampanas] = useState(null);
 
   const cargar = useCallback(async () => {
-    setCargando(true);
-    try {
-      setError(null);
-      const data = await puntoService.listarPuntos();
-      setPuntos(data || []);
-    } catch (_e) {
-      setError('No pudimos cargar los horarios');
-    } finally {
-      setCargando(false);
-    }
-  }, []);
+    const municipalidadId =
+      puntoUnico?.municipalidadId ||
+      puntoUnico?.municipalidad?.id ||
+      undefined;
+    const [resPuntos, resCampanas] = await Promise.allSettled([
+      puntoUnico ? Promise.resolve([puntoUnico]) : puntoService.listarPuntos(municipalidadId),
+      campanaService.listarCampanas(municipalidadId),
+    ]);
 
-  useEffect(() => {
-    if (puntoUnico) return undefined;
-    let activo = true;
-    puntoService
-      .listarPuntos()
-      .then((data) => {
-        if (activo) setPuntos(data || []);
-      })
-      .catch(() => {
-        if (activo) setError('No pudimos cargar los horarios');
-      })
-      .finally(() => {
-        if (activo) setCargando(false);
-      });
-    return () => {
-      activo = false;
-    };
+    if (resPuntos.status === 'fulfilled') {
+      setPuntos(resPuntos.value || []);
+      setError(null);
+    } else {
+      setError('No pudimos cargar los horarios');
+    }
+
+    if (resCampanas.status === 'fulfilled') {
+      setCampanas(resCampanas.value || []);
+      setErrorCampanas(null);
+    } else {
+      setErrorCampanas('No pudimos cargar las campañas');
+    }
+
+    setCargando(false);
+    setCargandoCampanas(false);
   }, [puntoUnico]);
+
+  function reintentar() {
+    setCargando(true);
+    setCargandoCampanas(true);
+    setError(null);
+    setErrorCampanas(null);
+    cargar();
+  }
+
+  useFocusEffect(
+    useCallback(() => {
+      cargar();
+    }, [cargar]),
+  );
 
   return (
     <View style={styles.fondo}>
@@ -90,7 +105,7 @@ export default function HorariosScreen({ route, navigation }) {
             <Text style={styles.estadoTexto}>Cargando horarios...</Text>
           </View>
         ) : error ? (
-          <TouchableOpacity style={[styles.estado, styles.estadoError]} activeOpacity={0.85} onPress={cargar}>
+          <TouchableOpacity style={[styles.estado, styles.estadoError]} activeOpacity={0.85} onPress={reintentar}>
             <Ionicons name="cloud-offline-outline" size={18} color={COLORS.danger} />
             <Text style={styles.estadoTexto}>{error} · Toca para reintentar</Text>
           </TouchableOpacity>
@@ -122,14 +137,28 @@ export default function HorariosScreen({ route, navigation }) {
 
         <Text style={[styles.seccion, styles.seccionCampanas]}>Campañas de la Municipalidad</Text>
 
-        {CAMPANAS.length === 0 ? (
+        {cargandoCampanas ? (
+          <View style={styles.estado}>
+            <ActivityIndicator size="small" color={COLORS.primary} />
+            <Text style={styles.estadoTexto}>Cargando campañas...</Text>
+          </View>
+        ) : errorCampanas ? (
+          <TouchableOpacity
+            style={[styles.estado, styles.estadoError]}
+            activeOpacity={0.85}
+            onPress={reintentar}
+          >
+            <Ionicons name="cloud-offline-outline" size={18} color={COLORS.danger} />
+            <Text style={styles.estadoTexto}>{errorCampanas} · Toca para reintentar</Text>
+          </TouchableOpacity>
+        ) : campanas.length === 0 ? (
           <View style={styles.vacio}>
             <Ionicons name="megaphone-outline" size={18} color={COLORS.mutSoft} />
             <Text style={styles.vacioTexto}>{SIN_CAMPANAS}</Text>
           </View>
         ) : (
           <View style={styles.lista}>
-            {CAMPANAS.map((campana) => (
+            {campanas.map((campana) => (
               <View key={campana.id} style={styles.tarjeta}>
                 <View style={[styles.tarjetaIcono, styles.campanaIcono]}>
                   <Ionicons name="megaphone-outline" size={16} color={COLORS.warning} />

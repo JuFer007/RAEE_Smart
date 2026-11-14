@@ -28,11 +28,9 @@ def vista():
 
 @app.get("/estado")
 def estado():
-    modo_simulado = clasificador.modo_simulado
     return {
         "servicio": "RAEE SMART IA",
         "estado": "activo",
-        "modo_simulado": modo_simulado,
-        "modelo": None if modo_simulado else Path(settings.RUTA_MODELO).name,
+        "modelo": Path(settings.RUTA_MODELO).name,
         "categorias": clasificador.categorias,
     }

@@ -20,10 +20,17 @@
     "plugins": [
       "expo-font",
       [
-        "expo-image-picker",
+        "expo-camera",
         {
-          "photosPermission": "Necesitamos acceso a tu galería para seleccionar una foto de perfil.",
-          "cameraPermission": "Necesitamos acceso a tu cámara para tomar una foto de perfil."
+          "cameraPermission": "Permítenos acceder a tu cámara para identificar y registrar tus RAEE.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Permítenos acceder a tu ubicación para registrar la entrega y asignarte el punto de acopio más cercano."
         }
       ]
     ]

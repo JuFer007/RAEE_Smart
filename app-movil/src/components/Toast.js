@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, ESPACIOS, RADIOS, SOMBRAS, TIPOGRAFIA, FUENTES } from '../theme';
@@ -16,35 +16,68 @@ export default function Toast({
   onAccion,
 }) {
   const [internoVisible, setInternoVisible] = useState(visible);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const translateAnim = useRef(new Animated.Value(posicion === 'top' ? -20 : 20)).current;
+  const fadeAnimRef = useRef(new Animated.Value(0));
+  const translateAnimRef = useRef(new Animated.Value(posicion === 'top' ? -20 : 20));
   const timeoutRef = useRef(null);
+
+  const cerrarAnimado = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    Animated.parallel([
+      Animated.timing(fadeAnimRef.current, {
+        toValue: 0,
+        duration: 140,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateAnimRef.current, {
+        toValue: posicion === 'top' ? -12 : 12,
+        duration: 140,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setInternoVisible(false);
+      onCerrar?.();
+    });
+  }, [onCerrar, posicion]);
 
   useEffect(() => {
     if (visible) {
-      setInternoVisible(true);
+      let id;
+      if (!internoVisible) {
+        id = setTimeout(() => setInternoVisible(true), 0);
+      }
       Animated.parallel([
-        Animated.timing(fadeAnim, {
+        Animated.timing(fadeAnimRef.current, {
           toValue: 1,
           duration: 180,
           useNativeDriver: true,
         }),
-        Animated.timing(translateAnim, {
+        Animated.timing(translateAnimRef.current, {
           toValue: 0,
           duration: 180,
           useNativeDriver: true,
         }),
       ]).start(() => {
         if (duracion > 0 && !accionTexto) {
+          if (timeoutRef.current) clearTimeout(timeoutRef.current);
           timeoutRef.current = setTimeout(() => {
-            cerrar();
+            cerrarAnimado();
           }, duracion);
         }
       });
-    } else if (internoVisible) {
-      cerrar();
+      return () => {
+        if (id) clearTimeout(id);
+      };
     }
-  }, [visible]);
+  }, [visible, internoVisible, accionTexto, duracion, cerrarAnimado]);
+
+  useEffect(() => {
+    if (!visible && internoVisible) {
+      cerrarAnimado();
+    }
+  }, [visible, internoVisible, cerrarAnimado]);
 
   function cerrar() {
     if (timeoutRef.current) {
@@ -52,12 +85,12 @@ export default function Toast({
       timeoutRef.current = null;
     }
     Animated.parallel([
-      Animated.timing(fadeAnim, {
+      Animated.timing(fadeAnimRef.current, {
         toValue: 0,
         duration: 140,
         useNativeDriver: true,
       }),
-      Animated.timing(translateAnim, {
+      Animated.timing(translateAnimRef.current, {
         toValue: posicion === 'top' ? -12 : 12,
         duration: 140,
         useNativeDriver: true,
@@ -79,10 +112,11 @@ export default function Toast({
           styles.toast,
           { backgroundColor: config.bg, borderColor: config.borde },
           {
-            opacity: fadeAnim,
-            transform: [{ translateY: translateAnim }],
+            opacity: fadeAnimRef.current,
+            transform: [{ translateY: translateAnimRef.current }],
           },
         ]}
+      >
       >
         <Ionicons name={config.icono} size={16} color={config.color} />
         <Text style={[styles.texto, { color: config.color }]} numberOfLines={3}>

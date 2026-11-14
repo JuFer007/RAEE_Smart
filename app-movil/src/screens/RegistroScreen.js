@@ -22,7 +22,9 @@ export default function RegistroScreen({ navigation }) {
 
   useEffect(() => {
     if (!creada) return undefined;
-    const t = setTimeout(() => navigation.navigate('Main'), 1200);
+    const t = setTimeout(() => {
+      navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
+    }, 1200);
     return () => clearTimeout(t);
   }, [creada, navigation]);
 
@@ -194,7 +196,7 @@ export default function RegistroScreen({ navigation }) {
             <Text style={styles.successSubtitulo}>Tu cuenta se creó correctamente. Te llevamos al inicio...</Text>
             <Boton
               titulo="Ir al inicio"
-              onPress={() => navigation.navigate('Main')}
+              onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Main' }] })}
               style={styles.successBoton}
             />
           </View>

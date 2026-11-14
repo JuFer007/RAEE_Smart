@@ -25,12 +25,42 @@ export default function CameraCapture({ onCaptura, analizando = false, tip, etiq
     await pedirPermiso();
   }
 
+  function seleccionarFotoWeb() {
+    if (typeof document === 'undefined') return;
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.style.display = 'none';
+
+    const limpiar = () => input.remove();
+    input.addEventListener('change', () => {
+      const archivo = input.files?.[0];
+      if (!archivo) {
+        limpiar();
+        return;
+      }
+      const lector = new FileReader();
+      lector.onload = () => {
+        limpiar();
+        if (typeof lector.result === 'string') {
+          setListo(false);
+          onCaptura(lector.result);
+        }
+      };
+      lector.onerror = limpiar;
+      lector.readAsDataURL(archivo);
+    });
+    input.addEventListener('cancel', limpiar);
+
+    document.body.appendChild(input);
+    input.click();
+  }
+
   async function disparar() {
     if (!listo || analizando) return;
 
     if (esWeb) {
-      setListo(false);
-      onCaptura(null);
+      seleccionarFotoWeb();
       return;
     }
 
@@ -67,7 +97,7 @@ export default function CameraCapture({ onCaptura, analizando = false, tip, etiq
             </LinearGradient>
             {esWeb ? (
               <Text style={estilos.simuladoTexto}>
-                Vista de cámara no disponible en el navegador. Pulsa el disparador para simular la captura.
+                Vista de cámara no disponible en el navegador. Pulsa el disparador para seleccionar una foto.
               </Text>
             ) : null}
           </LinearGradient>

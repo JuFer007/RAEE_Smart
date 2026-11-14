@@ -40,8 +40,8 @@ export default function LoginScreen({ navigation }) {
 
     try {
       setCargando(true);
-      await iniciarSesion(email.trim(), password);
-      navigation.navigate('Main');
+      await iniciarSesion(email.trim(), password, recordar);
+      navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
     } catch (err) {
       setErrorGeneral(err.normalizado || err.message || 'Intenta nuevamente en unos segundos.');
     } finally {

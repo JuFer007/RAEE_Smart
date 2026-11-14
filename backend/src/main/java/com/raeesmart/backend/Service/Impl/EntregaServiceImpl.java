@@ -7,51 +7,58 @@ import com.raeesmart.backend.Model.*;
 import com.raeesmart.backend.Model.Enums.EstadoEntrega;
 import com.raeesmart.backend.Model.Enums.TipoNotificacion;
 import com.raeesmart.backend.Model.Enums.TipoRAEE;
-import com.raeesmart.backend.Repository.CategoriaRAEERepository;
-import com.raeesmart.backend.Repository.EntregaRepository;
-import com.raeesmart.backend.Repository.UsuarioRepository;
-import com.raeesmart.backend.Service.*;
-import jakarta.transaction.Transactional;
+import com.raeesmart.backend.Repository.*;
+import com.raeesmart.backend.Service.CertificadoService;
+import com.raeesmart.backend.Service.ClasificacionIAService;
+import com.raeesmart.backend.Service.EntregaService;
+import com.raeesmart.backend.Security.AutorizacionService;
+import com.raeesmart.backend.Service.GeolocalizacionService;
+import com.raeesmart.backend.Service.NotificacionService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-
 public class EntregaServiceImpl implements EntregaService {
     private final EntregaRepository entregaRepository;
-    private final UsuarioRepository usuarioRepository;
+    private final PuntoRecoleccionRepository puntoRecoleccionRepository;
     private final CategoriaRAEERepository categoriaRAEERepository;
+    private final AlmacenamientoServiceImpl almacenamientoService;
     private final ClasificacionIAService clasificacionIAService;
     private final GeolocalizacionService geolocalizacionService;
-    private final CertificadoService certificadoService;
-    private final AlmacenamientoService almacenamientoService;
     private final NotificacionService notificacionService;
+    private final CertificadoService certificadoService;
+    private final AutorizacionService autorizacionService;
 
     public EntregaServiceImpl(EntregaRepository entregaRepository,
-                              UsuarioRepository usuarioRepository,
+                              PuntoRecoleccionRepository puntoRecoleccionRepository,
                               CategoriaRAEERepository categoriaRAEERepository,
+                              AlmacenamientoServiceImpl almacenamientoService,
                               ClasificacionIAService clasificacionIAService,
                               GeolocalizacionService geolocalizacionService,
+                              NotificacionService notificacionService,
                               CertificadoService certificadoService,
-                              AlmacenamientoService almacenamientoService,
-                              NotificacionService notificacionService) {
+                              AutorizacionService autorizacionService) {
         this.entregaRepository = entregaRepository;
-        this.usuarioRepository = usuarioRepository;
+        this.puntoRecoleccionRepository = puntoRecoleccionRepository;
         this.categoriaRAEERepository = categoriaRAEERepository;
+        this.almacenamientoService = almacenamientoService;
         this.clasificacionIAService = clasificacionIAService;
         this.geolocalizacionService = geolocalizacionService;
-        this.certificadoService = certificadoService;
-        this.almacenamientoService = almacenamientoService;
         this.notificacionService = notificacionService;
+        this.certificadoService = certificadoService;
+        this.autorizacionService = autorizacionService;
     }
 
     @Transactional
     @Override
     public EntregaResponseDTO registrarEntrega(EntregaRequestDTO request) {
-        Usuario usuario = usuarioRepository.findById(request.getUsuarioId()).orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+        Usuario usuario = autorizacionService.obtenerActor();
         ClasificacionResponseDTO clasificacion = clasificacionIAService.clasificar(request.getFoto());
-        PuntoRecoleccion punto = geolocalizacionService.encontrarPuntoMasCercano(request.getLatitud(), request.getLongitud());
+        PuntoRecoleccion punto = resolverPuntoRecoleccion(usuario, request);
         String fotoUrl = almacenamientoService.guardarFoto(request.getFoto());
 
         Entrega entrega = Entrega.builder()
@@ -68,16 +75,80 @@ public class EntregaServiceImpl implements EntregaService {
 
         entrega = entregaRepository.save(entrega);
 
-        Certificado certificado = certificadoService.generarCertificado(entrega);
-        entrega.setCertificado(certificado);
-        entrega.setEstado(EstadoEntrega.CONFIRMADA);
-        entrega = entregaRepository.save(entrega);
-
         notificacionService.notificarUsuario(
                 usuario,
                 TipoNotificacion.ENTREGA,
-                "Entrega confirmada",
-                "Tu entrega en " + punto.getNombre() + " fue registrada. Ya puedes ver tu certificado.");
+                "Entrega registrada",
+                "Tu entrega en " + punto.getNombre() + " fue registrada. El punto debe confirmar la recepcion para generar tu certificado.");
+
+        return mapearAResponse(entrega);
+    }
+
+    @Transactional
+    @Override
+    public EntregaResponseDTO confirmarEntrega(Long entregaId) {
+        Entrega entrega = entregaRepository.findById(entregaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Entrega no encontrada"));
+
+        autorizacionService.validarGestionEntrega(entrega);
+
+        if (entrega.getEstado() == EstadoEntrega.RECHAZADA) {
+            throw new IllegalStateException("No se puede confirmar una entrega rechazada");
+        }
+        if (entrega.getEstado() == EstadoEntrega.CONFIRMADA) {
+            return mapearAResponse(entrega);
+        }
+
+        if (entrega.getEstado() == EstadoEntrega.REGISTRADA) {
+            entrega.setEstado(EstadoEntrega.EN_PROCESO);
+            entrega = entregaRepository.save(entrega);
+        }
+
+        entrega.setEstado(EstadoEntrega.CONFIRMADA);
+        entrega.setFechaConfirmacion(LocalDateTime.now());
+        if (entrega.getCertificado() == null) {
+            entrega.setCertificado(certificadoService.generarCertificado(entrega));
+        }
+        entrega = entregaRepository.save(entrega);
+
+        notificacionService.notificarUsuario(
+                entrega.getUsuario(),
+                TipoNotificacion.ENTREGA,
+                "Certificado disponible",
+                "La recepcion de tu RAEE fue confirmada. Ya puedes descargar tu certificado.");
+
+        return mapearAResponse(entrega);
+    }
+
+    @Transactional
+    @Override
+    public EntregaResponseDTO rechazarEntrega(Long entregaId) {
+        Entrega entrega = entregaRepository.findById(entregaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Entrega no encontrada"));
+
+        autorizacionService.validarGestionEntrega(entrega);
+
+        if (entrega.getEstado() == EstadoEntrega.CONFIRMADA) {
+            throw new IllegalStateException("No se puede rechazar una entrega confirmada");
+        }
+        if (entrega.getEstado() == EstadoEntrega.RECHAZADA) {
+            return mapearAResponse(entrega);
+        }
+
+        if (entrega.getEstado() == EstadoEntrega.REGISTRADA) {
+            entrega.setEstado(EstadoEntrega.EN_PROCESO);
+            entrega = entregaRepository.save(entrega);
+        }
+
+        entrega.setEstado(EstadoEntrega.RECHAZADA);
+        entrega = entregaRepository.save(entrega);
+
+        notificacionService.notificarUsuario(
+                entrega.getUsuario(),
+                TipoNotificacion.ENTREGA,
+                "Entrega rechazada",
+                "La recepcion de tu RAEE en " + entrega.getPuntoRecoleccion().getNombre()
+                        + " fue rechazada. Acercate al punto para mas informacion.");
 
         return mapearAResponse(entrega);
     }
@@ -87,9 +158,17 @@ public class EntregaServiceImpl implements EntregaService {
     public EntregaResponseDTO corregirClasificacion(Long entregaId, TipoRAEE tipoCorregido) {
         Entrega entrega = entregaRepository.findById(entregaId).orElseThrow(() -> new ResourceNotFoundException("Entrega no encontrada"));
 
-        entrega.setTipoCorregido(tipoCorregido);
-        entrega.setClasificacionCorregida(true);
-        entrega = entregaRepository.save(entrega);
+        autorizacionService.validarAccesoEntrega(entrega);
+
+        if (entrega.getEstado() == EstadoEntrega.CONFIRMADA || entrega.getEstado() == EstadoEntrega.RECHAZADA) {
+            throw new IllegalStateException("No se puede corregir una entrega confirmada o rechazada");
+        }
+
+        if (tipoCorregido != null) {
+            entrega.setTipoCorregido(tipoCorregido);
+            entrega.setClasificacionCorregida(true);
+            entrega = entregaRepository.save(entrega);
+        }
 
         return mapearAResponse(entrega);
     }
@@ -97,16 +176,19 @@ public class EntregaServiceImpl implements EntregaService {
     @Override
     public EntregaResponseDTO buscarPorId(Long id) {
         Entrega entrega = entregaRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Entrega no encontrada"));
+        autorizacionService.validarAccesoEntrega(entrega);
         return mapearAResponse(entrega);
     }
 
     @Override
     public List<EntregaResponseDTO> listarPorUsuario(Long usuarioId) {
+        autorizacionService.validarAccesoUsuario(usuarioId);
         return entregaRepository.findByUsuarioIdOrderByFechaRegistroDesc(usuarioId).stream().map(this::mapearAResponse).collect(Collectors.toList());
     }
 
     @Override
     public List<EntregaResponseDTO> listarPorMunicipalidad(Long municipalidadId) {
+        autorizacionService.validarAccesoMunicipalidad(municipalidadId);
         return entregaRepository.findByPuntoRecoleccionMunicipalidadId(municipalidadId).stream().map(this::mapearAResponse).collect(Collectors.toList());
     }
 
@@ -125,10 +207,31 @@ public class EntregaServiceImpl implements EntregaService {
                 .confianzaIa(entrega.getConfianzaIa())
                 .clasificacionCorregida(entrega.getClasificacionCorregida())
                 .estado(entrega.getEstado())
+                .puntoRecoleccionId(entrega.getPuntoRecoleccion().getId())
                 .puntoRecoleccionNombre(entrega.getPuntoRecoleccion().getNombre())
                 .puntoRecoleccionDireccion(entrega.getPuntoRecoleccion().getDireccion())
                 .certificadoCodigoQr(entrega.getCertificado() != null ? entrega.getCertificado().getCodigoQr() : null)
                 .fechaRegistro(entrega.getFechaRegistro())
+                .fechaConfirmacion(entrega.getFechaConfirmacion())
                 .build();
+    }
+
+    private PuntoRecoleccion resolverPuntoRecoleccion(Usuario usuario, EntregaRequestDTO request) {
+        if (request.getPuntoRecoleccionId() == null) {
+            return geolocalizacionService.encontrarPuntoMasCercano(request.getLatitud(), request.getLongitud());
+        }
+
+        PuntoRecoleccion punto = puntoRecoleccionRepository.findById(request.getPuntoRecoleccionId())
+                .orElseThrow(() -> new ResourceNotFoundException("Punto de recoleccion no encontrado"));
+
+        if (punto.getMunicipalidad() == null || Boolean.FALSE.equals(punto.getMunicipalidad().getActivo())) {
+            throw new IllegalArgumentException("El punto de recoleccion no esta disponible");
+        }
+        if (usuario.getMunicipalidad() != null
+                && !usuario.getMunicipalidad().getId().equals(punto.getMunicipalidad().getId())) {
+            throw new IllegalArgumentException("El punto de recoleccion no pertenece a tu municipalidad");
+        }
+
+        return punto;
     }
 }

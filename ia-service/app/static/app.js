@@ -63,13 +63,8 @@ async function consultarEstado() {
       : "Esperando modelo entrenado";
 
     modeBadge.hidden = false;
-    if (data.modo_simulado) {
-      modeBadge.textContent = "Modo simulado";
-      modeBadge.className = "badge badge--sim";
-    } else {
-      modeBadge.textContent = "Modo real";
-      modeBadge.className = "badge badge--real";
-    }
+    modeBadge.textContent = "Modo real";
+    modeBadge.className = "badge badge--real";
   } catch (e) {
     statusBox.dataset.state = "down";
     statusTitle.textContent = "Servicio no disponible";
@@ -163,7 +158,7 @@ function pintarResultado(data) {
   });
 
   $("result-time").textContent = `${data.tiempo_inferencia_ms ?? "—"} ms`;
-  $("result-mode").textContent = data.modo_simulado ? "Simulado" : "Real";
+  $("result-mode").textContent = "Real";
 }
 
 async function clasificar() {

@@ -2,7 +2,7 @@ import React from 'react';
 import { Modal, View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Boton from './Boton';
-import { obtenerEstado, obtenerInfoTipo, estadoEntrega, COLORS, ESPACIOS, RADIOS, SOMBRAS, TIPOGRAFIA, FUENTES } from '../theme';
+import { obtenerInfoTipo, estadoEntrega, COLORS, ESPACIOS, RADIOS, SOMBRAS, TIPOGRAFIA, FUENTES } from '../theme';
 import { formatearFechaHora } from '../utils/fecha';
 
 export default function ModalEnProceso({ visible, entrega, onCerrar, onVerPuntos }) {
@@ -11,6 +11,8 @@ export default function ModalEnProceso({ visible, entrega, onCerrar, onVerPuntos
   const info = obtenerInfoTipo(entrega.tipoRaee);
   const estado = estadoEntrega(entrega.estado);
   const nombre = entrega.nombreCategoriaVisible || info.nombre;
+  const rechazada = entrega.estado === 'RECHAZADA';
+  const enProceso = entrega.estado === 'EN_PROCESO';
 
   return (
     <Modal
@@ -25,13 +27,23 @@ export default function ModalEnProceso({ visible, entrega, onCerrar, onVerPuntos
 
         <View style={styles.centro}>
           <View style={styles.tarjeta}>
-            <View style={styles.badge}>
-              <Ionicons name="hourglass-outline" size={22} color={COLORS.warning} />
+            <View style={[styles.badge, { backgroundColor: estado.bg }]}>
+              <Ionicons
+                name={rechazada ? 'close-circle-outline' : enProceso ? 'sync-outline' : 'hourglass-outline'}
+                size={22}
+                color={estado.color}
+              />
             </View>
 
-            <Text style={styles.titulo}>Pendiente de entrega</Text>
+            <Text style={styles.titulo}>
+              {rechazada ? 'Entrega rechazada' : enProceso ? 'Entrega en proceso' : 'Pendiente de entrega'}
+            </Text>
             <Text style={styles.subtitulo}>
-              El certificado digital se genera cuando el punto de acopio confirme la recepción del aparato.
+              {rechazada
+                ? 'El punto de acopio rechazó la recepción. Acércate para más información.'
+                : enProceso
+                  ? 'El punto de acopio está revisando tu entrega. El certificado se generará al confirmarla.'
+                  : 'El certificado digital se genera cuando el punto de acopio confirme la recepción del aparato.'}
             </Text>
 
             <View style={styles.datos}>

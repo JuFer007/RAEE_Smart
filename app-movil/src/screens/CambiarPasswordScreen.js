@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Alert } from 'react-native';
+import { View, ScrollView, StyleSheet, Alert } from 'react-native';
 import Encabezado from '../components/Encabezado';
 import Campo from '../components/Campo';
 import Boton from '../components/Boton';
+import * as authService from '../services/authService';
 import { COLORS, ESPACIOS, RADIOS } from '../theme';
 
 export default function CambiarPasswordScreen({ navigation }) {
@@ -24,13 +25,24 @@ export default function CambiarPasswordScreen({ navigation }) {
       Alert.alert('Error', 'La nueva contraseña debe tener al menos 6 caracteres.');
       return;
     }
-    setCargando(true);
-    setTimeout(() => {
-      setCargando(false);
+
+    try {
+      setCargando(true);
+      await authService.cambiarPassword(actual, nueva);
+      setActual('');
+      setNueva('');
+      setConfirmar('');
       Alert.alert('Éxito', 'Contraseña actualizada correctamente.', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
-    }, 800);
+    } catch (err) {
+      Alert.alert(
+        'No se pudo cambiar',
+        err.normalizado || 'Verifica tu contraseña actual e intenta nuevamente.',
+      );
+    } finally {
+      setCargando(false);
+    }
   };
 
   return (
@@ -64,10 +76,10 @@ export default function CambiarPasswordScreen({ navigation }) {
             autoCapitalize="none"
           />
           <Boton
-            titulo={cargando ? 'Guardando...' : 'Guardar cambios'}
+            titulo="Guardar cambios"
             iconoDerecha="checkmark"
             onPress={handleGuardar}
-            disabled={cargando}
+            cargando={cargando}
           />
         </View>
       </ScrollView>

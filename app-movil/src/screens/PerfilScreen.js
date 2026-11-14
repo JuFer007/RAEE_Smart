@@ -14,13 +14,7 @@ export default function PerfilScreen({ navigation }) {
   const { usuario, cerrarSesion } = useAuth();
 
   async function salir() {
-    const raiz = navigation.getParent();
     await cerrarSesion();
-    if (raiz) {
-      raiz.reset({ index: 0, routes: [{ name: 'Login' }] });
-    } else {
-      navigation.navigate('Login');
-    }
   }
 
   return (

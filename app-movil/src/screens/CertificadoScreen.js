@@ -1,17 +1,21 @@
-import React, { useState } from 'react';
-import { View, Text, Share, Platform, StyleSheet } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { View, Text, Share, Platform, ActivityIndicator, StyleSheet } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import Encabezado from '../components/Encabezado';
 import Boton from '../components/Boton';
 import QRDisplay from '../components/QRDisplay';
+import * as entregaService from '../services/entregaService';
+import * as certificadoService from '../services/certificadoService';
 import { obtenerEstado, obtenerInfoTipo, COLORS, ESPACIOS, RADIOS, TIPOGRAFIA, FUENTES } from '../theme';
 import { formatearFechaHora } from '../utils/fecha';
 import { USAR_DATOS_PRUEBA } from '../utils/datosPrueba';
 
 const PASOS = [
   { clave: 'REGISTRADA', titulo: 'Registrada' },
+  { clave: 'EN_PROCESO', titulo: 'En proceso' },
   { clave: 'CONFIRMADA', titulo: 'Certificada' },
 ];
 
@@ -19,14 +23,64 @@ const CODIGO_PRUEBA = 'RAEE-PRUEBA-CHC-000001';
 
 export default function CertificadoScreen({ route, navigation }) {
   const { entrega, punto } = route.params || {};
+  const entregaId = entrega?.id;
+  const [entregaActual, setEntregaActual] = useState(entrega);
+  const [certificado, setCertificado] = useState(null);
+  const [cargando, setCargando] = useState(!USAR_DATOS_PRUEBA && Boolean(entregaId));
   const [error, setError] = useState('');
-  const info = obtenerInfoTipo(entrega?.tipoRaee);
-  const nombrePunto = punto?.nombre || entrega?.puntoRecoleccionNombre || 'Punto por asignar';
-  const direccionPunto = punto?.direccion || entrega?.puntoRecoleccionDireccion;
-  const esConfirmada = entrega?.estado === 'CONFIRMADA';
+
+  const cargar = useCallback(async () => {
+    if (!entregaId || USAR_DATOS_PRUEBA) return;
+
+    try {
+      const actual = await entregaService.obtenerEntrega(entregaId);
+      setEntregaActual(actual);
+      setError('');
+
+      if (actual.estado === 'CONFIRMADA') {
+        try {
+          setCertificado(await certificadoService.obtenerPorEntrega(entregaId));
+        } catch (err) {
+          if (!certificadoService.esNoEncontrado(err)) throw err;
+          setCertificado(null);
+        }
+      } else {
+        setCertificado(null);
+      }
+    } catch (err) {
+      setError(err.normalizado || 'No pudimos consultar el estado del certificado');
+    } finally {
+      setCargando(false);
+    }
+  }, [entregaId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      cargar();
+    }, [cargar]),
+  );
+
+  function actualizar() {
+    setCargando(true);
+    setError('');
+    cargar();
+  }
+
+  const info = obtenerInfoTipo(entregaActual?.tipoRaee);
+  const estado = entregaActual?.estado;
+  const confirmada = estado === 'CONFIRMADA';
+  const rechazada = estado === 'RECHAZADA';
+  const nombrePunto =
+    entregaActual?.puntoRecoleccionNombre || certificado?.puntoEntregaNombre || punto?.nombre || 'Punto por asignar';
+  const direccionPunto = entregaActual?.puntoRecoleccionDireccion || punto?.direccion || nombrePunto;
+  const codigoHash = certificado?.codigoHash || (USAR_DATOS_PRUEBA && confirmada ? CODIGO_PRUEBA : '');
   const codigoQr =
-    entrega?.certificadoCodigoQr || (USAR_DATOS_PRUEBA && esConfirmada ? CODIGO_PRUEBA : '');
-  const verificado = esConfirmada && Boolean(codigoQr);
+    certificado?.codigoQr ||
+    entregaActual?.certificadoCodigoQr ||
+    (USAR_DATOS_PRUEBA && confirmada ? CODIGO_PRUEBA : '');
+  const fecha = certificado?.fechaEntrega || entregaActual?.fechaRegistro;
+  const verificado = confirmada && Boolean(codigoHash) && Boolean(codigoQr);
+  const nivel = confirmada ? 2 : estado === 'EN_PROCESO' ? 1 : 0;
 
   async function compartir() {
     if (!verificado) {
@@ -37,10 +91,10 @@ export default function CertificadoScreen({ route, navigation }) {
       await Share.share({
         message:
           `Certificado de entrega RAEE Smart\n` +
-          `Categoría: ${entrega?.nombreCategoriaVisible || info.nombre}\n` +
-          `Fecha: ${formatearFechaHora(entrega?.fechaRegistro)}\n` +
-          `Punto: ${direccionPunto || nombrePunto}\n` +
-          `Código: ${codigoQr}`,
+          `Categoría: ${certificado?.nombreCategoria || entregaActual?.nombreCategoriaVisible || info.nombre}\n` +
+          `Fecha: ${formatearFechaHora(fecha)}\n` +
+          `Punto: ${direccionPunto}\n` +
+          `Código: ${codigoHash}`,
       });
     } catch (_e) {
       setError('No pudimos compartir el certificado en este dispositivo');
@@ -53,7 +107,13 @@ export default function CertificadoScreen({ route, navigation }) {
       return;
     }
     try {
-      const html = htmlCertificado(entrega, info, nombrePunto, direccionPunto, codigoQr);
+      const html = htmlCertificado(
+        certificado?.nombreCategoria || entregaActual?.nombreCategoriaVisible || info.nombre,
+        fecha,
+        nombrePunto,
+        direccionPunto,
+        codigoHash,
+      );
       if (Platform.OS === 'web') {
         await Print.printAsync({ html });
         return;
@@ -77,7 +137,16 @@ export default function CertificadoScreen({ route, navigation }) {
         <Encabezado titulo="Certificado de entrega" onBack={() => navigation.goBack()} />
 
         <View style={styles.cuerpo}>
-          <View style={[styles.tarjetaQr, verificado ? styles.tarjetaQrOk : styles.tarjetaQrPendiente]}>
+          <View
+            style={[
+              styles.tarjetaQr,
+              verificado
+                ? styles.tarjetaQrOk
+                : rechazada
+                  ? styles.tarjetaQrRechazada
+                  : styles.tarjetaQrPendiente,
+            ]}
+          >
             <View style={styles.qrMarco}>
               {verificado ? (
                 <>
@@ -88,50 +157,98 @@ export default function CertificadoScreen({ route, navigation }) {
                 </>
               ) : (
                 <View style={styles.qrPendiente}>
-                  <Ionicons name="hourglass-outline" size={40} color={COLORS.warning} />
+                  <Ionicons
+                    name={rechazada ? 'close-circle-outline' : 'hourglass-outline'}
+                    size={40}
+                    color={rechazada ? COLORS.danger : COLORS.warning}
+                  />
                   <Text style={styles.qrPendienteTexto}>
-                    Tu certificado se generará aquí cuando el punto confirme la entrega
+                    {rechazada
+                      ? 'La entrega fue rechazada por el punto de acopio'
+                      : 'Tu certificado se generará aquí cuando el punto confirme la entrega'}
                   </Text>
                 </View>
               )}
             </View>
 
-            <Text style={[styles.estado, verificado ? styles.estadoOk : styles.estadoPendiente]}>
-              {verificado ? '¡Entrega certificada!' : 'Entrega en proceso'}
+            <Text
+              style={[
+                styles.estado,
+                verificado ? styles.estadoOk : rechazada ? styles.estadoRechazado : styles.estadoPendiente,
+              ]}
+            >
+              {verificado
+                ? '¡Entrega certificada!'
+                : rechazada
+                  ? 'Entrega rechazada'
+                  : cargando
+                    ? 'Consultando estado...'
+                    : 'Pendiente de confirmación'}
             </Text>
             <Text style={styles.estadoDetalle}>
               {verificado
                 ? 'Este código es único y sirve para comprobar la entrega.'
-                : 'Te avisaremos cuando el punto de acopio confirme la recepción.'}
+                : rechazada
+                  ? 'Acércate al punto de acopio para más información.'
+                  : 'Te avisaremos cuando el punto de acopio confirme la recepción.'}
             </Text>
 
-            <View style={styles.pasos}>
-              {PASOS.map((paso, i) => {
-                const activo = paso.clave === 'CONFIRMADA' ? verificado : true;
-                const esUltimo = i === PASOS.length - 1;
-                return (
-                  <View key={paso.clave} style={styles.pasoFila}>
-                    <View style={styles.pasoPunto}>
-                      <View style={[styles.pasoCirculo, !activo && styles.pasoCirculoInactivo]}>
-                        <Ionicons name={activo ? 'checkmark' : 'time-outline'} size={12} color={activo ? COLORS.white : COLORS.mutSoft} />
+            {!rechazada ? (
+              <View style={styles.pasos}>
+                {PASOS.map((paso, i) => {
+                  const activo = i <= nivel;
+                  const esUltimo = i === PASOS.length - 1;
+                  return (
+                    <View key={paso.clave} style={styles.pasoFila}>
+                      <View style={styles.pasoPunto}>
+                        <View style={[styles.pasoCirculo, !activo && styles.pasoCirculoInactivo]}>
+                          <Ionicons
+                            name={activo ? 'checkmark' : 'time-outline'}
+                            size={12}
+                            color={activo ? COLORS.white : COLORS.mutSoft}
+                          />
+                        </View>
+                        {!esUltimo ? (
+                          <View style={[styles.pasoLinea, i >= nivel && styles.pasoLineaInactiva]} />
+                        ) : null}
                       </View>
-                      {!esUltimo ? <View style={[styles.pasoLinea, !activo && styles.pasoLineaInactiva]} /> : null}
+                      <Text style={[styles.pasoTexto, !activo && styles.pasoTextoInactivo]}>{paso.titulo}</Text>
                     </View>
-                    <Text style={[styles.pasoTexto, !activo && styles.pasoTextoInactivo]}>{paso.titulo}</Text>
-                  </View>
-                );
-              })}
-            </View>
+                  );
+                })}
+              </View>
+            ) : null}
           </View>
+
+          {cargando ? <ActivityIndicator color={COLORS.primary} style={styles.cargando} /> : null}
 
           <Text style={styles.datosTitulo}>Datos del certificado</Text>
           <View style={styles.datos}>
-            <Dato icono="qr-code-outline" etiqueta="Código" valor={codigoQr || 'Se genera al confirmar'} mono />
-            <Dato icono={info.icono} etiqueta="Categoría" valor={entrega?.nombreCategoriaVisible || info.nombre} />
-            <Dato icono="calendar-outline" etiqueta="Fecha" valor={formatearFechaHora(entrega?.fechaRegistro)} />
-            <Dato icono="location-outline" etiqueta="Punto" valor={direccionPunto || nombrePunto} />
-            <Dato icono="flag-outline" etiqueta="Estado" valor={obtenerEstado(entrega?.estado).label} ultima />
+            <Dato
+              icono="qr-code-outline"
+              etiqueta="Código"
+              valor={codigoHash || (rechazada ? 'No disponible' : 'Se genera al confirmar')}
+              mono
+            />
+            <Dato
+              icono={info.icono}
+              etiqueta="Categoría"
+              valor={certificado?.nombreCategoria || entregaActual?.nombreCategoriaVisible || info.nombre}
+            />
+            <Dato icono="calendar-outline" etiqueta="Fecha" valor={formatearFechaHora(fecha)} />
+            <Dato icono="location-outline" etiqueta="Punto" valor={direccionPunto} />
+            <Dato icono="flag-outline" etiqueta="Estado" valor={obtenerEstado(estado).label} ultima />
           </View>
+
+          {!USAR_DATOS_PRUEBA && entrega?.id ? (
+            <Boton
+              titulo="Actualizar estado"
+              variante="fantasma"
+              icono="refresh-outline"
+              onPress={actualizar}
+              cargando={cargando}
+            />
+          ) : null}
 
           {error ? <Text style={styles.error}>{error}</Text> : null}
         </View>
@@ -184,13 +301,13 @@ function Dato({ icono, etiqueta, valor, ultima = false, mono = false }) {
   );
 }
 
-function htmlCertificado(entrega, info, nombrePunto, direccionPunto, codigoQr) {
+function htmlCertificado(nombreCategoria, fecha, nombrePunto, direccionPunto, codigoHash) {
   const filas = [
-    ['Categoría', entrega?.nombreCategoriaVisible || info.nombre],
-    ['Fecha de entrega', formatearFechaHora(entrega?.fechaRegistro)],
+    ['Categoría', nombreCategoria],
+    ['Fecha de entrega', formatearFechaHora(fecha)],
     ['Punto de entrega', nombrePunto],
     ['Dirección', direccionPunto],
-    ['Código de certificado', codigoQr],
+    ['Código de certificado', codigoHash],
   ];
 
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
@@ -203,7 +320,7 @@ function htmlCertificado(entrega, info, nombrePunto, direccionPunto, codigoQr) {
     .pie{margin-top:28px;color:#709087;font-size:12px}
   </style></head><body>
     <h1>Certificado de entrega</h1>
-    <p class="sub">RAEE Smart · Chiclayo</p>
+    <p class="sub">RAEE Smart - Chiclayo</p>
     <table>${filas
       .filter(([, valor]) => valor)
       .map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`)
@@ -227,6 +344,7 @@ const styles = StyleSheet.create({
   },
   tarjetaQrOk: { backgroundColor: COLORS.primaryPale, borderColor: COLORS.primaryRing },
   tarjetaQrPendiente: { backgroundColor: COLORS.warningSoft, borderColor: '#F2DFB4' },
+  tarjetaQrRechazada: { backgroundColor: COLORS.dangerSoft, borderColor: '#F2C4C4' },
 
   qrMarco: { position: 'relative' },
   qrPendiente: {
@@ -260,6 +378,7 @@ const styles = StyleSheet.create({
   estado: { ...TIPOGRAFIA.h3, fontSize: 16, marginTop: 8 },
   estadoOk: { color: COLORS.primaryText },
   estadoPendiente: { color: COLORS.warning },
+  estadoRechazado: { color: COLORS.danger },
   estadoDetalle: {
     ...TIPOGRAFIA.micro,
     fontSize: 11,
@@ -269,8 +388,8 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
-  pasos: { flexDirection: 'row', gap: ESPACIOS.lg, marginTop: ESPACIOS.sm },
-  pasoFila: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  pasos: { flexDirection: 'row', gap: ESPACIOS.sm, marginTop: ESPACIOS.sm },
+  pasoFila: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   pasoPunto: { flexDirection: 'row', alignItems: 'center' },
   pasoCirculo: {
     width: 18,
@@ -281,11 +400,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   pasoCirculoInactivo: { backgroundColor: COLORS.lineTab },
-  pasoLinea: { width: 16, height: 2, borderRadius: 1, backgroundColor: COLORS.primary },
+  pasoLinea: { width: 12, height: 2, borderRadius: 1, backgroundColor: COLORS.primary },
   pasoLineaInactiva: { backgroundColor: COLORS.lineTab },
-  pasoTexto: { ...TIPOGRAFIA.micro, fontSize: 10.5, fontFamily: FUENTES.dmSemi, color: COLORS.inkItem },
+  pasoTexto: { ...TIPOGRAFIA.micro, fontSize: 10, fontFamily: FUENTES.dmSemi, color: COLORS.inkItem },
   pasoTextoInactivo: { color: COLORS.mutSoft },
 
+  cargando: { marginVertical: 4 },
   datosTitulo: { ...TIPOGRAFIA.h4, fontSize: 13, marginBottom: 8 },
   datos: {
     backgroundColor: COLORS.surface,

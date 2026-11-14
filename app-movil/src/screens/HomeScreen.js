@@ -7,10 +7,8 @@ import { BotonIcono } from '../components/Encabezado';
 import MapaPuntos from '../components/MapaPuntos';
 import usePuntos from '../hooks/usePuntos';
 import useLocation from '../hooks/useLocation';
+import useNotificacionesNoLeidas from '../hooks/useNotificacionesNoLeidas';
 import { useAuth } from '../context/AuthContext';
-import { avisosNuevos } from '../utils/contenido';
-import { USAR_DATOS_PRUEBA } from '../utils/datosPrueba';
-import { avisosNuevosPrueba } from '../utils/usuarioPrueba';
 import { COLORS, ESPACIOS, RADIOS, SOMBRAS, TIPOGRAFIA, FUENTES } from '../theme';
 
 export default function HomeScreen({ navigation }) {
@@ -18,11 +16,11 @@ export default function HomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const { ubicacion } = useLocation();
   const { puntos, cargando, error } = usePuntos(ubicacion);
+  const nuevos = useNotificacionesNoLeidas();
 
   const hora = new Date().getHours();
   const saludo = hora < 12 ? 'Buenos días' : hora < 19 ? 'Buenas tardes' : 'Buenas noches';
   const nombre = (usuario?.nombre || '').trim().split(' ')[0] || 'vecino';
-  const nuevos = USAR_DATOS_PRUEBA ? avisosNuevosPrueba() : avisosNuevos();
   const textoPuntos = error
     ? 'No pudimos cargar los puntos'
     : cargando && puntos.length === 0

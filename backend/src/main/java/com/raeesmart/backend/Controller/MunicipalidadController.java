@@ -22,6 +22,13 @@ public class MunicipalidadController {
         this.campanaService = campanaService;
     }
 
+    @GetMapping("/puntos")
+    public List<PuntoRecoleccionResponseDTO> listarPuntosActivos() {
+        return puntoRecoleccionRepository.findByMunicipalidadActivoTrue().stream()
+                .map(this::mapearAResponse)
+                .toList();
+    }
+
     @GetMapping("/{id}/puntos")
     public List<PuntoRecoleccionResponseDTO> listarPuntos(@PathVariable Long id) {
         return puntoRecoleccionRepository.findByMunicipalidadId(id).stream()

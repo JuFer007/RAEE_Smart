@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import Encabezado from '../components/Encabezado';
 import ModalEnProceso from '../components/ModalEnProceso';
 import Boton from '../components/Boton';
@@ -10,7 +11,7 @@ import * as entregaService from '../services/entregaService';
 import { obtenerInfoTipo, estadoEntrega, COLORS, ESPACIOS, RADIOS, TIPOGRAFIA, FUENTES } from '../theme';
 import { formatearFechaHora } from '../utils/fecha';
 
-const FILTROS = ['Todas', 'Certificadas', 'En proceso'];
+const FILTROS = ['Todas', 'Certificadas', 'En proceso', 'Rechazadas'];
 
 export default function HistorialScreen({ navigation }) {
   const { usuario } = useAuth();
@@ -23,6 +24,7 @@ export default function HistorialScreen({ navigation }) {
   const cargar = useCallback(async () => {
     try {
       setError(null);
+      setCargando(true);
       const data = await entregaService.listarHistorial(usuario.id);
       setEntregas(data);
     } catch (_e) {
@@ -32,31 +34,22 @@ export default function HistorialScreen({ navigation }) {
     }
   }, [usuario.id]);
 
-  useEffect(() => {
-    let activo = true;
-    entregaService
-      .listarHistorial(usuario.id)
-      .then((data) => {
-        if (activo) setEntregas(data);
-      })
-      .catch(() => {
-        if (activo) setError('No pudimos cargar tus entregas');
-      })
-      .finally(() => {
-        if (activo) setCargando(false);
-      });
-    return () => {
-      activo = false;
-    };
-  }, [usuario.id]);
+  useFocusEffect(
+    useCallback(() => {
+      cargar();
+    }, [cargar]),
+  );
 
   const visibles = entregas.filter((e) => {
     if (filtro === 'Certificadas') return e.estado === 'CONFIRMADA';
-    if (filtro === 'En proceso') return e.estado !== 'CONFIRMADA';
+    if (filtro === 'En proceso') {
+      return e.estado !== 'CONFIRMADA' && e.estado !== 'RECHAZADA';
+    }
+    if (filtro === 'Rechazadas') return e.estado === 'RECHAZADA';
     return true;
   });
 
-  const certificada = (entrega) => entrega.estado === 'CONFIRMADA' && Boolean(entrega.certificadoCodigoQr);
+  const certificada = (entrega) => entrega.estado === 'CONFIRMADA';
 
   function abrirEntrega(entrega) {
     if (certificada(entrega)) {
@@ -128,7 +121,7 @@ export default function HistorialScreen({ navigation }) {
 function FilaEntrega({ entrega, onPress }) {
   const info = obtenerInfoTipo(entrega.tipoRaee);
   const estado = estadoEntrega(entrega.estado);
-  const lista = entrega.estado === 'CONFIRMADA' && Boolean(entrega.certificadoCodigoQr);
+  const lista = entrega.estado === 'CONFIRMADA';
 
   return (
     <TouchableOpacity style={styles.item} onPress={onPress} activeOpacity={0.85}>
@@ -141,8 +134,8 @@ function FilaEntrega({ entrega, onPress }) {
         </Text>
         <Text style={styles.itemDetalle}>{formatearFechaHora(entrega.fechaRegistro)}</Text>
         <Text style={styles.itemDetalle} numberOfLines={1}>
-          {entrega.certificadoCodigoQr
-            ? `Código: ${entrega.certificadoCodigoQr}`
+          {lista
+            ? 'Certificado disponible'
             : entrega.puntoRecoleccionNombre || 'Punto por asignar'}
         </Text>
       </View>
