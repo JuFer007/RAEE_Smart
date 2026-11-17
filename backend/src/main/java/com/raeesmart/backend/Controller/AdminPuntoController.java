@@ -1,6 +1,7 @@
 package com.raeesmart.backend.Controller;
 import com.raeesmart.backend.Dto.Request.PuntoRecoleccionRequestDTO;
 import com.raeesmart.backend.Dto.Response.PuntoRecoleccionResponseDTO;
+import com.raeesmart.backend.Security.AutorizacionService;
 import com.raeesmart.backend.Service.PuntoRecoleccionService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -13,15 +14,19 @@ import java.util.List;
 
 public class AdminPuntoController {
     private final PuntoRecoleccionService puntoService;
+    private final AutorizacionService autorizacionService;
 
-    public AdminPuntoController(PuntoRecoleccionService puntoService) {
+    public AdminPuntoController(PuntoRecoleccionService puntoService,
+                                AutorizacionService autorizacionService) {
         this.puntoService = puntoService;
+        this.autorizacionService = autorizacionService;
     }
 
     @GetMapping
     public List<PuntoRecoleccionResponseDTO> listar(@RequestParam(required = false) Long municipalidadId) {
-        return municipalidadId != null
-                ? puntoService.listarPorMunicipalidad(municipalidadId)
+        Long filtro = autorizacionService.resolverMunicipalidadIdOpcional(municipalidadId);
+        return filtro != null
+                ? puntoService.listarPorMunicipalidad(filtro)
                 : puntoService.listarTodos();
     }
 

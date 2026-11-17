@@ -1,6 +1,7 @@
 package com.raeesmart.backend.Controller;
 import com.raeesmart.backend.Dto.Request.CampanaRequestDTO;
 import com.raeesmart.backend.Dto.Response.CampanaResponseDTO;
+import com.raeesmart.backend.Security.AutorizacionService;
 import com.raeesmart.backend.Service.CampanaService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -13,14 +14,20 @@ import java.util.List;
 
 public class AdminCampanaController {
     private final CampanaService campanaService;
+    private final AutorizacionService autorizacionService;
 
-    public AdminCampanaController(CampanaService campanaService) {
+    public AdminCampanaController(CampanaService campanaService,
+                                  AutorizacionService autorizacionService) {
         this.campanaService = campanaService;
+        this.autorizacionService = autorizacionService;
     }
 
     @GetMapping
-    public List<CampanaResponseDTO> listar(@RequestParam Long municipalidadId) {
-        return campanaService.listarPorMunicipalidad(municipalidadId);
+    public List<CampanaResponseDTO> listar(@RequestParam(required = false) Long municipalidadId) {
+        Long filtro = autorizacionService.resolverMunicipalidadIdOpcional(municipalidadId);
+        return filtro != null
+                ? campanaService.listarPorMunicipalidad(filtro)
+                : campanaService.listarTodas();
     }
 
     @PostMapping

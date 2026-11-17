@@ -6,8 +6,11 @@ import com.raeesmart.backend.Exception.ResourceNotFoundException;
 import com.raeesmart.backend.Model.Campana;
 import com.raeesmart.backend.Model.Enums.TipoNotificacion;
 import com.raeesmart.backend.Model.Municipalidad;
+import com.raeesmart.backend.Model.PuntoRecoleccion;
 import com.raeesmart.backend.Repository.CampanaRepository;
 import com.raeesmart.backend.Repository.MunicipalidadRepository;
+import com.raeesmart.backend.Repository.PuntoRecoleccionRepository;
+import com.raeesmart.backend.Security.AutorizacionService;
 import com.raeesmart.backend.Service.NotificacionService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,24 +27,35 @@ public class CampanaServiceImpl implements CampanaService {
 
     private final CampanaRepository campanaRepository;
     private final MunicipalidadRepository municipalidadRepository;
+    private final PuntoRecoleccionRepository puntoRecoleccionRepository;
     private final NotificacionService notificacionService;
+    private final AutorizacionService autorizacionService;
 
     public CampanaServiceImpl(CampanaRepository campanaRepository,
                               MunicipalidadRepository municipalidadRepository,
-                              NotificacionService notificacionService) {
+                              PuntoRecoleccionRepository puntoRecoleccionRepository,
+                              NotificacionService notificacionService,
+                              AutorizacionService autorizacionService) {
         this.campanaRepository = campanaRepository;
         this.municipalidadRepository = municipalidadRepository;
+        this.puntoRecoleccionRepository = puntoRecoleccionRepository;
         this.notificacionService = notificacionService;
-    }    @Transactional
+        this.autorizacionService = autorizacionService;
+    }
+
+    @Transactional
     @Override
     public CampanaResponseDTO crear(CampanaRequestDTO request) {
         validarFechas(request);
-        Municipalidad municipalidad = buscarMunicipalidad(request.getMunicipalidadId());
+        Long municipalidadId = autorizacionService.resolverMunicipalidadId(request.getMunicipalidadId());
+        Municipalidad municipalidad = buscarMunicipalidad(municipalidadId);
+        PuntoRecoleccion punto = resolverPunto(request.getPuntoRecoleccionId(), municipalidadId);
         Campana campana = Campana.builder()
                 .municipalidad(municipalidad)
                 .titulo(request.getTitulo().trim())
                 .descripcion(request.getDescripcion())
                 .lugar(request.getLugar())
+                .puntoRecoleccion(punto)
                 .horario(request.getHorario())
                 .fechaInicio(request.getFechaInicio())
                 .fechaFin(request.getFechaFin())
@@ -57,10 +71,13 @@ public class CampanaServiceImpl implements CampanaService {
     public CampanaResponseDTO actualizar(Long id, CampanaRequestDTO request) {
         validarFechas(request);
         Campana campana = buscarCampana(id);
-        campana.setMunicipalidad(buscarMunicipalidad(request.getMunicipalidadId()));
+        autorizacionService.validarGestionCampana(campana);
+        Long municipalidadId = autorizacionService.resolverMunicipalidadId(request.getMunicipalidadId());
+        campana.setMunicipalidad(buscarMunicipalidad(municipalidadId));
         campana.setTitulo(request.getTitulo().trim());
         campana.setDescripcion(request.getDescripcion());
         campana.setLugar(request.getLugar());
+        campana.setPuntoRecoleccion(resolverPunto(request.getPuntoRecoleccionId(), municipalidadId));
         campana.setHorario(request.getHorario());
         campana.setFechaInicio(request.getFechaInicio());
         campana.setFechaFin(request.getFechaFin());
@@ -74,6 +91,7 @@ public class CampanaServiceImpl implements CampanaService {
     @Override
     public CampanaResponseDTO cambiarEstado(Long id, boolean activa) {
         Campana campana = buscarCampana(id);
+        autorizacionService.validarGestionCampana(campana);
         boolean estabaApagada = !Boolean.TRUE.equals(campana.getActiva());
         campana.setActiva(activa);
         campana = campanaRepository.save(campana);
@@ -86,13 +104,25 @@ public class CampanaServiceImpl implements CampanaService {
     @Transactional
     @Override
     public void eliminar(Long id) {
-        campanaRepository.delete(buscarCampana(id));
+        Campana campana = buscarCampana(id);
+        autorizacionService.validarGestionCampana(campana);
+        campanaRepository.delete(campana);
     }
 
     @Transactional(readOnly = true)
     @Override
     public List<CampanaResponseDTO> listarPorMunicipalidad(Long municipalidadId) {
+        autorizacionService.validarAccesoMunicipalidad(municipalidadId);
         return campanaRepository.findByMunicipalidadIdOrderByFechaInicioDesc(municipalidadId).stream()
+                .map(this::mapearAResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<CampanaResponseDTO> listarTodas() {
+        autorizacionService.validarSuperAdmin();
+        return campanaRepository.findAll().stream()
                 .map(this::mapearAResponse)
                 .toList();
     }
@@ -136,7 +166,9 @@ public class CampanaServiceImpl implements CampanaService {
             throw new ResourceNotFoundException("Campaña no encontrada");
         }
         return mapearAResponse(campana);
-    }    private void notificarSiEsVigente(Campana campana) {
+    }
+
+    private void notificarSiEsVigente(Campana campana) {
         boolean municipalidadActiva = Boolean.TRUE.equals(campana.getMunicipalidad().getActivo());
         boolean noTermino = !campana.getFechaFin().isBefore(LocalDate.now(ZONA_PERU));
         if (Boolean.TRUE.equals(campana.getActiva()) && municipalidadActiva && noTermino) {
@@ -156,6 +188,20 @@ public class CampanaServiceImpl implements CampanaService {
                 .orElseThrow(() -> new ResourceNotFoundException("Municipalidad no encontrada"));
     }
 
+    private PuntoRecoleccion resolverPunto(Long puntoId, Long municipalidadId) {
+        if (puntoId == null) {
+            return null;
+        }
+        PuntoRecoleccion punto = puntoRecoleccionRepository.findById(puntoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Punto de recolección no encontrado"));
+        if (punto.getMunicipalidad() == null
+                || !municipalidadId.equals(punto.getMunicipalidad().getId())) {
+            throw new IllegalArgumentException(
+                    "El punto de recolección no pertenece a la municipalidad indicada");
+        }
+        return punto;
+    }
+
     private Campana buscarCampana(Long id) {
         return campanaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Campaña no encontrada"));
@@ -170,6 +216,7 @@ public class CampanaServiceImpl implements CampanaService {
     }
 
     private CampanaResponseDTO mapearAResponse(Campana campana) {
+        PuntoRecoleccion punto = campana.getPuntoRecoleccion();
         return CampanaResponseDTO.builder()
                 .id(campana.getId())
                 .municipalidadId(campana.getMunicipalidad().getId())
@@ -177,6 +224,8 @@ public class CampanaServiceImpl implements CampanaService {
                 .titulo(campana.getTitulo())
                 .descripcion(campana.getDescripcion())
                 .lugar(campana.getLugar())
+                .puntoRecoleccionId(punto != null ? punto.getId() : null)
+                .puntoRecoleccionNombre(punto != null ? punto.getNombre() : null)
                 .horario(campana.getHorario())
                 .fechaInicio(campana.getFechaInicio())
                 .fechaFin(campana.getFechaFin())

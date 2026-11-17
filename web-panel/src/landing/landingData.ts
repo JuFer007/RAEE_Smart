@@ -1,4 +1,4 @@
-// Datos de la landing de RAEE Smart (tomados de la app móvil: contenido.js y datosPrueba.js)
+﻿// Datos de la landing de RAEE Smart (tomados de la app móvil: contenido.js y datosPrueba.js)
 
 import carrusel1 from './img/hero/carrusel-1.jpg';
 import carrusel2 from './img/hero/carrusel-2.jpg';
@@ -99,18 +99,18 @@ export const CATEGORIAS: Categoria[] = [
 ];
 
 export const PUNTOS: Punto[] = [
-  { id: 1, nombre: 'Municipalidad de Chiclayo', direccion: 'Plaza de Armas de Chiclayo, Chiclayo', horario: 'Lunes a viernes · 8:00 a 16:30', lat: -6.7714, lng: -79.8409 },
-  { id: 2, nombre: 'Municipalidad de José Leonardo Ortiz', direccion: 'Plaza de Armas de José Leonardo Ortiz', horario: 'Lunes a viernes · 8:00 a 16:30', lat: -6.76, lng: -79.837 },
-  { id: 3, nombre: 'Municipalidad de La Victoria', direccion: 'Plaza de Armas de La Victoria', horario: 'Lunes a viernes · 8:00 a 15:00', lat: -6.781, lng: -79.832 },
-  { id: 4, nombre: 'Municipalidad de Pimentel', direccion: 'Plaza de Armas de Pimentel', horario: 'Lunes a sábado · 9:00 a 17:00', lat: -6.8369, lng: -79.934 },
-  { id: 5, nombre: 'Municipalidad de Santa Rosa', direccion: 'Plaza de Armas de Santa Rosa', horario: 'Lunes a sábado · 10:00 a 18:00', lat: -6.8667, lng: -79.95 },
-  { id: 6, nombre: 'Municipalidad de Monsefú', direccion: 'Plaza de Armas de Monsefú', horario: 'Lunes a sábado · 9:00 a 17:00', lat: -6.8767, lng: -79.8692 },
-  { id: 7, nombre: 'Municipalidad de Reque', direccion: 'Plaza de Armas de Reque', horario: 'Martes, jueves y sábado · 9:00 a 13:00', lat: -6.8631, lng: -79.8211 },
-  { id: 8, nombre: 'Municipalidad de Eten', direccion: 'Plaza de Armas de Eten', horario: 'Lunes a viernes · 8:30 a 16:30', lat: -6.9072, lng: -79.8644 },
-  { id: 9, nombre: 'Municipalidad de Puerto Eten', direccion: 'Plaza de Armas de Puerto Eten', horario: 'Lunes a viernes · 8:30 a 16:30', lat: -6.9417, lng: -79.8647 },
-  { id: 10, nombre: 'Municipalidad de Pomalca', direccion: 'Plaza de Armas de Pomalca', horario: 'Lunes a viernes · 8:00 a 15:00', lat: -6.7667, lng: -79.7833 },
-  { id: 11, nombre: 'Municipalidad de Tumán', direccion: 'Plaza de Armas de Tumán', horario: 'Lunes a viernes · 8:00 a 15:00', lat: -6.75, lng: -79.7167 },
-  { id: 12, nombre: 'Municipalidad Provincial de Lambayeque', direccion: 'Plaza de Armas de Lambayeque, Lambayeque', horario: 'Lunes a viernes · 8:00 a 16:00', lat: -6.7011, lng: -79.9067 },
-  { id: 13, nombre: 'Universidad Nacional Pedro Ruiz Gallo', direccion: 'Av. Juan XXIII 391, Lambayeque', horario: 'Lunes a viernes · horario por confirmar', lat: -6.7046, lng: -79.9065 },
-  { id: 14, nombre: 'Museo Tumbas Reales de Sipán', direccion: 'Av. Juan Pablo Vizcardo y Guzmán 895, Lambayeque', horario: 'Horario por confirmar', lat: -6.7017, lng: -79.9069 },
+  { id: 1, nombre: 'Municipalidad de Chiclayo', direccion: 'Plaza de Armas de Chiclayo, Chiclayo', horarioAtencion: 'Lunes a viernes · 8:00 a 16:30', latitud: -6.7714, longitud: -79.8409 },
+  { id: 2, nombre: 'Municipalidad de José Leonardo Ortiz', direccion: 'Plaza de Armas de José Leonardo Ortiz', horarioAtencion: 'Lunes a viernes · 8:00 a 16:30', latitud: -6.76, longitud: -79.837 },
+  { id: 3, nombre: 'Municipalidad de La Victoria', direccion: 'Plaza de Armas de La Victoria', horarioAtencion: 'Lunes a viernes · 8:00 a 15:00', latitud: -6.781, longitud: -79.832 },
+  { id: 4, nombre: 'Municipalidad de Pimentel', direccion: 'Plaza de Armas de Pimentel', horarioAtencion: 'Lunes a sábado · 9:00 a 17:00', latitud: -6.8369, longitud: -79.934 },
+  { id: 5, nombre: 'Municipalidad de Santa Rosa', direccion: 'Plaza de Armas de Santa Rosa', horarioAtencion: 'Lunes a sábado · 10:00 a 18:00', latitud: -6.8667, longitud: -79.95 },
+  { id: 6, nombre: 'Municipalidad de Monsefú', direccion: 'Plaza de Armas de Monsefú', horarioAtencion: 'Lunes a sábado · 9:00 a 17:00', latitud: -6.8767, longitud: -79.8692 },
+  { id: 7, nombre: 'Municipalidad de Reque', direccion: 'Plaza de Armas de Reque', horarioAtencion: 'Martes, jueves y sábado · 9:00 a 13:00', latitud: -6.8631, longitud: -79.8211 },
+  { id: 8, nombre: 'Municipalidad de Eten', direccion: 'Plaza de Armas de Eten', horarioAtencion: 'Lunes a viernes · 8:30 a 16:30', latitud: -6.9072, longitud: -79.8644 },
+  { id: 9, nombre: 'Municipalidad de Puerto Eten', direccion: 'Plaza de Armas de Puerto Eten', horarioAtencion: 'Lunes a viernes · 8:30 a 16:30', latitud: -6.9417, longitud: -79.8647 },
+  { id: 10, nombre: 'Municipalidad de Pomalca', direccion: 'Plaza de Armas de Pomalca', horarioAtencion: 'Lunes a viernes · 8:00 a 15:00', latitud: -6.7667, longitud: -79.7833 },
+  { id: 11, nombre: 'Municipalidad de Tumán', direccion: 'Plaza de Armas de Tumán', horarioAtencion: 'Lunes a viernes · 8:00 a 15:00', latitud: -6.75, longitud: -79.7167 },
+  { id: 12, nombre: 'Municipalidad Provincial de Lambayeque', direccion: 'Plaza de Armas de Lambayeque, Lambayeque', horarioAtencion: 'Lunes a viernes · 8:00 a 16:00', latitud: -6.7011, longitud: -79.9067 },
+  { id: 13, nombre: 'Universidad Nacional Pedro Ruiz Gallo', direccion: 'Av. Juan XXIII 391, Lambayeque', horarioAtencion: 'Lunes a viernes · horario por confirmar', latitud: -6.7046, longitud: -79.9065 },
+  { id: 14, nombre: 'Museo Tumbas Reales de Sipán', direccion: 'Av. Juan Pablo Vizcardo y Guzmán 895, Lambayeque', horarioAtencion: 'Horario por confirmar', latitud: -6.7017, longitud: -79.9069 },
 ];

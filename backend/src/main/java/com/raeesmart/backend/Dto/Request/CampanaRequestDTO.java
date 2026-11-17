@@ -28,6 +28,8 @@ public class CampanaRequestDTO {
     @Size(max = 200)
     private String lugar;
 
+    private Long puntoRecoleccionId;
+
     @Size(max = 100)
     private String horario;
 

@@ -112,13 +112,59 @@ FROM (VALUES
      'Plaza de Armas de Pimentel', 'Sáb y Dom 09:00 - 17:00', 7, 37),
   ('Municipalidad Provincial de Lambayeque', 'Lambayeque Recicla en la UNPRG',
      'Acopio de RAEE en la Universidad Nacional Pedro Ruiz Gallo para estudiantes y vecinos.',
-     'Universidad Nacional Pedro Ruiz Gallo', 'Lun a Vie 09:00 - 15:00', 3, 33)
+     'Universidad Nacional Pedro Ruiz Gallo', 'Lun a Vie 09:00 - 15:00', 3, 33),
+  ('Municipalidad Distrital de Santa Rosa', 'Santa Rosa Recicla en Familia',
+     'Jornada familiar para entregar aparatos electrónicos en desuso y recibir orientación ambiental.',
+     'Plaza de Armas de Santa Rosa', 'Sáb 09:00 - 15:00', 4, 34),
+  ('Municipalidad Distrital de Monsefú', 'Monsefú sin RAEE',
+     'Campaña distrital para acopiar celulares, tablets y pequeños electrodomésticos.',
+     'Plaza de Armas de Monsefú', 'Vie y Sáb 09:00 - 16:00', 6, 36),
+  ('Municipalidad Distrital de Reque', 'Reque Recicla',
+     'Punto temporal de acopio de RAEE para vecinos y comercios del distrito.',
+     'Plaza de Armas de Reque', 'Jue 09:00 - 13:00', 8, 38),
+  ('Municipalidad Distrital de Eten', 'Eten Ciudad Limpia',
+     'Recolección de equipos eléctricos y electrónicos para reducir la contaminación.',
+     'Plaza de Armas de Eten', 'Sáb 08:30 - 14:30', 10, 40),
+  ('Municipalidad Distrital de Puerto Eten', 'Puerto Eten Recicla',
+     'Jornada de acopio de RAEE en el malecón y la plaza principal del puerto.',
+     'Plaza de Armas de Puerto Eten', 'Dom 09:00 - 13:00', 11, 39),
+  ('Municipalidad Distrital de Pomalca', 'Pomalca Recicla Tecnología',
+     'Acopio de computadoras, impresoras y electrodomésticos en la zona urbana.',
+     'Plaza de Armas de Pomalca', 'Lun a Vie 08:00 - 15:00', 2, 31),
+  ('Municipalidad Distrital de Tumán', 'Tumán Recicla',
+     'Campaña de recepción de RAEE con certificado digital para cada entrega.',
+     'Plaza de Armas de Tumán', 'Mié y Vie 09:00 - 15:00', 5, 35)
 ) AS v(muni, titulo, descripcion, lugar, horario, ini, fin)
 JOIN municipalidad m ON m.nombre = v.muni
 WHERE NOT EXISTS (
   SELECT 1 FROM campanas c
   WHERE c.municipalidad_id = m.id AND c.titulo = v.titulo
 );
+
+-- Vincula las campañas con su punto de entrega cuando el lugar coincide
+-- con el nombre o la dirección de un punto de la misma municipalidad.
+UPDATE campanas c
+SET punto_recoleccion_id = COALESCE(
+  (
+    SELECT p.id
+    FROM puntos_recoleccion p
+    WHERE p.municipalidad_id = c.municipalidad_id
+      AND (p.nombre = c.lugar
+           OR p.direccion = c.lugar
+           OR p.direccion LIKE c.lugar || '%'
+           OR c.lugar LIKE p.direccion || '%')
+    ORDER BY p.id
+    LIMIT 1
+  ),
+  (
+    SELECT p.id
+    FROM puntos_recoleccion p
+    WHERE p.municipalidad_id = c.municipalidad_id
+    ORDER BY p.id
+    LIMIT 1
+  )
+)
+WHERE c.punto_recoleccion_id IS NULL;
 
 -- ---------------------------------------------------------------------
 -- 5) usuario  (contraseñas con BCrypt, igual que el backend)
@@ -127,29 +173,234 @@ WHERE NOT EXISTS (
 --   Super admin:                      admin@raee.com           / 123456
 --   Admin por municipalidad:          admin.<distrito>@raee.com / 123456
 --
--- Los admins municipales usan rol ADMIN porque SecurityConfig solo deja
--- entrar a /api/admin/** con ese rol; quedan ligados a su municipalidad_id.
+-- Los admins municipales usan rol MUNICIPALIDAD y quedan ligados a su
+-- municipalidad_id; el backend fuerza ese alcance en cada operación.
 -- ---------------------------------------------------------------------
 INSERT INTO usuario (nombre, email, password, telefono, dni, rol_usuario, fecha_registro, municipalidad_id)
 SELECT v.nombre, v.email, v.password, v.telefono, v.dni, v.rol, NOW(), m.id
 FROM (VALUES
   ('Carlos Alberto Ramírez', 'vecino@raee.com',  '$2a$10$800I/8HGwCkjx0iApGb/kevpKOnZ1jp2UjTTWCg9CKaUNKdFhoywa', '987654321', '76543210', 'CIUDADANO', NULL),
+  ('María Fernanda Torres', 'maria.torres@raee.com', '$2a$10$800I/8HGwCkjx0iApGb/kevpKOnZ1jp2UjTTWCg9CKaUNKdFhoywa', '976543210', '87654321', 'CIUDADANO', NULL),
+  ('Luis Alberto Sánchez', 'luis.sanchez@raee.com', '$2a$10$800I/8HGwCkjx0iApGb/kevpKOnZ1jp2UjTTWCg9CKaUNKdFhoywa', '965432109', '45678912', 'CIUDADANO', NULL),
+  ('Ana Lucía Delgado', 'ana.delgado@raee.com', '$2a$10$800I/8HGwCkjx0iApGb/kevpKOnZ1jp2UjTTWCg9CKaUNKdFhoywa', '954321098', '12345678', 'CIUDADANO', NULL),
+  ('Jorge Enrique Custodio', 'jorge.custodio@raee.com', '$2a$10$800I/8HGwCkjx0iApGb/kevpKOnZ1jp2UjTTWCg9CKaUNKdFhoywa', '943210987', '74185296', 'CIUDADANO', NULL),
+  ('Rosa Elena Vásquez', 'rosa.vasquez@raee.com', '$2a$10$800I/8HGwCkjx0iApGb/kevpKOnZ1jp2UjTTWCg9CKaUNKdFhoywa', '932109876', '96325874', 'CIUDADANO', NULL),
   ('Administrador RAEE Smart', 'admin@raee.com', '$2a$10$800I/8HGwCkjx0iApGb/kevpKOnZ1jp2UjTTWCg9CKaUNKdFhoywa', NULL, NULL, 'ADMIN', NULL),
-  ('Admin Municipalidad de Chiclayo',              'admin.chiclayo@raee.com',    '$2a$10$800I/8HGwCkjx0iApGb/kevpKOnZ1jp2UjTTWCg9CKaUNKdFhoywa', NULL, NULL, 'ADMIN', 'Municipalidad Provincial de Chiclayo'),
-  ('Admin Municipalidad de José Leonardo Ortiz',   'admin.jlo@raee.com',         '$2a$10$800I/8HGwCkjx0iApGb/kevpKOnZ1jp2UjTTWCg9CKaUNKdFhoywa', NULL, NULL, 'ADMIN', 'Municipalidad Distrital de José Leonardo Ortiz'),
-  ('Admin Municipalidad de La Victoria',           'admin.lavictoria@raee.com',  '$2a$10$800I/8HGwCkjx0iApGb/kevpKOnZ1jp2UjTTWCg9CKaUNKdFhoywa', NULL, NULL, 'ADMIN', 'Municipalidad Distrital de La Victoria'),
-  ('Admin Municipalidad de Pimentel',              'admin.pimentel@raee.com',    '$2a$10$800I/8HGwCkjx0iApGb/kevpKOnZ1jp2UjTTWCg9CKaUNKdFhoywa', NULL, NULL, 'ADMIN', 'Municipalidad Distrital de Pimentel'),
-  ('Admin Municipalidad de Santa Rosa',            'admin.santarosa@raee.com',   '$2a$10$800I/8HGwCkjx0iApGb/kevpKOnZ1jp2UjTTWCg9CKaUNKdFhoywa', NULL, NULL, 'ADMIN', 'Municipalidad Distrital de Santa Rosa'),
-  ('Admin Municipalidad de Monsefú',               'admin.monsefu@raee.com',     '$2a$10$800I/8HGwCkjx0iApGb/kevpKOnZ1jp2UjTTWCg9CKaUNKdFhoywa', NULL, NULL, 'ADMIN', 'Municipalidad Distrital de Monsefú'),
-  ('Admin Municipalidad de Reque',                 'admin.reque@raee.com',       '$2a$10$800I/8HGwCkjx0iApGb/kevpKOnZ1jp2UjTTWCg9CKaUNKdFhoywa', NULL, NULL, 'ADMIN', 'Municipalidad Distrital de Reque'),
-  ('Admin Municipalidad de Eten',                  'admin.eten@raee.com',        '$2a$10$800I/8HGwCkjx0iApGb/kevpKOnZ1jp2UjTTWCg9CKaUNKdFhoywa', NULL, NULL, 'ADMIN', 'Municipalidad Distrital de Eten'),
-  ('Admin Municipalidad de Puerto Eten',           'admin.puertoeten@raee.com',  '$2a$10$800I/8HGwCkjx0iApGb/kevpKOnZ1jp2UjTTWCg9CKaUNKdFhoywa', NULL, NULL, 'ADMIN', 'Municipalidad Distrital de Puerto Eten'),
-  ('Admin Municipalidad de Pomalca',               'admin.pomalca@raee.com',     '$2a$10$800I/8HGwCkjx0iApGb/kevpKOnZ1jp2UjTTWCg9CKaUNKdFhoywa', NULL, NULL, 'ADMIN', 'Municipalidad Distrital de Pomalca'),
-  ('Admin Municipalidad de Tumán',                 'admin.tuman@raee.com',       '$2a$10$800I/8HGwCkjx0iApGb/kevpKOnZ1jp2UjTTWCg9CKaUNKdFhoywa', NULL, NULL, 'ADMIN', 'Municipalidad Distrital de Tumán'),
-  ('Admin Municipalidad de Lambayeque',            'admin.lambayeque@raee.com',  '$2a$10$800I/8HGwCkjx0iApGb/kevpKOnZ1jp2UjTTWCg9CKaUNKdFhoywa', NULL, NULL, 'ADMIN', 'Municipalidad Provincial de Lambayeque')
+  ('Admin Municipalidad de Chiclayo',              'admin.chiclayo@raee.com',    '$2a$10$800I/8HGwCkjx0iApGb/kevpKOnZ1jp2UjTTWCg9CKaUNKdFhoywa', NULL, NULL, 'MUNICIPALIDAD', 'Municipalidad Provincial de Chiclayo'),
+  ('Admin Municipalidad de José Leonardo Ortiz',   'admin.jlo@raee.com',         '$2a$10$800I/8HGwCkjx0iApGb/kevpKOnZ1jp2UjTTWCg9CKaUNKdFhoywa', NULL, NULL, 'MUNICIPALIDAD', 'Municipalidad Distrital de José Leonardo Ortiz'),
+  ('Admin Municipalidad de La Victoria',           'admin.lavictoria@raee.com',  '$2a$10$800I/8HGwCkjx0iApGb/kevpKOnZ1jp2UjTTWCg9CKaUNKdFhoywa', NULL, NULL, 'MUNICIPALIDAD', 'Municipalidad Distrital de La Victoria'),
+  ('Admin Municipalidad de Pimentel',              'admin.pimentel@raee.com',    '$2a$10$800I/8HGwCkjx0iApGb/kevpKOnZ1jp2UjTTWCg9CKaUNKdFhoywa', NULL, NULL, 'MUNICIPALIDAD', 'Municipalidad Distrital de Pimentel'),
+  ('Admin Municipalidad de Santa Rosa',            'admin.santarosa@raee.com',   '$2a$10$800I/8HGwCkjx0iApGb/kevpKOnZ1jp2UjTTWCg9CKaUNKdFhoywa', NULL, NULL, 'MUNICIPALIDAD', 'Municipalidad Distrital de Santa Rosa'),
+  ('Admin Municipalidad de Monsefú',               'admin.monsefu@raee.com',     '$2a$10$800I/8HGwCkjx0iApGb/kevpKOnZ1jp2UjTTWCg9CKaUNKdFhoywa', NULL, NULL, 'MUNICIPALIDAD', 'Municipalidad Distrital de Monsefú'),
+  ('Admin Municipalidad de Reque',                 'admin.reque@raee.com',       '$2a$10$800I/8HGwCkjx0iApGb/kevpKOnZ1jp2UjTTWCg9CKaUNKdFhoywa', NULL, NULL, 'MUNICIPALIDAD', 'Municipalidad Distrital de Reque'),
+  ('Admin Municipalidad de Eten',                  'admin.eten@raee.com',        '$2a$10$800I/8HGwCkjx0iApGb/kevpKOnZ1jp2UjTTWCg9CKaUNKdFhoywa', NULL, NULL, 'MUNICIPALIDAD', 'Municipalidad Distrital de Eten'),
+  ('Admin Municipalidad de Puerto Eten',           'admin.puertoeten@raee.com',  '$2a$10$800I/8HGwCkjx0iApGb/kevpKOnZ1jp2UjTTWCg9CKaUNKdFhoywa', NULL, NULL, 'MUNICIPALIDAD', 'Municipalidad Distrital de Puerto Eten'),
+  ('Admin Municipalidad de Pomalca',               'admin.pomalca@raee.com',     '$2a$10$800I/8HGwCkjx0iApGb/kevpKOnZ1jp2UjTTWCg9CKaUNKdFhoywa', NULL, NULL, 'MUNICIPALIDAD', 'Municipalidad Distrital de Pomalca'),
+  ('Admin Municipalidad de Tumán',                 'admin.tuman@raee.com',       '$2a$10$800I/8HGwCkjx0iApGb/kevpKOnZ1jp2UjTTWCg9CKaUNKdFhoywa', NULL, NULL, 'MUNICIPALIDAD', 'Municipalidad Distrital de Tumán'),
+  ('Admin Municipalidad de Lambayeque',            'admin.lambayeque@raee.com',  '$2a$10$800I/8HGwCkjx0iApGb/kevpKOnZ1jp2UjTTWCg9CKaUNKdFhoywa', NULL, NULL, 'MUNICIPALIDAD', 'Municipalidad Provincial de Lambayeque')
 ) AS v(nombre, email, password, telefono, dni, rol, muni)
 LEFT JOIN municipalidad m ON m.nombre = v.muni
 WHERE NOT EXISTS (SELECT 1 FROM usuario u WHERE u.email = v.email);
+
+-- Corrige bases creadas con la versión anterior del seed, donde los admins
+-- municipales tenían rol ADMIN.
+UPDATE usuario
+SET rol_usuario = 'MUNICIPALIDAD'
+WHERE municipalidad_id IS NOT NULL
+  AND rol_usuario = 'ADMIN';
+
+-- Normaliza las preferencias de notificación de usuarios creados con el seed.
+UPDATE usuario
+SET notificar_push = COALESCE(notificar_push, TRUE),
+    notificar_campanas = COALESCE(notificar_campanas, TRUE),
+    notificar_entregas = COALESCE(notificar_entregas, TRUE)
+WHERE notificar_push IS NULL
+   OR notificar_campanas IS NULL
+   OR notificar_entregas IS NULL;
+
+-- ---------------------------------------------------------------------
+-- 6) entregas (24 registros distribuidos en las 12 municipalidades)
+--    foto_url funciona como clave idempotente del seed.
+-- ---------------------------------------------------------------------
+INSERT INTO entregas (
+  usuario_id, tipo_raee, tipo_corregido, punto_recoleccion_id, foto_url,
+  confianza_ia, clasificacion_corregida, latitud_usuario, longitud_usuario,
+  estado, fecha_registro, fecha_confirmacion
+)
+SELECT u.id,
+       v.tipo_raee,
+       CASE WHEN v.corregida THEN v.tipo_corregido ELSE NULL END,
+       p.id,
+       v.foto_url,
+       v.confianza,
+       v.corregida,
+       p.latitud,
+       p.longitud,
+       v.estado,
+       NOW() - make_interval(days => v.dias_atras),
+       CASE WHEN v.estado = 'CONFIRMADA'
+            THEN NOW() - make_interval(days => v.dias_atras) + interval '3 hours'
+            ELSE NULL END
+FROM (VALUES
+  ('/uploads/raee-smart/seed/entrega-01.jpg', 'vecino@raee.com',        'Municipalidad de Chiclayo',              'TELEVISOR',                NULL,      0.94, 'CONFIRMADA', 12, FALSE),
+  ('/uploads/raee-smart/seed/entrega-02.jpg', 'maria.torres@raee.com',  'Municipalidad de Chiclayo',              'CELULAR',                  NULL,      0.89, 'CONFIRMADA',  9, FALSE),
+  ('/uploads/raee-smart/seed/entrega-03.jpg', 'luis.sanchez@raee.com',  'Municipalidad de Chiclayo',              'LAPTOP',                   NULL,      0.91, 'EN_PROCESO',  2, FALSE),
+  ('/uploads/raee-smart/seed/entrega-04.jpg', 'ana.delgado@raee.com',   'Municipalidad de Chiclayo',              'IMPRESORA',                NULL,      0.78, 'REGISTRADA',  1, FALSE),
+  ('/uploads/raee-smart/seed/entrega-05.jpg', 'jorge.custodio@raee.com','Municipalidad de José Leonardo Ortiz',   'REFRIGERADORA',            NULL,      0.96, 'CONFIRMADA', 15, FALSE),
+  ('/uploads/raee-smart/seed/entrega-06.jpg', 'rosa.vasquez@raee.com',  'Municipalidad de José Leonardo Ortiz',   'EQUIPO_DE_SONIDO',         NULL,      0.72, 'RECHAZADA',   6, FALSE),
+  ('/uploads/raee-smart/seed/entrega-07.jpg', 'vecino@raee.com',        'Municipalidad de José Leonardo Ortiz',   'PEQUENO_ELECTRODOMESTICO', NULL,      0.83, 'CONFIRMADA', 20, FALSE),
+  ('/uploads/raee-smart/seed/entrega-08.jpg', 'maria.torres@raee.com',  'Municipalidad de La Victoria',           'TABLET',                   NULL,      0.88, 'CONFIRMADA', 11, FALSE),
+  ('/uploads/raee-smart/seed/entrega-09.jpg', 'luis.sanchez@raee.com',  'Municipalidad de La Victoria',           'TELEVISOR',                'LAPTOP',  0.61, 'CONFIRMADA',  8, TRUE),
+  ('/uploads/raee-smart/seed/entrega-10.jpg', 'ana.delgado@raee.com',   'Municipalidad de La Victoria',           'CELULAR',                  NULL,      0.93, 'REGISTRADA',  0, FALSE),
+  ('/uploads/raee-smart/seed/entrega-11.jpg', 'jorge.custodio@raee.com','Municipalidad de Pimentel',              'LAPTOP',                   NULL,      0.86, 'CONFIRMADA', 18, FALSE),
+  ('/uploads/raee-smart/seed/entrega-12.jpg', 'rosa.vasquez@raee.com',  'Municipalidad de Pimentel',              'CELULAR',                  NULL,      0.81, 'EN_PROCESO',  3, FALSE),
+  ('/uploads/raee-smart/seed/entrega-13.jpg', 'vecino@raee.com',        'Municipalidad de Santa Rosa',            'REFRIGERADORA',            NULL,      0.97, 'CONFIRMADA', 25, FALSE),
+  ('/uploads/raee-smart/seed/entrega-14.jpg', 'maria.torres@raee.com',  'Municipalidad de Monsefú',               'IMPRESORA',                NULL,      0.69, 'RECHAZADA',  10, FALSE),
+  ('/uploads/raee-smart/seed/entrega-15.jpg', 'luis.sanchez@raee.com',  'Municipalidad de Reque',                 'TELEVISOR',                NULL,      0.90, 'CONFIRMADA', 14, FALSE),
+  ('/uploads/raee-smart/seed/entrega-16.jpg', 'ana.delgado@raee.com',   'Municipalidad de Eten',                  'TABLET',                   NULL,      0.84, 'CONFIRMADA', 22, FALSE),
+  ('/uploads/raee-smart/seed/entrega-17.jpg', 'jorge.custodio@raee.com','Municipalidad de Puerto Eten',           'PEQUENO_ELECTRODOMESTICO', NULL,      0.79, 'EN_PROCESO',  4, FALSE),
+  ('/uploads/raee-smart/seed/entrega-18.jpg', 'rosa.vasquez@raee.com',  'Municipalidad de Pomalca',               'EQUIPO_DE_SONIDO',         NULL,      0.92, 'CONFIRMADA', 16, FALSE),
+  ('/uploads/raee-smart/seed/entrega-19.jpg', 'vecino@raee.com',        'Municipalidad de Tumán',                 'CELULAR',                  NULL,      0.87, 'CONFIRMADA',  7, FALSE),
+  ('/uploads/raee-smart/seed/entrega-20.jpg', 'maria.torres@raee.com',  'Universidad Nacional Pedro Ruiz Gallo',  'LAPTOP',                   NULL,      0.95, 'CONFIRMADA', 13, FALSE),
+  ('/uploads/raee-smart/seed/entrega-21.jpg', 'luis.sanchez@raee.com',  'Museo Tumbas Reales de Sipán',           'TELEVISOR',                NULL,      0.88, 'REGISTRADA',  1, FALSE),
+  ('/uploads/raee-smart/seed/entrega-22.jpg', 'ana.delgado@raee.com',   'Municipalidad Provincial de Lambayeque', 'IMPRESORA',                NULL,      0.74, 'CONFIRMADA', 19, FALSE),
+  ('/uploads/raee-smart/seed/entrega-23.jpg', 'jorge.custodio@raee.com','Municipalidad de Chiclayo',              'REFRIGERADORA',            NULL,      0.66, 'RECHAZADA',   5, FALSE),
+  ('/uploads/raee-smart/seed/entrega-24.jpg', 'rosa.vasquez@raee.com',  'Municipalidad de Chiclayo',              'EQUIPO_DE_SONIDO',         'CELULAR', 0.58, 'CONFIRMADA',  4, TRUE)
+) AS v(foto_url, email, punto, tipo_raee, tipo_corregido, confianza, estado, dias_atras, corregida)
+JOIN usuario u ON u.email = v.email
+JOIN puntos_recoleccion p ON p.nombre = v.punto
+WHERE NOT EXISTS (
+  SELECT 1 FROM entregas e WHERE e.foto_url = v.foto_url
+);
+
+-- ---------------------------------------------------------------------
+-- 7) reportes_ia (una inferencia por cada entrega del seed)
+-- ---------------------------------------------------------------------
+INSERT INTO reportes_ia (entrega_id, version_modelo, prediccion_top1, confianza, tiempo_inferencia_ms)
+SELECT e.id,
+       'raee-classifier-v1.4',
+       e.tipo_raee,
+       e.confianza_ia,
+       (120 + (e.id % 280))::integer
+FROM entregas e
+WHERE e.foto_url LIKE '/uploads/raee-smart/seed/entrega-%'
+  AND NOT EXISTS (
+    SELECT 1 FROM reportes_ia r WHERE r.entrega_id = e.id
+  );
+
+-- ---------------------------------------------------------------------
+-- 8) certificados (solo para entregas confirmadas del seed)
+-- ---------------------------------------------------------------------
+INSERT INTO certificados (entrega_id, codigo_qr, codigo_hash, fecha_emision)
+SELECT e.id,
+       'http://localhost:8080/api/certificados/verificar/SEED-CERT-' || LPAD(e.id::text, 6, '0'),
+       'SEED-CERT-' || LPAD(e.id::text, 6, '0'),
+       COALESCE(e.fecha_confirmacion, e.fecha_registro) + interval '5 minutes'
+FROM entregas e
+WHERE e.foto_url LIKE '/uploads/raee-smart/seed/entrega-%'
+  AND e.estado = 'CONFIRMADA'
+  AND NOT EXISTS (
+    SELECT 1 FROM certificados c WHERE c.entrega_id = e.id
+  );
+
+-- ---------------------------------------------------------------------
+-- 9) notificaciones (bienvenida, campañas, entregas y horarios)
+-- ---------------------------------------------------------------------
+INSERT INTO notificaciones (usuario_id, titulo, detalle, tipo, leida, fecha_creacion)
+SELECT u.id,
+       'Bienvenido a RAEE Smart',
+       'Tu cuenta está activa. Desde aquí puedes gestionar tus entregas y recibir novedades.',
+       'GENERAL',
+       FALSE,
+       NOW() - interval '30 days'
+FROM usuario u
+WHERE NOT EXISTS (
+  SELECT 1 FROM notificaciones n
+  WHERE n.usuario_id = u.id AND n.titulo = 'Bienvenido a RAEE Smart'
+);
+
+INSERT INTO notificaciones (usuario_id, titulo, detalle, tipo, leida, fecha_creacion)
+SELECT u.id,
+       c.titulo,
+       'Nueva campaña de acopio en ' || COALESCE(c.lugar, 'tu distrito') ||
+       '. Horario: ' || COALESCE(c.horario, 'por confirmar') || '.',
+       'CAMPANA',
+       FALSE,
+       NOW() - interval '2 days'
+FROM usuario u
+CROSS JOIN campanas c
+WHERE u.rol_usuario = 'CIUDADANO'
+  AND c.activa = TRUE
+  AND NOT EXISTS (
+    SELECT 1 FROM notificaciones n
+    WHERE n.usuario_id = u.id AND n.titulo = c.titulo
+  );
+
+INSERT INTO notificaciones (usuario_id, titulo, detalle, tipo, leida, fecha_creacion)
+SELECT e.usuario_id,
+       'Entrega #' || LPAD(e.id::text, 4, '0') || ' ' ||
+       CASE e.estado
+         WHEN 'CONFIRMADA' THEN 'confirmada'
+         WHEN 'RECHAZADA' THEN 'rechazada'
+         WHEN 'EN_PROCESO' THEN 'en revisión'
+         ELSE 'registrada'
+       END,
+       CASE e.estado
+         WHEN 'CONFIRMADA' THEN 'La recepción en ' || p.nombre || ' fue confirmada. Tu certificado digital ya está disponible.'
+         WHEN 'RECHAZADA' THEN 'La recepción en ' || p.nombre || ' fue rechazada. Acércate al punto para más información.'
+         WHEN 'EN_PROCESO' THEN 'Tu entrega en ' || p.nombre || ' está siendo revisada por la municipalidad.'
+         ELSE 'Tu entrega en ' || p.nombre || ' fue registrada y está pendiente de revisión.'
+       END,
+       'ENTREGA',
+       e.fecha_registro < NOW() - interval '7 days',
+       e.fecha_registro + interval '5 minutes'
+FROM entregas e
+JOIN puntos_recoleccion p ON p.id = e.punto_recoleccion_id
+WHERE e.foto_url LIKE '/uploads/raee-smart/seed/entrega-%'
+  AND NOT EXISTS (
+    SELECT 1 FROM notificaciones n
+    WHERE n.usuario_id = e.usuario_id
+      AND n.titulo LIKE 'Entrega #' || LPAD(e.id::text, 4, '0') || '%'
+  );
+
+INSERT INTO notificaciones (usuario_id, titulo, detalle, tipo, leida, fecha_creacion)
+SELECT a.id,
+       'Entrega #' || LPAD(e.id::text, 4, '0') || ' en ' || p.nombre,
+       'Se registró una entrega de ' || c.nombre_visible || ' en ' || p.nombre ||
+       '. Estado actual: ' || e.estado || '.',
+       'ENTREGA',
+       e.fecha_registro < NOW() - interval '7 days',
+       e.fecha_registro + interval '2 minutes'
+FROM entregas e
+JOIN puntos_recoleccion p ON p.id = e.punto_recoleccion_id
+JOIN usuario a ON a.municipalidad_id = p.municipalidad_id
+               AND a.rol_usuario = 'MUNICIPALIDAD'
+JOIN categorias_raee c ON c.tipo = COALESCE(e.tipo_corregido, e.tipo_raee)
+WHERE e.foto_url LIKE '/uploads/raee-smart/seed/entrega-%'
+  AND NOT EXISTS (
+    SELECT 1 FROM notificaciones n
+    WHERE n.usuario_id = a.id
+      AND n.titulo = 'Entrega #' || LPAD(e.id::text, 4, '0') || ' en ' || p.nombre
+  );
+
+UPDATE usuario
+SET notificar_recordatorios = TRUE
+WHERE email = 'vecino@raee.com'
+  AND notificar_recordatorios IS NOT TRUE;
+
+INSERT INTO notificaciones (usuario_id, titulo, detalle, tipo, leida, fecha_creacion)
+SELECT u.id,
+       'Horario de atención actualizado',
+       'El punto Municipalidad de Chiclayo atiende de lunes a viernes de 8:00 a 16:30.',
+       'HORARIO',
+       TRUE,
+       NOW() - interval '7 days'
+FROM usuario u
+WHERE u.email = 'vecino@raee.com'
+  AND NOT EXISTS (
+    SELECT 1 FROM notificaciones n
+    WHERE n.usuario_id = u.id AND n.titulo = 'Horario de atención actualizado'
+  );
 
 COMMIT;
 

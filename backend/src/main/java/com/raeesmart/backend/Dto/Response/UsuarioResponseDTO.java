@@ -17,4 +17,8 @@ public class UsuarioResponseDTO {
     private String dni;
     private String telefono;
     private RolUsuario rol;
+    private Long municipalidadId;
+    private String municipalidadNombre;
+    private Double municipalidadLatitud;
+    private Double municipalidadLongitud;
 }

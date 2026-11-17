@@ -1,5 +1,6 @@
 package com.raeesmart.backend.Security;
 
+import com.raeesmart.backend.Model.Campana;
 import com.raeesmart.backend.Model.Entrega;
 import com.raeesmart.backend.Model.Municipalidad;
 import com.raeesmart.backend.Model.PuntoRecoleccion;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
@@ -135,6 +137,54 @@ class AutorizacionServiceTest {
     }
 
     @Test
+    void municipalidadSiempreResuelveSuPropiaMunicipalidad() {
+        Usuario municipal = crearUsuario(3L, RolUsuario.MUNICIPALIDAD, 10L);
+        autenticar(municipal);
+
+        assertEquals(10L, autorizacionService.resolverMunicipalidadId(20L));
+        assertEquals(10L, autorizacionService.resolverMunicipalidadIdOpcional(20L));
+    }
+
+    @Test
+    void municipalidadNoPuedeGestionarPuntosDeOtraMunicipalidad() {
+        Usuario municipal = crearUsuario(3L, RolUsuario.MUNICIPALIDAD, 10L);
+        autenticar(municipal);
+
+        assertDoesNotThrow(() -> autorizacionService.validarGestionPunto(crearPunto(10L)));
+        assertThrows(AccessDeniedException.class,
+                () -> autorizacionService.validarGestionPunto(crearPunto(20L)));
+    }
+
+    @Test
+    void municipalidadNoPuedeGestionarCampanasDeOtraMunicipalidad() {
+        Usuario municipal = crearUsuario(3L, RolUsuario.MUNICIPALIDAD, 10L);
+        autenticar(municipal);
+
+        assertDoesNotThrow(() -> autorizacionService.validarGestionCampana(crearCampana(10L)));
+        assertThrows(AccessDeniedException.class,
+                () -> autorizacionService.validarGestionCampana(crearCampana(20L)));
+    }
+
+    @Test
+    void adminVinculadoAUnaMunicipalidadNoEsSuperAdmin() {
+        Usuario adminMunicipal = crearUsuario(9L, RolUsuario.ADMIN, 10L);
+        autenticar(adminMunicipal);
+
+        assertThrows(AccessDeniedException.class, () -> autorizacionService.validarSuperAdmin());
+        assertThrows(AccessDeniedException.class,
+                () -> autorizacionService.validarAccesoMunicipalidad(20L));
+    }
+
+    @Test
+    void superAdminPuedeAdministrarMunicipalidadesYResolverCualquiera() {
+        Usuario superAdmin = crearUsuario(9L, RolUsuario.ADMIN, null);
+        autenticar(superAdmin);
+
+        assertDoesNotThrow(() -> autorizacionService.validarSuperAdmin());
+        assertEquals(20L, autorizacionService.resolverMunicipalidadId(20L));
+    }
+
+    @Test
     void sinAutenticacionDeniegaAcceso() {
         SecurityContextHolder.clearContext();
 
@@ -155,6 +205,24 @@ class AutorizacionServiceTest {
                 .id(id)
                 .email("usuario" + id + "@raee.com")
                 .rolUsuario(rol)
+                .municipalidad(municipalidad)
+                .build();
+    }
+
+    private PuntoRecoleccion crearPunto(Long municipalidadId) {
+        Municipalidad municipalidad = Municipalidad.builder().id(municipalidadId).nombre("Municipalidad").build();
+        return PuntoRecoleccion.builder()
+                .id(100L)
+                .nombre("Punto")
+                .municipalidad(municipalidad)
+                .build();
+    }
+
+    private Campana crearCampana(Long municipalidadId) {
+        Municipalidad municipalidad = Municipalidad.builder().id(municipalidadId).nombre("Municipalidad").build();
+        return Campana.builder()
+                .id(200L)
+                .titulo("Campaña")
                 .municipalidad(municipalidad)
                 .build();
     }

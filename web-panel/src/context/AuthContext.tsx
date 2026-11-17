@@ -1,50 +1,89 @@
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import type { Usuario } from '../types';
-
-const USUARIO_PANEL: Usuario = {
-  id: 1,
-  nombre: 'Admin Municipalidad de Chiclayo',
-  email: 'admin.chiclayo@raee.com',
-  municipalidadId: 1,
-  municipalidadNombre: 'Municipalidad Provincial de Chiclayo',
-  rol: 'ADMIN',
-};
+import { obtenerSesionApi, iniciarSesionApi } from '../api/auth';
+import { guardarToken, obtenerToken } from '../api/client';
 
 interface AuthContextValue {
   usuario: Usuario | null;
   autenticado: boolean;
-  iniciarSesion: (datos: { email?: string }) => Usuario;
+  cargando: boolean;
+  iniciarSesion: (
+    email: string,
+    password: string,
+    recordarSesion?: boolean,
+  ) => Promise<Usuario>;
   cerrarSesion: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
-const CLAVE = 'raeesmart_panel_usuario';
+const CLAVE_ANTERIOR = 'raeesmart_panel_usuario';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [usuario, setUsuario] = useState<Usuario | null>(() => {
-    try {
-      const guardado = localStorage.getItem(CLAVE);
-      return guardado ? (JSON.parse(guardado) as Usuario) : null;
-    } catch {
-      return null;
+  const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const [cargando, setCargando] = useState(true);
+
+  useEffect(() => {
+    const anterior = localStorage.getItem(CLAVE_ANTERIOR);
+    if (anterior) localStorage.removeItem(CLAVE_ANTERIOR);
+
+    let activo = true;
+
+    async function recuperarSesion() {
+      if (!obtenerToken()) {
+        if (activo) setCargando(false);
+        return;
+      }
+
+      try {
+        const sesion = await obtenerSesionApi();
+        if (activo) setUsuario(sesion);
+      } catch {
+        guardarToken(null);
+        if (activo) setUsuario(null);
+      } finally {
+        if (activo) setCargando(false);
+      }
     }
-  });
 
-  const iniciarSesion = ({ email }: { email?: string }): Usuario => {
-    const datos: Usuario = { ...USUARIO_PANEL, email: email || USUARIO_PANEL.email };
-    localStorage.setItem(CLAVE, JSON.stringify(datos));
-    setUsuario(datos);
-    return datos;
-  };
+    void recuperarSesion();
+    return () => {
+      activo = false;
+    };
+  }, []);
 
-  const cerrarSesion = (): void => {
-    localStorage.removeItem(CLAVE);
+  const iniciarSesion = useCallback(
+    async (email: string, password: string, recordarSesion = true): Promise<Usuario> => {
+      const respuesta = await iniciarSesionApi(email.trim(), password);
+      guardarToken(respuesta.token, recordarSesion);
+      setUsuario(respuesta.usuario);
+      setCargando(false);
+      return respuesta.usuario;
+    },
+    [],
+  );
+
+  const cerrarSesion = useCallback((): void => {
+    guardarToken(null);
+    localStorage.removeItem(CLAVE_ANTERIOR);
     setUsuario(null);
-  };
+  }, []);
 
   const valor = useMemo(
-    () => ({ usuario, autenticado: Boolean(usuario), iniciarSesion, cerrarSesion }),
-    [usuario],
+    () => ({
+      usuario,
+      autenticado: Boolean(usuario),
+      cargando,
+      iniciarSesion,
+      cerrarSesion,
+    }),
+    [usuario, cargando, iniciarSesion, cerrarSesion],
   );
 
   return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>;

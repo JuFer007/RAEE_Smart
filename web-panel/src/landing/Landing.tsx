@@ -75,7 +75,7 @@ function ListaPuntos({ puntos }: { puntos: Punto[] }) {
         <span>{p.direccion}</span>
         <span className="puntos-lista__horario">
           <Icon name="clock" size={13} />
-          {p.horario}
+          {p.horarioAtencion}
         </span>
       </div>
     </li>

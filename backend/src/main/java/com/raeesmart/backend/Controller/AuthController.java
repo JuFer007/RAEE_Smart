@@ -11,8 +11,11 @@ import com.raeesmart.backend.Service.UsuarioService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -77,6 +80,14 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/me")
+    public UsuarioResponseDTO obtenerSesionActual(Authentication authentication) {
+        if (authentication == null || "anonymousUser".equals(authentication.getPrincipal())) {
+            throw new AccessDeniedException("No autorizado");
+        }
+        return mapearAResponse(usuarioService.buscarPorEmail(authentication.getName()));
+    }
+
     private UsuarioResponseDTO mapearAResponse(Usuario usuario) {
         return UsuarioResponseDTO.builder()
                 .id(usuario.getId())
@@ -85,6 +96,10 @@ public class AuthController {
                 .dni(usuario.getDni())
                 .telefono(usuario.getTelefono())
                 .rol(usuario.getRolUsuario())
+                .municipalidadId(usuario.getMunicipalidad() != null ? usuario.getMunicipalidad().getId() : null)
+                .municipalidadNombre(usuario.getMunicipalidad() != null ? usuario.getMunicipalidad().getNombre() : null)
+                .municipalidadLatitud(usuario.getMunicipalidad() != null ? usuario.getMunicipalidad().getLatitud() : null)
+                .municipalidadLongitud(usuario.getMunicipalidad() != null ? usuario.getMunicipalidad().getLongitud() : null)
                 .build();
     }
 }

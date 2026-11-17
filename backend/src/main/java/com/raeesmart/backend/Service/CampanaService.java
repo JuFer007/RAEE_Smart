@@ -9,6 +9,7 @@ public interface CampanaService {
     CampanaResponseDTO cambiarEstado(Long id, boolean activa);
     void eliminar(Long id);
     List<CampanaResponseDTO> listarPorMunicipalidad(Long municipalidadId);
+    List<CampanaResponseDTO> listarTodas();
     List<CampanaResponseDTO> listarVigentes(Long municipalidadId);
     List<CampanaResponseDTO> listarVigentesPublic(Long municipalidadId);
     CampanaResponseDTO obtenerPublic(Long id);

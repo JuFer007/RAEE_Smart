@@ -1,290 +1,199 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import type { FormEvent } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import Icon from '../components/Icon';
-import { COLORS, FUENTES, RADIOS, SOMBRAS } from '../theme';
 import { useAuth } from '../context/AuthContext';
-
-const BENEFICIOS = [
-  { icono: 'list', texto: 'Monitorea las entregas de RAEE de tu distrito' },
-  { icono: 'chart', texto: 'Reportes y estadísticas para la gestión municipal' },
-  { icono: 'qr', texto: 'Certificados digitales verificables con QR' },
-];
+import './Login.css';
 
 export default function Login() {
-  const { autenticado, iniciarSesion } = useAuth();
+  const { usuario, cargando, iniciarSesion, cerrarSesion } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('admin.chiclayo@raee.com');
-  const [password, setPassword] = useState('123456');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [recordarSesion, setRecordarSesion] = useState(true);
+  const [verPassword, setVerPassword] = useState(false);
   const [error, setError] = useState('');
-  const [cargando, setCargando] = useState(false);
+  const [aviso, setAviso] = useState('');
+  const [enviando, setEnviando] = useState(false);
 
-  if (autenticado) return <Navigate to="/panel" replace />;
+  if (!cargando && usuario?.municipalidadId) {
+    return <Navigate to="/panel/municipal" replace />;
+  }
 
-  const enviar = (e: React.FormEvent) => {
-    e.preventDefault();
+  if (!cargando && usuario?.rol === 'ADMIN' && !usuario.municipalidadId) {
+    return <Navigate to="/panel" replace />;
+  }
+
+  const enviar = async (evento: FormEvent) => {
+    evento.preventDefault();
     setError('');
+    setAviso('');
+
     if (!email.trim() || !password.trim()) {
-      setError('Ingresa tu correo y contraseña');
+      setError('Ingresa tu usuario y contraseña.');
       return;
     }
-    setCargando(true);
-    setTimeout(() => {
-      iniciarSesion({ email: email.trim() });
-      navigate('/panel', { replace: true });
-    }, 450);
+
+    setEnviando(true);
+    try {
+      const sesion = await iniciarSesion(email, password, recordarSesion);
+      if (!sesion.municipalidadId && sesion.rol !== 'ADMIN') {
+        cerrarSesion();
+        setError('Esta cuenta no tiene acceso al panel municipal.');
+        return;
+      }
+
+      navigate(sesion.municipalidadId ? '/panel/municipal' : '/panel', {
+        replace: true,
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo iniciar sesión.');
+    } finally {
+      setEnviando(false);
+    }
   };
 
   return (
-    <div style={styles.pantalla}>
-      <div style={styles.lado}>
-        <div style={styles.ladoFondo} />
-        <img src="/logoRectangular.png" alt="RAEE Smart" style={styles.logo} />
-        <h1 style={styles.ladoTitulo}>
-          Panel municipal
-          <br />
-          RAEE Smart
-        </h1>
-        <p style={styles.ladoTexto}>
-          Gestión inteligente de residuos de aparatos eléctricos y electrónicos en Chiclayo y Lambayeque.
-        </p>
+    <div className="login-page">
+      <div className="wrap">
+        <main className="left">
+          <img className="logo" src="/login/logo.png" alt="RAEE Smart" />
+          <span className="badge">Acceso al panel municipal</span>
+          <h1>
+            Iniciar <em>sesión</em>
+          </h1>
+          <p className="sub">
+            Ingresa con la cuenta de tu municipalidad para dar seguimiento a las
+            entregas de RAEE.
+          </p>
 
-        <ul style={styles.beneficios}>
-          {BENEFICIOS.map((b) => (
-            <li key={b.texto} style={styles.beneficio}>
-              <span style={styles.beneficioIcono}>
-                <Icon name={b.icono} size={16} color={COLORS.primaryText} />
-              </span>
-              {b.texto}
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <div style={styles.ladoFormulario}>
-        <form style={styles.formulario} onSubmit={enviar}>
-          <span style={styles.eyebrow}>Acceso institucional</span>
-          <h2 style={styles.formTitulo}>Inicia sesión</h2>
-          <p style={styles.formTexto}>Ingresa con la cuenta de tu municipalidad.</p>
-
-          <label style={styles.label}>
-            Correo electrónico
-            <div style={styles.campo}>
-              <Icon name="users" size={17} color={COLORS.mutIcon} />
+          <form onSubmit={enviar} noValidate>
+            <div className="field">
+              <label htmlFor="login-usuario">Usuario</label>
+              <svg className="ic" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4 21c0-4 4-6 8-6s8 2 8 6" />
+              </svg>
               <input
+                id="login-usuario"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@raee.com"
-                style={styles.input}
+                onChange={(evento) => setEmail(evento.target.value)}
+                placeholder="Ingresa tu usuario"
                 autoComplete="username"
               />
             </div>
-          </label>
 
-          <label style={styles.label}>
-            Contraseña
-            <div style={styles.campo}>
-              <Icon name="refresh" size={17} color={COLORS.mutIcon} />
+            <div className="field">
+              <label htmlFor="login-password">Contraseña</label>
+              <svg className="ic" viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="4" y="11" width="16" height="10" rx="2" />
+                <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+              </svg>
               <input
-                type="password"
+                id="login-password"
+                type={verPassword ? 'text' : 'password'}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••"
-                style={styles.input}
+                onChange={(evento) => setPassword(evento.target.value)}
+                placeholder="Ingresa tu contraseña"
                 autoComplete="current-password"
               />
+              <button
+                type="button"
+                className="eye"
+                onClick={() => setVerPassword((visible) => !visible)}
+                aria-label={verPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+                  <circle cx="12" cy="12" r="3" />
+                  {verPassword ? <path d="m4 4 16 16" /> : null}
+                </svg>
+              </button>
             </div>
-          </label>
 
-          {error ? (
-            <div style={styles.error}>
-              <Icon name="alert" size={15} color={COLORS.danger} />
-              {error}
+            <div className="row">
+              <label className="chk">
+                <input
+                  type="checkbox"
+                  checked={recordarSesion}
+                  onChange={(evento) => setRecordarSesion(evento.target.checked)}
+                />
+                Recordar sesión
+              </label>
+              <a
+                href="#"
+                onClick={(evento) => {
+                  evento.preventDefault();
+                  setError('');
+                  setAviso('La recuperación de contraseña estará disponible próximamente.');
+                }}
+              >
+                ¿Olvidaste tu contraseña?
+              </a>
             </div>
-          ) : null}
 
-          <button type="submit" style={styles.boton} disabled={cargando}>
-            {cargando ? 'Ingresando…' : 'Ingresar al panel'}
-            {!cargando && <Icon name="chevronRight" size={17} color={COLORS.white} />}
-          </button>
+            <div className={`msg${aviso ? ' ok' : ''}`} role="alert">
+              {error || aviso}
+            </div>
 
-          <p style={styles.demo}>
-            Demo: <b>admin.chiclayo@raee.com</b> · contraseña <b>123456</b>
-          </p>
-        </form>
+            <button className="btn" type="submit" disabled={enviando || cargando}>
+              <svg
+                className="btn__icono"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4" />
+                <path d="M10 8l4 4-4 4M14 12H4" />
+              </svg>
+              <span>{enviando ? 'Ingresando...' : 'Iniciar sesión'}</span>
+            </button>
+          </form>
+
+          <p className="foot">Juntos por un Chiclayo más limpio</p>
+        </main>
+
+        <aside className="right" aria-hidden="true">
+          <div className="marca" />
+          <div className="stage">
+            <div className="cluster">
+              <div className="telefono p1">
+                <div className="telefono__pantalla">
+                  <img className="telefono__img" src="/login/telefono-1.jpg" alt="" />
+                </div>
+              </div>
+              <div className="telefono p2">
+                <div className="telefono__pantalla">
+                  <img className="telefono__img" src="/login/telefono-2.jpg" alt="" />
+                </div>
+              </div>
+              <div className="telefono p3">
+                <div className="telefono__pantalla">
+                  <img className="telefono__img" src="/login/telefono-3.jpg" alt="" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="cap">
+            <span className="chip">
+              <i />
+              Reportes y estadísticas
+            </span>
+            <span className="chip">
+              <i />
+              Certificado digital con QR
+            </span>
+            <span className="chip">
+              <i />
+              Puntos de acopio cercanos
+            </span>
+          </div>
+        </aside>
       </div>
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  pantalla: {
-    display: 'grid',
-    gridTemplateColumns: '1.05fr 1fr',
-    minHeight: '100vh',
-    background: COLORS.bg,
-  },
-  lado: {
-    position: 'relative',
-    overflow: 'hidden',
-    padding: '54px 56px',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    background: `linear-gradient(150deg, ${COLORS.gradA}, ${COLORS.gradB})`,
-    color: COLORS.white,
-  },
-  ladoFondo: {
-    position: 'absolute',
-    width: 460,
-    height: 460,
-    borderRadius: '50%',
-    background: 'rgba(255,255,255,0.08)',
-    top: -140,
-    right: -120,
-  },
-  logo: { height: 54, width: 'fit-content', position: 'relative', zIndex: 1 },
-  ladoTitulo: {
-    fontFamily: FUENTES.manrope,
-    fontSize: 38,
-    lineHeight: '44px',
-    fontWeight: 800,
-    letterSpacing: '-1px',
-    color: COLORS.white,
-    margin: '26px 0 14px',
-    position: 'relative',
-    zIndex: 1,
-  },
-  ladoTexto: {
-    fontFamily: FUENTES.dm,
-    fontSize: 15,
-    lineHeight: '23px',
-    color: 'rgba(255,255,255,0.85)',
-    maxWidth: 420,
-    margin: 0,
-    position: 'relative',
-    zIndex: 1,
-  },
-  beneficios: {
-    listStyle: 'none',
-    padding: 0,
-    margin: '32px 0 0',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 14,
-    position: 'relative',
-    zIndex: 1,
-  },
-  beneficio: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 12,
-    fontFamily: FUENTES.dm,
-    fontSize: 13.5,
-    color: 'rgba(255,255,255,0.92)',
-  },
-  beneficioIcono: {
-    width: 34,
-    height: 34,
-    borderRadius: 11,
-    background: COLORS.white,
-    display: 'grid',
-    placeItems: 'center',
-    flexShrink: 0,
-  },
-  ladoFormulario: {
-    display: 'grid',
-    placeItems: 'center',
-    padding: 40,
-  },
-  formulario: {
-    width: '100%',
-    maxWidth: 380,
-    background: COLORS.surface,
-    border: `1px solid ${COLORS.lineSoft}`,
-    borderRadius: RADIOS.lg,
-    padding: '34px 32px',
-    boxShadow: SOMBRAS.flotante,
-  },
-  eyebrow: {
-    fontFamily: FUENTES.dm,
-    fontSize: 10.5,
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-    color: COLORS.primaryText,
-    fontWeight: 700,
-  },
-  formTitulo: {
-    fontFamily: FUENTES.manrope,
-    fontSize: 25,
-    fontWeight: 800,
-    letterSpacing: '-0.8px',
-    color: COLORS.ink,
-    margin: '8px 0 6px',
-  },
-  formTexto: { fontFamily: FUENTES.dm, fontSize: 13, color: COLORS.mut, margin: '0 0 24px' },
-  label: {
-    display: 'block',
-    fontFamily: FUENTES.dm,
-    fontSize: 12,
-    fontWeight: 600,
-    color: COLORS.inkHeading,
-    marginBottom: 16,
-  },
-  campo: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 10,
-    marginTop: 7,
-    padding: '0 13px',
-    height: 46,
-    border: `1px solid ${COLORS.line}`,
-    borderRadius: RADIOS.campo,
-    background: COLORS.bgTop,
-  },
-  input: {
-    flex: 1,
-    border: 'none',
-    outline: 'none',
-    background: 'transparent',
-    fontFamily: FUENTES.dm,
-    fontSize: 14,
-    color: COLORS.ink,
-  },
-  error: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    fontFamily: FUENTES.dm,
-    fontSize: 12.5,
-    color: COLORS.danger,
-    background: COLORS.dangerSoft,
-    borderRadius: RADIOS.campo,
-    padding: '10px 12px',
-    marginBottom: 14,
-  },
-  boton: {
-    width: '100%',
-    height: 48,
-    border: 'none',
-    borderRadius: RADIOS.boton,
-    background: `linear-gradient(135deg, ${COLORS.gradA}, ${COLORS.gradB})`,
-    color: COLORS.white,
-    fontFamily: FUENTES.dm,
-    fontSize: 14.5,
-    fontWeight: 700,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    boxShadow: SOMBRAS.hero,
-    marginTop: 4,
-  },
-  demo: {
-    fontFamily: FUENTES.dm,
-    fontSize: 11.5,
-    color: COLORS.mut,
-    textAlign: 'center',
-    margin: '18px 0 0',
-  },
-};

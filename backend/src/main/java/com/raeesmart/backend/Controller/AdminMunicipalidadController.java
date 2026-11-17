@@ -4,6 +4,7 @@ import com.raeesmart.backend.Dto.Response.MunicipalidadResponseDTO;
 import com.raeesmart.backend.Exception.ResourceNotFoundException;
 import com.raeesmart.backend.Model.Municipalidad;
 import com.raeesmart.backend.Repository.MunicipalidadRepository;
+import com.raeesmart.backend.Security.AutorizacionService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,18 +15,23 @@ import java.util.List;
 @RequestMapping("/api/admin/municipalidades")
 public class AdminMunicipalidadController {
     private final MunicipalidadRepository municipalidadRepository;
+    private final AutorizacionService autorizacionService;
 
-    public AdminMunicipalidadController(MunicipalidadRepository municipalidadRepository) {
+    public AdminMunicipalidadController(MunicipalidadRepository municipalidadRepository,
+                                        AutorizacionService autorizacionService) {
         this.municipalidadRepository = municipalidadRepository;
+        this.autorizacionService = autorizacionService;
     }
 
     @GetMapping
     public List<MunicipalidadResponseDTO> listar() {
+        autorizacionService.validarSuperAdmin();
         return municipalidadRepository.findAll().stream().map(this::mapearAResponse).toList();
     }
 
     @PostMapping
     public ResponseEntity<MunicipalidadResponseDTO> crear(@Valid @RequestBody MunicipalidadRequestDTO request) {
+        autorizacionService.validarSuperAdmin();
         Municipalidad municipalidad = Municipalidad.builder()
                 .nombre(request.getNombre().trim())
                 .distrito(request.getDistrito().trim())
@@ -41,6 +47,7 @@ public class AdminMunicipalidadController {
 
     @PutMapping("/{id}/activo")
     public MunicipalidadResponseDTO cambiarEstado(@PathVariable Long id, @RequestParam boolean valor) {
+        autorizacionService.validarSuperAdmin();
         Municipalidad municipalidad = municipalidadRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Municipalidad no encontrada"));
         municipalidad.setActivo(valor);
@@ -49,6 +56,7 @@ public class AdminMunicipalidadController {
 
     @PutMapping("/{id}")
     public MunicipalidadResponseDTO actualizar(@PathVariable Long id, @Valid @RequestBody MunicipalidadRequestDTO request) {
+        autorizacionService.validarSuperAdmin();
         Municipalidad municipalidad = municipalidadRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Municipalidad no encontrada"));
         municipalidad.setNombre(request.getNombre().trim());

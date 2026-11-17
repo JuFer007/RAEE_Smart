@@ -1,23 +1,23 @@
 @import 'leaflet/dist/leaflet.css';
 
 :root {
-  --page: #e8f0ed;
-  --bg: #f8fcfa;
-  --bg-top: #fbfefd;
+  --page: var(--app-bg);
+  --bg: var(--app-bg);
+  --bg-top: var(--app-bg);
   --surface: #ffffff;
-  --ink: #103b35;
-  --ink-soft: #123d39;
-  --ink-item: #22584c;
-  --mut: #709087;
-  --mut-soft: #829b92;
-  --primary: #079150;
-  --primary-deep: #087c4b;
-  --primary-text: #07884e;
-  --secondary: #126155;
-  --line: #d5e8df;
-  --line-soft: #e1eee7;
-  --grad-a: #087c4b;
-  --grad-b: #0a9d5a;
+  --ink: var(--text);
+  --ink-soft: var(--text);
+  --ink-item: var(--text);
+  --mut: var(--text-secondary);
+  --mut-soft: var(--text-tertiary);
+  --primary: var(--emerald);
+  --primary-deep: var(--emerald-dark);
+  --primary-text: var(--emerald);
+  --secondary: var(--forest-800);
+  --line: var(--border);
+  --line-soft: var(--border);
+  --grad-a: var(--forest-900);
+  --grad-b: var(--forest-800);
 }
 
 * {
@@ -32,7 +32,7 @@ body,
 }
 
 body {
-  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
   color: var(--ink);
   background: var(--page);
   -webkit-font-smoothing: antialiased;
@@ -43,7 +43,7 @@ h1,
 h2,
 h3,
 h4 {
-  font-family: 'Manrope', system-ui, sans-serif;
+  font-family: var(--font-sans);
   color: var(--ink);
   margin: 0;
 }

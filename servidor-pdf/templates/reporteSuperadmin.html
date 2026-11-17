@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Reporte consolidado RAEE</title>
+<style>{{estilos}}</style>
+</head>
+<body>
+<div class="reporte">
+
+  <div class="cabecera">
+    <div class="logo-section">
+      <img class="logo" src="{{logo}}" alt="RAEE Smart">
+      <div class="info-negocio">
+        <div class="nombre-negocio">RAEE SMART</div>
+        <div class="subtitulo-negocio">Panel de administración · Todas las municipalidades</div>
+      </div>
+    </div>
+    <div class="info-reporte">
+      <div class="titulo-reporte">Reporte consolidado de entregas RAEE</div>
+      <div class="fecha-reporte">Generado el: {{fechaGeneracion}} - {{horaGeneracion}}</div>
+    </div>
+  </div>
+
+  <div class="periodo">
+    <div class="dato"><div class="periodo-label">Período</div><div class="periodo-valor">{{fechaInicio}} - {{fechaFin}}</div></div>
+    <div class="dato"><div class="periodo-label">Categoría</div><div class="periodo-valor">{{categoria}}</div></div>
+    <div class="dato"><div class="periodo-label">Municipalidades</div><div class="periodo-valor">{{activas}} activas de {{totalMunicipalidades}}</div></div>
+    <div class="dato"><div class="periodo-label">Presentación</div><div class="periodo-valor">MINAM / SIGERSOL</div></div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="n">{{total}}</div><div class="l">Entregas totales</div></div>
+    <div class="kpi"><div class="n ok">{{certificadas}}</div><div class="l">Certificadas</div></div>
+    <div class="kpi"><div class="n warn">{{enProceso}}</div><div class="l">En proceso</div></div>
+    <div class="kpi"><div class="n bad">{{rechazadas}}</div><div class="l">Rechazadas</div></div>
+    <div class="kpi"><div class="n">{{tasa}}%</div><div class="l">Tasa de certificación</div></div>
+  </div>
+
+  <div class="graficos">
+    <div class="grafico"><h3>Entregas por municipalidad</h3>{{graficoMunicipalidades}}</div>
+    <div class="grafico"><h3>Distribución por categoría RAEE</h3>{{graficoCategorias}}</div>
+  </div>
+
+  <h2>Desempeño por municipalidad</h2>
+  <table>
+    <thead><tr>
+      <th>Municipalidad</th><th>Distrito</th><th>Estado</th>
+      <th class="text-center">Entregas</th><th class="text-center">Certificadas</th>
+      <th class="text-center">En proceso</th><th class="text-center">Rechazadas</th><th class="text-right">Tasa cert.</th>
+    </tr></thead>
+    <tbody>{{municipalidades}}{{totales}}</tbody>
+  </table>
+  {{aviso}}
+
+  <div class="firmas"><div>Administrador general</div><div>Sello institucional</div></div>
+
+  <div class="pie">
+    <div class="pie-info">RAEE SMART - Plataforma de reciclaje de residuos de aparatos eléctricos y electrónicos</div>
+    <div class="pie-info">Consolidado de todas las municipalidades registradas en la plataforma</div>
+    <div class="pie-info">Este documento es generado automáticamente por el sistema</div>
+  </div>
+</div>
+</body>
+</html>

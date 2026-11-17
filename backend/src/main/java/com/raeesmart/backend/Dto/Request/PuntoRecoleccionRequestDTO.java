@@ -18,6 +18,9 @@ public class PuntoRecoleccionRequestDTO {
     @Size(max = 150)
     private String nombre;
 
+    @Size(max = 200)
+    private String direccion;
+
     @NotNull(message = "La latitud es obligatoria")
     @DecimalMin(value = "-90.0")
     @DecimalMax(value = "90.0")

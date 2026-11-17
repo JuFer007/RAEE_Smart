@@ -32,6 +32,10 @@ public class Campana {
     @Column(length = 200)
     private String lugar;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "punto_recoleccion_id")
+    private PuntoRecoleccion puntoRecoleccion;
+
     @Column(length = 100)
     private String horario;
 

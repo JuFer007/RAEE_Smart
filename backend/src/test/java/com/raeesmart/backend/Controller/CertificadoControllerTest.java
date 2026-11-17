@@ -3,6 +3,7 @@ package com.raeesmart.backend.Controller;
 import com.raeesmart.backend.Repository.CategoriaRAEERepository;
 import com.raeesmart.backend.Service.CertificadoService;
 import com.raeesmart.backend.Service.EntregaService;
+import com.raeesmart.backend.Service.QRService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,12 +27,15 @@ class CertificadoControllerTest {
     @Mock
     private EntregaService entregaService;
 
+    @Mock
+    private QRService qrService;
+
     private CertificadoController certificadoController;
 
     @BeforeEach
     void setUp() {
         certificadoController = new CertificadoController(
-                certificadoService, categoriaRAEERepository, entregaService);
+                certificadoService, categoriaRAEERepository, entregaService, qrService);
     }
 
     @Test
@@ -41,6 +45,6 @@ class CertificadoControllerTest {
 
         assertThrows(AccessDeniedException.class,
                 () -> certificadoController.obtenerPorEntrega(1L));
-        verifyNoInteractions(certificadoService, categoriaRAEERepository);
+        verifyNoInteractions(certificadoService, categoriaRAEERepository, qrService);
     }
 }

@@ -17,6 +17,8 @@ public class CampanaResponseDTO {
     private String titulo;
     private String descripcion;
     private String lugar;
+    private Long puntoRecoleccionId;
+    private String puntoRecoleccionNombre;
     private String horario;
     private LocalDate fechaInicio;
     private LocalDate fechaFin;

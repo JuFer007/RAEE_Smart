@@ -7,10 +7,12 @@ import com.raeesmart.backend.Model.Enums.TipoRAEE;
 import com.raeesmart.backend.Repository.CategoriaRAEERepository;
 import com.raeesmart.backend.Service.CertificadoService;
 import com.raeesmart.backend.Service.EntregaService;
+import com.raeesmart.backend.Service.QRService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import java.util.Base64;
 
 @RestController
 @RequestMapping("/api/certificados")
@@ -19,13 +21,16 @@ public class CertificadoController {
     private final CertificadoService certificadoService;
     private final CategoriaRAEERepository categoriaRAEERepository;
     private final EntregaService entregaService;
+    private final QRService qrService;
 
     public CertificadoController(CertificadoService certificadoService,
                                  CategoriaRAEERepository categoriaRAEERepository,
-                                 EntregaService entregaService) {
+                                 EntregaService entregaService,
+                                 QRService qrService) {
         this.certificadoService = certificadoService;
         this.categoriaRAEERepository = categoriaRAEERepository;
         this.entregaService = entregaService;
+        this.qrService = qrService;
     }
 
     @GetMapping("/entrega/{entregaId}")
@@ -52,6 +57,7 @@ public class CertificadoController {
                 .entregaId(entrega.getId())
                 .codigoHash(certificado.getCodigoHash())
                 .codigoQr(certificado.getCodigoQr())
+                .qrImagenBase64(Base64.getEncoder().encodeToString(qrService.generarQR(certificado.getCodigoQr())))
                 .tipoAparato(metadata != null ? metadata.getNombreVisible() : tipoFinal.name())
                 .nombreCategoria(metadata != null ? metadata.getNombreVisible() : tipoFinal.name())
                 .iconoCategoria(metadata != null ? metadata.getIconoUrl() : null)

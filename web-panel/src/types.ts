@@ -2,35 +2,57 @@ export interface Municipalidad {
   id: number;
   nombre: string;
   distrito: string;
+  direccion?: string | null;
+  latitud?: number | null;
+  longitud?: number | null;
+  contactoEmail?: string | null;
+  activo?: boolean;
+  campanasHabilitadas?: boolean;
 }
 
 export interface Punto {
   id: number;
   municipalidadId?: number;
+  municipalidadNombre?: string;
   nombre: string;
-  direccion: string;
-  lat: number;
-  lng: number;
-  horario: string;
-  capacidad?: number;
+  direccion: string | null;
+  latitud: number;
+  longitud: number;
+  horarioAtencion: string | null;
+  capacidadDiaria?: number | null;
 }
 
 export interface Campana {
   id: number;
   municipalidadId: number;
+  municipalidadNombre: string;
   titulo: string;
-  lugar: string;
-  horario: string;
+  descripcion: string | null;
+  lugar: string | null;
+  puntoRecoleccionId: number | null;
+  puntoRecoleccionNombre: string | null;
+  horario: string | null;
+  fechaInicio: string;
+  fechaFin: string;
   activa: boolean;
+  estado: string;
 }
+
+export type EstadoEntrega = 'REGISTRADA' | 'EN_PROCESO' | 'CONFIRMADA' | 'RECHAZADA';
+
+export type RolUsuario = 'CIUDADANO' | 'MUNICIPALIDAD' | 'ADMIN';
 
 export interface Usuario {
   id: number;
   nombre: string;
   email: string;
-  municipalidadId: number;
-  municipalidadNombre: string;
-  rol: string;
+  dni: string | null;
+  telefono: string | null;
+  rol: RolUsuario;
+  municipalidadId: number | null;
+  municipalidadNombre: string | null;
+  municipalidadLatitud: number | null;
+  municipalidadLongitud: number | null;
 }
 
 export interface Entrega {
@@ -40,15 +62,28 @@ export interface Entrega {
   iconoCategoria: string;
   confianzaIa: number;
   clasificacionCorregida: boolean;
-  estado: string;
+  estado: EstadoEntrega;
+  puntoRecoleccionId: number;
   puntoRecoleccionNombre: string;
   puntoRecoleccionDireccion: string;
-  municipalidadId: number;
   certificadoCodigoQr: string | null;
   fechaRegistro: string;
-  usuarioNombre: string;
-  dni: string;
-  pesoKg: number;
+  fechaConfirmacion: string | null;
+}
+
+export interface Certificado {
+  id: number;
+  entregaId: number;
+  codigoHash: string;
+  codigoQr: string;
+  qrImagenBase64: string | null;
+  tipoAparato: string;
+  nombreCategoria: string;
+  iconoCategoria: string | null;
+  puntoEntregaNombre: string;
+  fechaEmision: string;
+  fechaEntrega: string;
+  urlPdf: string | null;
 }
 
 export interface Tendencia {

@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+﻿import React, { useMemo } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L, { type LatLngExpression } from 'leaflet';
 import { COLORS, FUENTES, RADIOS, SOMBRAS } from '../theme';
 import type { Punto } from '../types';
@@ -11,9 +11,31 @@ interface MapViewProps {
   centro?: LatLngExpression;
   zoom?: number;
   alto?: number;
+  marcador?: { latitud: number; longitud: number } | null;
+  onSeleccionar?: (latitud: number, longitud: number) => void;
 }
 
-export default function MapView({ puntos = [], centro = CENTRO_CHICLAYO, zoom = 11, alto = 360 }: MapViewProps) {
+function ClicksMapa({
+  onSeleccionar,
+}: {
+  onSeleccionar: (latitud: number, longitud: number) => void;
+}) {
+  useMapEvents({
+    click(evento) {
+      onSeleccionar(evento.latlng.lat, evento.latlng.lng);
+    },
+  });
+  return null;
+}
+
+export default function MapView({
+  puntos = [],
+  centro = CENTRO_CHICLAYO,
+  zoom = 11,
+  alto = 360,
+  marcador = null,
+  onSeleccionar,
+}: MapViewProps) {
   const icono = useMemo(
     () =>
       L.divIcon({
@@ -33,16 +55,23 @@ export default function MapView({ puntos = [], centro = CENTRO_CHICLAYO, zoom = 
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        {onSeleccionar ? <ClicksMapa onSeleccionar={onSeleccionar} /> : null}
+        {marcador ? (
+          <Marker
+            position={[marcador.latitud, marcador.longitud] as LatLngExpression}
+            icon={icono}
+          />
+        ) : null}
         {puntos.map((p) => (
-          <Marker key={p.id} position={[p.lat, p.lng] as LatLngExpression} icon={icono}>
+          <Marker key={p.id} position={[p.latitud, p.longitud] as LatLngExpression} icon={icono}>
             <Popup>
               <div style={styles.popup}>
                 <p style={styles.popupTitulo}>{p.nombre}</p>
                 <p style={styles.popupTexto}>{p.direccion}</p>
-                {p.horario ? (
+                {p.horarioAtencion ? (
                   <p style={styles.popupMeta}>
-                    {p.horario}
-                    {p.capacidad ? ` · cap. ${p.capacidad}/día` : ''}
+                    {p.horarioAtencion}
+                    {p.capacidadDiaria ? ` - cap. ${p.capacidadDiaria}/día` : ''}
                   </p>
                 ) : null}
               </div>
