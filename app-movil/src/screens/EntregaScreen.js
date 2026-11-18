@@ -103,7 +103,22 @@ export default function EntregaScreen({ route, navigation }) {
         latitud,
         longitud,
       });
-      navigation.replace('Confirmacion', { entrega: registrada });
+
+      let final = registrada;
+      if (entrega?.clasificacionCorregida && entrega?.tipoRaee && registrada?.id) {
+        try {
+          final = await entregaService.corregirClasificacion(registrada.id, entrega.tipoRaee);
+        } catch (_e) {
+          final = {
+            ...registrada,
+            tipoRaee: entrega.tipoRaee,
+            nombreCategoriaVisible: entrega.nombreCategoriaVisible || registrada.nombreCategoriaVisible,
+            clasificacionCorregida: true,
+          };
+        }
+      }
+
+      navigation.replace('Confirmacion', { entrega: final });
     } catch (err) {
       setError(err.normalizado || 'No se pudo registrar la entrega. Intenta nuevamente.');
     } finally {

@@ -13,7 +13,6 @@ export default function ConfirmacionScreen({ route, navigation }) {
   const confirmada = entrega?.estado === 'CONFIRMADA';
   const rechazada = entrega?.estado === 'RECHAZADA';
   const enProceso = entrega?.estado === 'EN_PROCESO';
-  const puedeCorregir = entrega?.id && !confirmada && !rechazada;
 
   function irAlInicio() {
     navigation.navigate('Main', { screen: 'Inicio' });
@@ -77,13 +76,6 @@ export default function ConfirmacionScreen({ route, navigation }) {
             titulo={confirmada ? 'Ver certificado digital' : 'Ver estado del certificado'}
             onPress={() => navigation.navigate('Certificado', { entrega })}
           />
-          {puedeCorregir ? (
-            <Boton
-              titulo="¿No es correcto? Corregir categoría"
-              variante="enlace"
-              onPress={() => navigation.navigate('Correccion', { entrega })}
-            />
-          ) : null}
           <Boton titulo="Volver al inicio" variante="secundario" icono="home-outline" onPress={irAlInicio} />
         </View>
       </ScrollView>

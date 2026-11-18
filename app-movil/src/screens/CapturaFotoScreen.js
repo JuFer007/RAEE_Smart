@@ -65,7 +65,7 @@ export default function CapturaFotoScreen({ route, navigation }) {
         <Text style={styles.ubicacion}>Obteniendo tu ubicación...</Text>
       ) : null}
 
-      {analizando ? <LoadingOverlay mensaje="Analizando con IA..." /> : null}
+      <LoadingOverlay visible={analizando} mensaje="Analizando con IA..." />
     </View>
   );
 }

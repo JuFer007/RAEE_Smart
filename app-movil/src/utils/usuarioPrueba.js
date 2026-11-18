@@ -1,6 +1,6 @@
 export const CREDENCIALES_PRUEBA = {
   email: 'vecino@raee.com',
-  password: 'raee2026',
+  password: '123456',
 };
 
 export const USUARIO_PRUEBA = {

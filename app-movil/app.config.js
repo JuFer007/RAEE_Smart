@@ -1,8 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 
-const appJson = require('./app.json');
-
 function cargarEnv(rutaArchivo) {
   if (!fs.existsSync(rutaArchivo)) return {};
 
@@ -53,16 +51,15 @@ if (env.EXPO_PUBLIC_API_URL) {
 process.env.EXPO_PUBLIC_MAP_STYLE_URL = mapStyleUrl;
 process.env.EXPO_PUBLIC_USAR_DATOS_PRUEBA = String(usarDatosPrueba);
 
-const extra = {
-  ...(appJson.expo.extra || {}),
-  backendPort,
-  mapStyleUrl,
-  usarDatosPrueba,
-};
+module.exports = ({ config }) => {
+  const extra = {
+    ...(config.extra || {}),
+    backendPort,
+    mapStyleUrl,
+    usarDatosPrueba,
+  };
 
-if (apiBaseUrl) extra.apiBaseUrl = apiBaseUrl;
+  if (apiBaseUrl) extra.apiBaseUrl = apiBaseUrl;
 
-module.exports = {
-  ...appJson.expo,
-  extra,
+  return { ...config, extra };
 };

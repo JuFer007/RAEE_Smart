@@ -4,7 +4,7 @@ import Encabezado from '../components/Encabezado';
 import Boton from '../components/Boton';
 import CategoriaCard from '../components/CategoriaCard';
 import * as entregaService from '../services/entregaService';
-import { COLORS, ESPACIOS, TIPOGRAFIA, TIPOS_RAEE } from '../theme';
+import { COLORS, ESPACIOS, TIPOGRAFIA, TIPOS_RAEE, obtenerInfoTipo } from '../theme';
 
 export default function CorreccionScreen({ route, navigation }) {
   const { entrega } = route.params || {};
@@ -13,14 +13,41 @@ export default function CorreccionScreen({ route, navigation }) {
   const [error, setError] = useState('');
 
   async function confirmar() {
+    if (!seleccionado) {
+      setError('Selecciona una categoría.');
+      return;
+    }
+
     try {
       setGuardando(true);
       setError('');
-      const actualizada = await entregaService.corregirClasificacion(entrega.id, seleccionado);
+
+      const info = obtenerInfoTipo(seleccionado);
+      let actualizada;
+
+      if (entrega?.id) {
+        actualizada = await entregaService.corregirClasificacion(entrega.id, seleccionado);
+      } else {
+        actualizada = {
+          ...entrega,
+          tipoRaee: seleccionado,
+          nombreCategoriaVisible: info.nombre,
+          clasificacionCorregida: true,
+        };
+      }
+
+      actualizada = {
+        ...actualizada,
+        clasificacionCorregida: true,
+        nombreCategoriaVisible: actualizada?.nombreCategoriaVisible || info.nombre,
+      };
+
       navigation.replace('Resultado', {
         entrega: actualizada,
         modo: route.params?.modo,
         punto: route.params?.punto,
+        fotoUri: route.params?.fotoUri,
+        ubicacion: route.params?.ubicacion,
       });
     } catch (_e) {
       setError('No pudimos guardar la corrección. Intenta nuevamente.');

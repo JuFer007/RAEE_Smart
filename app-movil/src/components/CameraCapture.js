@@ -4,17 +4,21 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import ModalPermiso from './ModalPermiso';
-import { COLORS, TIPOGRAFIA } from '../theme';
+import { COLORS, RADIOS, TIPOGRAFIA } from '../theme';
 
 const INTERIOR = 72;
 
 export default function CameraCapture({ onCaptura, analizando = false, tip, etiqueta = null }) {
   const [listo, setListo] = useState(true);
+  const [camaraLista, setCamaraLista] = useState(false);
+  const [errorCamara, setErrorCamara] = useState('');
   const camara = useRef(null);
   const [permiso, pedirPermiso] = useCameraPermissions();
   const [analizandoPrev, setAnalizandoPrev] = useState(analizando);
   const esWeb = Platform.OS === 'web';
   const mostrarPermiso = !esWeb && permiso != null && !permiso.granted;
+  const esperandoCamara = !esWeb && permiso?.granted && !camaraLista;
+  const disparadorDeshabilitado = !listo || analizando || esperandoCamara;
 
   if (analizando !== analizandoPrev) {
     setAnalizandoPrev(analizando);
@@ -57,7 +61,9 @@ export default function CameraCapture({ onCaptura, analizando = false, tip, etiq
   }
 
   async function disparar() {
-    if (!listo || analizando) return;
+    if (disparadorDeshabilitado) return;
+
+    setErrorCamara('');
 
     if (esWeb) {
       seleccionarFotoWeb();
@@ -69,10 +75,16 @@ export default function CameraCapture({ onCaptura, analizando = false, tip, etiq
       if (!respuesta.granted) return;
     }
 
-    const foto = await camara.current?.takePictureAsync({ quality: 0.7 });
-    if (foto?.uri) {
-      setListo(false);
-      onCaptura(foto.uri);
+    if (!camaraLista) return;
+
+    try {
+      const foto = await camara.current?.takePictureAsync({ quality: 0.7 });
+      if (foto?.uri) {
+        setListo(false);
+        onCaptura(foto.uri);
+      }
+    } catch (_e) {
+      setErrorCamara('No se pudo tomar la foto. Intenta nuevamente.');
     }
   }
 
@@ -102,7 +114,16 @@ export default function CameraCapture({ onCaptura, analizando = false, tip, etiq
             ) : null}
           </LinearGradient>
         ) : (
-          <CameraView ref={camara} style={StyleSheet.absoluteFill} facing="back" />
+          <CameraView
+            ref={camara}
+            style={StyleSheet.absoluteFill}
+            facing="back"
+            onCameraReady={() => {
+              setErrorCamara('');
+              setCamaraLista(true);
+            }}
+            onMountError={() => setErrorCamara('No se pudo iniciar la cámara. Revisa los permisos e inténtalo de nuevo.')}
+          />
         )}
 
         <View style={[estilos.esquina, estilos.tl]} />
@@ -117,14 +138,19 @@ export default function CameraCapture({ onCaptura, analizando = false, tip, etiq
           <TouchableOpacity
             onPress={disparar}
             activeOpacity={0.85}
-            disabled={!listo || analizando}
-            style={[estilos.disparador, (analizando || !listo) && { opacity: 0.5 }]}
+            disabled={disparadorDeshabilitado}
+            style={[estilos.disparador, disparadorDeshabilitado && { opacity: 0.5 }]}
           >
             <View style={estilos.disparadorInterno} />
           </TouchableOpacity>
           <View style={estilos.botonGaleria} />
         </View>
-        {etiqueta ? <Text style={estilos.etiqueta}>{etiqueta}</Text> : null}
+        {errorCamara ? <Text style={estilos.errorCamara}>{errorCamara}</Text> : null}
+        {esperandoCamara ? (
+          <Text style={estilos.etiqueta}>Preparando cámara...</Text>
+        ) : etiqueta ? (
+          <Text style={estilos.etiqueta}>{etiqueta}</Text>
+        ) : null}
       </View>
 
       {tip ? <Text style={estilos.tip}>{tip}</Text> : null}
@@ -214,6 +240,20 @@ const estilos = StyleSheet.create({
     paddingHorizontal: 22,
     paddingTop: 10,
     lineHeight: 16,
+  },
+  errorCamara: {
+    position: 'absolute',
+    top: 60,
+    left: 20,
+    right: 20,
+    backgroundColor: COLORS.dangerSoft,
+    borderRadius: RADIOS.sm,
+    paddingVertical: 7,
+    paddingHorizontal: 10,
+    ...TIPOGRAFIA.micro,
+    fontSize: 11,
+    color: COLORS.danger,
+    textAlign: 'center',
   },
   etiqueta: {
     position: 'absolute',

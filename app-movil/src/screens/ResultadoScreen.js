@@ -79,10 +79,10 @@ export default function ResultadoScreen({ route, navigation }) {
             <Ionicons name="alert-circle-outline" size={18} color={COLORS.warning} />
             <Text style={styles.avisoTexto}>
               {identificarSolo
-                ? 'La confianza de la IA es baja. Vuelve a tomar la foto con mejor iluminación o continúa si la categoría es correcta.'
+                ? 'La confianza de la IA es baja. Puedes corregir la categoría o volver a tomar la foto.'
                 : entrega?.id
                   ? 'La confianza de la IA es baja. Puedes corregir la categoría desde esta pantalla.'
-                  : 'La confianza de la IA es baja. Confirma si la categoría es correcta o vuelve a tomar la foto. Podrás corregirla después de registrar la entrega.'}
+                  : 'La confianza de la IA es baja. Corrige la categoría o vuelve a tomar la foto.'}
             </Text>
           </View>
         ) : null}
@@ -106,11 +106,19 @@ export default function ResultadoScreen({ route, navigation }) {
             variante="secundario"
             onPress={volverTomarFoto}
           />
-          {!identificarSolo && entrega?.id ? (
+          {bajaConfianza ? (
             <Boton
               titulo="¿No es correcto? Corregir categoría"
               variante="enlace"
-              onPress={() => navigation.navigate('Correccion', { entrega, modo, punto })}
+              onPress={() =>
+                navigation.navigate('Correccion', {
+                  entrega,
+                  modo,
+                  punto,
+                  fotoUri,
+                  ubicacion,
+                })
+              }
             />
           ) : null}
         </View>

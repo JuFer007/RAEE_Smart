@@ -21,7 +21,10 @@ export default function usePuntos(ubicacion) {
   }, [ubicacion]);
 
   useEffect(() => {
-    cargar(ubicacion);
+    const id = setTimeout(() => {
+      cargar(ubicacion);
+    }, 0);
+    return () => clearTimeout(id);
   }, [cargar, ubicacion]);
 
   return { puntos, cargando, error, recargar: cargar };

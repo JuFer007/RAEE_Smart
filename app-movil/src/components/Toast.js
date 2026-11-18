@@ -16,8 +16,8 @@ export default function Toast({
   onAccion,
 }) {
   const [internoVisible, setInternoVisible] = useState(visible);
-  const fadeAnimRef = useRef(new Animated.Value(0));
-  const translateAnimRef = useRef(new Animated.Value(posicion === 'top' ? -20 : 20));
+  const [fadeAnim] = useState(() => new Animated.Value(0));
+  const [translateAnim] = useState(() => new Animated.Value(posicion === 'top' ? -20 : 20));
   const timeoutRef = useRef(null);
 
   const cerrarAnimado = useCallback(() => {
@@ -26,12 +26,12 @@ export default function Toast({
       timeoutRef.current = null;
     }
     Animated.parallel([
-      Animated.timing(fadeAnimRef.current, {
+      Animated.timing(fadeAnim, {
         toValue: 0,
         duration: 140,
         useNativeDriver: true,
       }),
-      Animated.timing(translateAnimRef.current, {
+      Animated.timing(translateAnim, {
         toValue: posicion === 'top' ? -12 : 12,
         duration: 140,
         useNativeDriver: true,
@@ -40,7 +40,7 @@ export default function Toast({
       setInternoVisible(false);
       onCerrar?.();
     });
-  }, [onCerrar, posicion]);
+  }, [fadeAnim, translateAnim, onCerrar, posicion]);
 
   useEffect(() => {
     if (visible) {
@@ -49,12 +49,12 @@ export default function Toast({
         id = setTimeout(() => setInternoVisible(true), 0);
       }
       Animated.parallel([
-        Animated.timing(fadeAnimRef.current, {
+        Animated.timing(fadeAnim, {
           toValue: 1,
           duration: 180,
           useNativeDriver: true,
         }),
-        Animated.timing(translateAnimRef.current, {
+        Animated.timing(translateAnim, {
           toValue: 0,
           duration: 180,
           useNativeDriver: true,
@@ -71,7 +71,7 @@ export default function Toast({
         if (id) clearTimeout(id);
       };
     }
-  }, [visible, internoVisible, accionTexto, duracion, cerrarAnimado]);
+  }, [visible, internoVisible, accionTexto, duracion, cerrarAnimado, fadeAnim, translateAnim]);
 
   useEffect(() => {
     if (!visible && internoVisible) {
@@ -85,12 +85,12 @@ export default function Toast({
       timeoutRef.current = null;
     }
     Animated.parallel([
-      Animated.timing(fadeAnimRef.current, {
+      Animated.timing(fadeAnim, {
         toValue: 0,
         duration: 140,
         useNativeDriver: true,
       }),
-      Animated.timing(translateAnimRef.current, {
+      Animated.timing(translateAnim, {
         toValue: posicion === 'top' ? -12 : 12,
         duration: 140,
         useNativeDriver: true,
@@ -112,11 +112,10 @@ export default function Toast({
           styles.toast,
           { backgroundColor: config.bg, borderColor: config.borde },
           {
-            opacity: fadeAnimRef.current,
-            transform: [{ translateY: translateAnimRef.current }],
+            opacity: fadeAnim,
+            transform: [{ translateY: translateAnim }],
           },
         ]}
-      >
       >
         <Ionicons name={config.icono} size={16} color={config.color} />
         <Text style={[styles.texto, { color: config.color }]} numberOfLines={3}>
