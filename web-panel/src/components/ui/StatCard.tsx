@@ -4,6 +4,7 @@ interface StatCardProps {
   label: string;
   value: string | number;
   description?: string;
+  trend?: string;
   icon?: string;
   tone?: 'neutral' | 'success' | 'warning' | 'danger';
 }
@@ -12,6 +13,7 @@ export default function StatCard({
   label,
   value,
   description,
+  trend,
   icon,
   tone = 'neutral',
 }: StatCardProps) {
@@ -22,6 +24,7 @@ export default function StatCard({
         {icon ? <Icon name={icon} size={16} /> : null}
       </header>
       <strong>{value}</strong>
+      {trend ? <span className="ui-stat__trend">{trend}</span> : null}
       {description ? <p>{description}</p> : null}
     </article>
   );

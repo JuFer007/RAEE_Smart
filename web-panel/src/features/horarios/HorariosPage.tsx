@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
+import HorarioEditor from '../../components/HorarioEditor';
 import Icon from '../../components/Icon';
 import Modal from '../../components/Modal';
 import PanelAlert from '../../components/PanelAlert';
@@ -13,6 +14,13 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import type { Punto } from '../../types';
 import { obtenerMensajeError, pluralizar } from '../../utils/formato';
+import {
+  formatearHorario,
+  horarioVacio,
+  parsearHorario,
+  validarHorario,
+  type HorarioValor,
+} from '../../utils/horario';
 
 export default function HorariosPage() {
   const { usuario } = useAuth();
@@ -22,7 +30,7 @@ export default function HorariosPage() {
   const [error, setError] = useState('');
   const [busqueda, setBusqueda] = useState('');
   const [puntoEditando, setPuntoEditando] = useState<Punto | null>(null);
-  const [horario, setHorario] = useState('');
+  const [horario, setHorario] = useState<HorarioValor>(horarioVacio());
   const [errorHorario, setErrorHorario] = useState('');
   const [guardando, setGuardando] = useState(false);
 
@@ -57,19 +65,19 @@ export default function HorariosPage() {
 
   const abrirEdicion = (punto: Punto) => {
     setPuntoEditando(punto);
-    setHorario(punto.horarioAtencion ?? '');
+    setHorario(parsearHorario(punto.horarioAtencion) ?? horarioVacio());
     setErrorHorario('');
   };
 
   const guardar = async (evento: FormEvent) => {
     evento.preventDefault();
     if (!puntoEditando) return;
-    if (!horario.trim()) {
-      setErrorHorario('El horario de atención es obligatorio.');
-      return;
-    }
-    if (horario.trim().length > 100) {
-      setErrorHorario('El horario no debe superar los 100 caracteres.');
+    const errorHorario = validarHorario(horario, {
+      obligatorio: true,
+      permitirSinHorario: true,
+    });
+    if (errorHorario) {
+      setErrorHorario(errorHorario);
       return;
     }
     if (!usuario?.municipalidadId) {
@@ -86,7 +94,7 @@ export default function HorariosPage() {
         direccion: puntoEditando.direccion ?? '',
         latitud: puntoEditando.latitud,
         longitud: puntoEditando.longitud,
-        horarioAtencion: horario.trim(),
+        horarioAtencion: formatearHorario(horario),
         capacidadDiaria: puntoEditando.capacidadDiaria ?? null,
       });
       setPuntos((actuales) =>
@@ -102,7 +110,7 @@ export default function HorariosPage() {
   };
 
   return (
-    <section>
+    <section className="horarios">
       <PageHeader
         title="Horarios de atención"
         description="Mantén actualizada la disponibilidad de cada punto para que los ciudadanos planifiquen su entrega."
@@ -234,23 +242,17 @@ export default function HorariosPage() {
       >
         <form className="panel-form" onSubmit={guardar} noValidate>
           {errorHorario ? <PanelAlert>{errorHorario}</PanelAlert> : null}
-          <div className="panel-field">
-            <label htmlFor="horario-punto">Horario</label>
-            <input
-              id="horario-punto"
-              value={horario}
-              onChange={(evento) => {
-                setHorario(evento.target.value);
-                setErrorHorario('');
-              }}
-              placeholder="Lunes a viernes · 8:00 a 16:30"
-              maxLength={100}
-              autoFocus
-            />
-            <small className="panel-field__ayuda">
-              Al guardar se notificará a los ciudadanos sobre el cambio de horario.
-            </small>
-          </div>
+          <HorarioEditor
+            id="horario-punto"
+            valor={horario}
+            onChange={(valor) => {
+              setHorario(valor);
+              setErrorHorario('');
+            }}
+            error={errorHorario}
+            ayuda="Al guardar se notificará a los ciudadanos sobre el cambio de horario."
+            obligatorio
+          />
           <div className="panel-form__acciones">
             <Button
               variant="secondary"

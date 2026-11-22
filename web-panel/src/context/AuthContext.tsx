@@ -8,7 +8,7 @@ import React, {
 } from 'react';
 import type { Usuario } from '../types';
 import { obtenerSesionApi, iniciarSesionApi } from '../api/auth';
-import { guardarToken, obtenerToken } from '../api/client';
+import { guardarToken, obtenerToken, registrarManejadorSesion } from '../api/client';
 
 interface AuthContextValue {
   usuario: Usuario | null;
@@ -28,6 +28,23 @@ const CLAVE_ANTERIOR = 'raeesmart_panel_usuario';
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [cargando, setCargando] = useState(true);
+
+  useEffect(() => {
+    const desuscribir = registrarManejadorSesion((motivo) => {
+      if (motivo === 'expirada') {
+        setUsuario(null);
+        setCargando(false);
+        if (typeof window !== 'undefined') {
+          window.location.assign('/login?motivo=expirada');
+        }
+        return;
+      }
+      if (typeof window !== 'undefined') {
+        window.location.assign('/acceso-denegado?motivo=accion');
+      }
+    });
+    return desuscribir;
+  }, []);
 
   useEffect(() => {
     const anterior = localStorage.getItem(CLAVE_ANTERIOR);

@@ -11,6 +11,7 @@ import {
   listarEntregas,
   listarMunicipalidades,
 } from '../../api/panel';
+import { descargarPdf } from '../../api/pdf';
 import { useToast } from '../../context/ToastContext';
 import type { Entrega, EstadoEntrega, Municipalidad } from '../../types';
 import {
@@ -42,6 +43,7 @@ export default function AdminReportesPage() {
   const [municipalidades, setMunicipalidades] = useState<Municipalidad[]>([]);
   const [entregas, setEntregas] = useState<EntregaConsolidada[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [generandoPdf, setGenerandoPdf] = useState(false);
   const [error, setError] = useState('');
 
   const [desde, setDesde] = useState(sumarDias(fechaHoyISO(), -30));
@@ -154,15 +156,41 @@ export default function AdminReportesPage() {
     showToast('Reporte consolidado exportado en formato CSV.');
   };
 
+  const exportarPdf = async () => {
+    setGenerandoPdf(true);
+    try {
+      await descargarPdf(
+        '/generar-reporte-superadmin',
+        { fechaInicio: desde, fechaFin: hasta, categoria: 'TODAS' },
+        `reporte-consolidado-${desde}-a-${hasta}`,
+      );
+      showToast('Reporte PDF descargado.');
+    } catch (err) {
+      showToast(obtenerMensajeError(err), 'error');
+    } finally {
+      setGenerandoPdf(false);
+    }
+  };
+
   return (
     <section>
       <PageHeader
         title="Reportes consolidados"
         description="Compara la operación de todas las municipalidades y descarga el detalle consolidado."
         actions={
-          <Button icon="download" variant="secondary" onClick={exportar}>
-            Exportar CSV
-          </Button>
+          <>
+            <Button icon="download" variant="secondary" onClick={exportar}>
+              Exportar CSV
+            </Button>
+            <Button
+              icon="file"
+              variant="primary"
+              onClick={() => void exportarPdf()}
+              disabled={generandoPdf}
+            >
+              {generandoPdf ? 'Generando PDF...' : 'Exportar PDF'}
+            </Button>
+          </>
         }
       />
 

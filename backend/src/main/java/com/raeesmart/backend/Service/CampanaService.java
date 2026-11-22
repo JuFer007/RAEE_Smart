@@ -6,7 +6,7 @@ import java.util.List;
 public interface CampanaService {
     CampanaResponseDTO crear(CampanaRequestDTO request);
     CampanaResponseDTO actualizar(Long id, CampanaRequestDTO request);
-    CampanaResponseDTO cambiarEstado(Long id, boolean activa);
+    CampanaResponseDTO cambiarEstado(Long id, boolean activa, String motivoDesactivacion);
     void eliminar(Long id);
     List<CampanaResponseDTO> listarPorMunicipalidad(Long municipalidadId);
     List<CampanaResponseDTO> listarTodas();

@@ -6,6 +6,18 @@ export const API_BASE_URL =
 
 const TOKEN_KEY = 'raeesmart_panel_token';
 
+type MotivoSesion = 'expirada' | 'denegada';
+type ManejadorSesion = (motivo: MotivoSesion) => void;
+
+let manejadorSesion: ManejadorSesion | null = null;
+
+export function registrarManejadorSesion(manejador: ManejadorSesion | null): () => void {
+  manejadorSesion = manejador;
+  return () => {
+    if (manejadorSesion === manejador) manejadorSesion = null;
+  };
+}
+
 export class ApiError extends Error {
   status: number;
   detalles: string[];
@@ -67,7 +79,15 @@ export async function peticion<T = unknown>(
       }
     }
 
-    if (respuesta.status === 401) guardarToken(null);
+    const esLogin = ruta.startsWith('/auth/login');
+
+    if (respuesta.status === 401 && !esLogin) {
+      guardarToken(null);
+      manejadorSesion?.('expirada');
+    }
+    if (respuesta.status === 403) {
+      manejadorSesion?.('denegada');
+    }
 
     const mensaje =
       cuerpo?.mensaje ||
@@ -84,4 +104,11 @@ export async function peticion<T = unknown>(
   return (texto ? JSON.parse(texto) : null) as T;
 }
 
-export default { API_BASE_URL, obtenerToken, guardarToken, peticion, ApiError };
+export default {
+  API_BASE_URL,
+  obtenerToken,
+  guardarToken,
+  registrarManejadorSesion,
+  peticion,
+  ApiError,
+};

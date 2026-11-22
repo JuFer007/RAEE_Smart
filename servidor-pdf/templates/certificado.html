@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Certificado de entrega RAEE</title>
+<style>{{estilos}}</style>
+<style>
+  @page { size: A4 landscape; }
+  .certificado { border: 1px solid #D5E8DF; border-radius: 10px; padding: 14px 20px; }
+  .certificado .cabecera { border-bottom-width: 3px; padding-bottom: 12px; }
+  .sello { display: inline-block; margin-bottom: 8px; padding: 4px 14px; border-radius: 14px; background: #E1F5E9; color: #07884E; font-size: 9px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; }
+  .cuerpo-certificado { display: grid; grid-template-columns: 180px minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: stretch; margin-top: 14px; page-break-inside: avoid; }
+  .qr-bloque { text-align: center; border-right: 1px solid #D5E8DF; padding-right: 16px; }
+  .qr-bloque img { width: 132px; height: 132px; object-fit: contain; border: 1px solid #D5E8DF; border-radius: 8px; background: #fff; padding: 6px; }
+  .qr-vacio { width: 132px; height: 132px; margin: 0 auto; border: 2px dashed #B6D4C7; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #709087; font-size: 9px; }
+  .qr-leyenda { margin-top: 8px; font-size: 8.5px; color: #709087; line-height: 1.4; }
+  .persona-bloque, .detalle-bloque { min-width: 0; }
+  .bloque-titulo { font-size: 8.5px; font-weight: 700; color: #087C4B; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; padding-bottom: 5px; border-bottom: 1px solid #E1EEE7; }
+  h1 { font-size: 20px; font-weight: 700; color: #103B35; margin-bottom: 6px; }
+  .declaracion-intro { font-size: 9.5px; color: #22584C; line-height: 1.6; margin-bottom: 12px; }
+  .declaracion-intro strong { color: #087C4B; }
+  table.detalle-certificado { width: 100%; }
+  table.detalle-certificado td { padding: 6px 0; font-size: 9.5px; }
+  table.detalle-certificado td:first-child { width: 38%; color: #709087; text-transform: uppercase; font-size: 8px; letter-spacing: .4px; }
+  table.detalle-certificado td:last-child { font-weight: 700; color: #15443D; }
+  .codigo-bloque { margin-top: 12px; padding: 9px 12px; background: #F8FCFA; border: 1px solid #D5E8DF; border-left: 4px solid #079150; border-radius: 6px; page-break-inside: avoid; }
+  .codigo-bloque .periodo-valor { font-size: 11px; letter-spacing: .6px; }
+  .codigo-url { margin-top: 4px; font-size: 8px; color: #22584C; overflow-wrap: anywhere; }
+  .declaracion { margin-top: 12px; padding: 9px 14px; border: 1px solid #D5E8DF; border-radius: 6px; font-size: 9px; color: #22584C; line-height: 1.6; page-break-inside: avoid; }
+  .certificado .pie { margin-top: 12px; }
+</style>
+</head>
+<body>
+<div class="certificado">
+
+  <div class="cabecera">
+    <div class="logo-section">
+      <img class="logo" src="{{logo}}" alt="RAEE Smart">
+      <div class="info-negocio">
+        <div class="nombre-negocio">RAEE Smart</div>
+        <div class="subtitulo-negocio">Plataforma de reciclaje de aparatos eléctricos y electrónicos</div>
+        <div class="subtitulo-negocio">Chiclayo · Perú</div>
+      </div>
+    </div>
+    <div class="info-reporte">
+      <div class="titulo-reporte">Certificado de entrega</div>
+      <div class="fecha-reporte">Generado el: {{fechaGeneracion}} - {{horaGeneracion}}</div>
+    </div>
+  </div>
+
+  <div class="cuerpo-certificado">
+    <div class="qr-bloque">
+      {{qr}}
+      <div class="qr-leyenda">Escanea el código QR para verificar la entrega</div>
+    </div>
+
+    <div class="persona-bloque">
+      <div class="sello">Entrega certificada</div>
+      <h1>Constancia de recepción</h1>
+      <div class="declaracion-intro">
+        Se certifica que <strong>{{personaNombre}}</strong>, identificado con DNI <strong>{{personaDni}}</strong>, registró y entregó un residuo de aparato eléctrico o electrónico en un punto de acopio autorizado de RAEE Smart.
+      </div>
+      <div class="bloque-titulo">Datos del titular</div>
+      <table class="detalle-certificado">
+        <tr><td>Nombre completo</td><td>{{personaNombre}}</td></tr>
+        <tr><td>DNI</td><td>{{personaDni}}</td></tr>
+        <tr><td>N.º de entrega</td><td>#{{entregaId}}</td></tr>
+      </table>
+    </div>
+
+    <div class="detalle-bloque">
+      <div class="bloque-titulo">Datos de la entrega</div>
+      <table class="detalle-certificado">
+        <tr><td>Categoría RAEE</td><td>{{categoria}}</td></tr>
+        <tr><td>Punto de acopio</td><td>{{punto}}</td></tr>
+        <tr><td>Fecha de entrega</td><td>{{fechaEntrega}}</td></tr>
+        <tr><td>Fecha de emisión</td><td>{{fechaEmision}}</td></tr>
+      </table>
+      <div class="codigo-bloque">
+        <div class="periodo-label">Código único de verificación</div>
+        <div class="periodo-valor mono">{{codigoHash}}</div>
+        <div class="codigo-url">{{codigoQr}}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="declaracion">
+    Este documento es generado automáticamente por RAEE Smart. La validez del certificado puede comprobarse escaneando el código QR o ingresando el código único en el módulo de verificación de la plataforma.
+  </div>
+
+  <div class="pie">
+    <div class="pie-info">RAEE SMART - Gestión responsable de residuos electrónicos</div>
+    <div class="pie-info">Documento emitido el {{fechaGeneracion}} · {{anio}}</div>
+    <div class="pie-info">Este documento es generado automáticamente por el sistema</div>
+  </div>
+</div>
+</body>
+</html>

@@ -52,6 +52,15 @@ public class Campana {
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private LocalDateTime fechaCreacion;
 
+    @Column(name = "motivo_desactivacion", length = 300)
+    private String motivoDesactivacion;
+
+    @Column(name = "fecha_desactivacion")
+    private LocalDateTime fechaDesactivacion;
+
+    @Column(name = "desactivada_por", length = 150)
+    private String desactivadaPor;
+
     @PrePersist
     public void prePersist() {
         if (this.fechaCreacion == null) {

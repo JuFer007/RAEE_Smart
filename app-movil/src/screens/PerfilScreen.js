@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Encabezado from '../components/Encabezado';
 import Boton from '../components/Boton';
+import CalificarAppModal from '../components/CalificarAppModal';
 import { useAuth } from '../context/AuthContext';
 import { SECCIONES_MENU } from '../utils/menu';
 import { APP } from '../utils/contenido';
@@ -12,9 +13,18 @@ const SECCIONES = SECCIONES_MENU;
 
 export default function PerfilScreen({ navigation }) {
   const { usuario, cerrarSesion } = useAuth();
+  const [calificarVisible, setCalificarVisible] = useState(false);
 
   async function salir() {
     await cerrarSesion();
+  }
+
+  function abrirOpcion(opcion) {
+    if (opcion.modal === 'calificarApp') {
+      setCalificarVisible(true);
+      return;
+    }
+    if (opcion.pantalla) navigation.navigate(opcion.pantalla);
   }
 
   return (
@@ -47,7 +57,7 @@ export default function PerfilScreen({ navigation }) {
                   key={opcion.titulo}
                   style={[styles.fila, i === seccion.opciones.length - 1 && styles.filaUltima]}
                   activeOpacity={0.7}
-                  onPress={() => (opcion.pantalla ? navigation.navigate(opcion.pantalla) : null)}
+                  onPress={() => abrirOpcion(opcion)}
                 >
                   <Ionicons name={opcion.icono} size={20} color={COLORS.primaryText} />
                   <Text style={styles.filaTitulo}>{opcion.titulo}</Text>
@@ -62,6 +72,11 @@ export default function PerfilScreen({ navigation }) {
 
         <Text style={styles.version}>RAEE Smart · versión {APP.version}</Text>
       </ScrollView>
+
+      <CalificarAppModal
+        visible={calificarVisible}
+        onClose={() => setCalificarVisible(false)}
+      />
     </View>
   );
 }

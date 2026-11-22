@@ -25,8 +25,9 @@ class ErrorHttp extends Error {
 }
 
 async function get(ruta, token) {
-  const r = await fetch(`${backendUrl()}${ruta}`, { headers: { Authorization: `Bearer ${token}` } });
-  if (!r.ok) throw new ErrorHttp([401, 403, 404].includes(r.status) ? r.status : 502, `Backend respondió ${r.status}`);
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  const r = await fetch(`${backendUrl()}${ruta}`, { headers });
+  if (!r.ok) throw new ErrorHttp([400, 401, 403, 404].includes(r.status) ? r.status : 502, `Backend respondió ${r.status}`);
   return r.json();
 }
 
@@ -173,4 +174,28 @@ async function datosSuperadmin(query, token) {
   };
 }
 
-module.exports = { datosMunicipalidad, datosSuperadmin, ErrorHttp, ESTADOS };
+async function datosMunicipalidades(token) {
+  const lista = await fuente.municipalidades(token);
+  const municipalidades = lista
+    .map((m) => ({
+      nombre: m.nombre,
+      distrito: m.distrito,
+      direccion: m.direccion || '—',
+      contactoEmail: m.contactoEmail || '—',
+      latitud: m.latitud,
+      longitud: m.longitud,
+      activa: !!m.activo,
+      campanasHabilitadas: !!m.campanasHabilitadas,
+    }))
+    .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+
+  return {
+    municipalidades,
+    total: lista.length,
+    activas: lista.filter((m) => m.activo).length,
+    inactivas: lista.filter((m) => !m.activo).length,
+    conCampanas: lista.filter((m) => m.campanasHabilitadas).length,
+  };
+}
+
+module.exports = { datosMunicipalidad, datosSuperadmin, datosMunicipalidades, ErrorHttp, ESTADOS, get };

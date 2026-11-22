@@ -40,4 +40,7 @@ public class CampanaRequestDTO {
     private LocalDate fechaFin;
 
     private Boolean activa;
+
+    @Size(max = 300)
+    private String motivoDesactivacion;
 }

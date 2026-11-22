@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
+import HorarioEditor from '../../components/HorarioEditor';
 import Icon from '../../components/Icon';
 import Modal from '../../components/Modal';
 import ConfirmDialog from '../../components/ConfirmDialog';
@@ -24,18 +25,26 @@ import { useToast } from '../../context/ToastContext';
 import type { Campana, Punto } from '../../types';
 import {
   fechaHoyISO,
+  formatearFechaHora,
   formatearRango,
   obtenerMensajeError,
   pluralizar,
   sumarDias,
 } from '../../utils/formato';
+import {
+  formatearHorario,
+  horarioVacio,
+  parsearHorario,
+  validarHorario,
+  type HorarioValor,
+} from '../../utils/horario';
 
 interface FormularioCampana {
   titulo: string;
   descripcion: string;
   lugar: string;
   puntoRecoleccionId: string;
-  horario: string;
+  horario: HorarioValor;
   fechaInicio: string;
   fechaFin: string;
   activa: boolean;
@@ -47,7 +56,7 @@ const FORMULARIO_VACIO: FormularioCampana = {
   descripcion: '',
   lugar: '',
   puntoRecoleccionId: '',
-  horario: '',
+  horario: horarioVacio(),
   fechaInicio: hoy,
   fechaFin: sumarDias(hoy, 14),
   activa: true,
@@ -68,6 +77,15 @@ const TONOS_ESTADO: Record<string, StatusTone> = {
   FINALIZADA: 'neutral',
   INACTIVA: 'neutral',
 };
+
+const MOTIVOS_DESACTIVACION = [
+  'Finalizó anticipadamente',
+  'Falta de personal o recursos',
+  'Cambio de punto de acopio',
+  'Error en fechas o datos',
+  'Suspensión por seguridad o clima',
+  'Otro',
+];
 
 function estadoCampana(campana: Campana): { label: string; tone: StatusTone } {
   if (!campana.activa) {
@@ -96,8 +114,15 @@ export default function CampanasPage() {
   const [guardando, setGuardando] = useState(false);
 
   const [campanaEliminar, setCampanaEliminar] = useState<Campana | null>(null);
+  const [campanaReactivar, setCampanaReactivar] = useState<Campana | null>(null);
   const [eliminando, setEliminando] = useState(false);
   const [cambiandoEstado, setCambiandoEstado] = useState<number | null>(null);
+
+  const [campanaMotivo, setCampanaMotivo] = useState<Campana | null>(null);
+  const [motivoCategoria, setMotivoCategoria] = useState(MOTIVOS_DESACTIVACION[0]);
+  const [motivoDetalle, setMotivoDetalle] = useState('');
+  const [erroresMotivo, setErroresMotivo] = useState<Record<string, string>>({});
+  const [guardandoMotivo, setGuardandoMotivo] = useState(false);
 
   const cargar = useCallback(async () => {
     setCargando(true);
@@ -160,7 +185,7 @@ export default function CampanasPage() {
       puntoRecoleccionId: campana.puntoRecoleccionId
         ? String(campana.puntoRecoleccionId)
         : '',
-      horario: campana.horario ?? '',
+      horario: parsearHorario(campana.horario) ?? horarioVacio(),
       fechaInicio: campana.fechaInicio.slice(0, 10),
       fechaFin: campana.fechaFin.slice(0, 10),
       activa: campana.activa,
@@ -171,7 +196,7 @@ export default function CampanasPage() {
   };
 
   const cerrarModal = () => {
-    if (guardando) return;
+    if (guardando || campanaMotivo) return;
     setModalCampana(false);
     setCampanaEditando(null);
     setErrorFormulario('');
@@ -191,7 +216,10 @@ export default function CampanasPage() {
       ...actual,
       puntoRecoleccionId: id,
       lugar: actual.lugar.trim() ? actual.lugar : punto?.direccion ?? '',
-      horario: actual.horario.trim() ? actual.horario : punto?.horarioAtencion ?? '',
+      horario:
+        actual.horario.dias.length || actual.horario.sinHorario
+          ? actual.horario
+          : parsearHorario(punto?.horarioAtencion) ?? horarioVacio(),
     }));
     setErrores((actual) => ({ ...actual, puntoRecoleccionId: '' }));
   };
@@ -213,8 +241,13 @@ export default function CampanasPage() {
       nuevosErrores.lugar = 'El lugar no debe superar los 200 caracteres.';
     }
 
-    if (formulario.horario.trim().length > 100) {
-      nuevosErrores.horario = 'El horario no debe superar los 100 caracteres.';
+    const errorHorario = validarHorario(formulario.horario, {
+      obligatorio: false,
+      permitirSinHorario: false,
+      permitirVacio: true,
+    });
+    if (errorHorario) {
+      nuevosErrores.horario = errorHorario;
     }
 
     if (!formulario.puntoRecoleccionId) {
@@ -245,7 +278,7 @@ export default function CampanasPage() {
       descripcion: formulario.descripcion.trim(),
       lugar: formulario.lugar.trim(),
       puntoRecoleccionId: Number(formulario.puntoRecoleccionId),
-      horario: formulario.horario.trim(),
+      horario: formatearHorario(formulario.horario),
       fechaInicio: formulario.fechaInicio,
       fechaFin: formulario.fechaFin,
       activa: formulario.activa,
@@ -282,18 +315,99 @@ export default function CampanasPage() {
     }
   };
 
-  const alternarActiva = async (campana: Campana) => {
+  const ejecutarCambioEstado = async (
+    campana: Campana,
+    activa: boolean,
+    motivo?: string,
+  ) => {
     setCambiandoEstado(campana.id);
     try {
-      const actualizada = await cambiarEstadoCampana(campana.id, !campana.activa);
+      const actualizada = await cambiarEstadoCampana(campana.id, activa, motivo);
       setCampanas((actuales) =>
         actuales.map((item) => (item.id === actualizada.id ? actualizada : item)),
       );
-      showToast(actualizada.activa ? 'Campaña activada.' : 'Campaña desactivada.');
+      setCampanaEditando((actual) =>
+        actual && actual.id === actualizada.id ? actualizada : actual,
+      );
+      if (modalCampana && campanaEditando?.id === actualizada.id) {
+        setFormulario((actual) => ({ ...actual, activa: actualizada.activa }));
+      }
+      showToast(
+        actualizada.activa
+          ? 'Campaña activada.'
+          : 'Campaña desactivada. Motivo registrado.',
+      );
+      return actualizada;
     } catch (err) {
       showToast(obtenerMensajeError(err), 'error');
+      return null;
     } finally {
       setCambiandoEstado(null);
+    }
+  };
+
+  const abrirMotivoDesactivacion = (campana: Campana) => {
+    setCampanaMotivo(campana);
+    setMotivoCategoria(MOTIVOS_DESACTIVACION[0]);
+    setMotivoDetalle('');
+    setErroresMotivo({});
+  };
+
+  const cerrarMotivo = () => {
+    if (guardandoMotivo) return;
+    setCampanaMotivo(null);
+    setErroresMotivo({});
+  };
+
+  const alternarActiva = (campana: Campana) => {
+    if (campana.activa) {
+      abrirMotivoDesactivacion(campana);
+      return;
+    }
+    setCampanaReactivar(campana);
+  };
+
+  const cambiarActivaFormulario = (marcada: boolean) => {
+    if (!campanaEditando) {
+      cambiarCampo('activa', marcada);
+      return;
+    }
+    if (marcada) {
+      setCampanaReactivar(campanaEditando);
+      return;
+    }
+    abrirMotivoDesactivacion(campanaEditando);
+  };
+
+  const motivoCompleto = motivoDetalle.trim()
+    ? `${motivoCategoria}: ${motivoDetalle.trim()}`
+    : motivoCategoria;
+
+  const confirmarDesactivacion = async (evento: FormEvent) => {
+    evento.preventDefault();
+    if (!campanaMotivo) return;
+
+    const nuevosErrores: Record<string, string> = {};
+    if (!motivoCategoria) {
+      nuevosErrores.categoria = 'Selecciona un motivo.';
+    }
+    if (!motivoDetalle.trim()) {
+      nuevosErrores.detalle = 'Describe el motivo de la desactivación.';
+    } else if (motivoCompleto.length > 300) {
+      nuevosErrores.detalle = 'El motivo no debe superar los 300 caracteres.';
+    }
+    setErroresMotivo(nuevosErrores);
+    if (Object.keys(nuevosErrores).length) return;
+
+    setGuardandoMotivo(true);
+    try {
+      const actualizada = await ejecutarCambioEstado(campanaMotivo, false, motivoCompleto);
+      if (actualizada) {
+        setCampanaMotivo(null);
+        setErroresMotivo({});
+      }
+    } finally {
+      setGuardandoMotivo(false);
     }
   };
 
@@ -380,7 +494,7 @@ export default function CampanasPage() {
                       aria-checked={campana.activa}
                       aria-label={`${campana.activa ? 'Desactivar' : 'Activar'} ${campana.titulo}`}
                       disabled={cambiandoEstado === campana.id}
-                      onClick={() => void alternarActiva(campana)}
+                      onClick={() => alternarActiva(campana)}
                     >
                       <span />
                     </button>
@@ -388,6 +502,28 @@ export default function CampanasPage() {
 
                   {campana.descripcion ? (
                     <p className="campaign-row__description">{campana.descripcion}</p>
+                  ) : null}
+
+                  {!campana.activa ? (
+                    <div className="campaign-motivo">
+                      <Icon name="alert" size={15} />
+                      <div>
+                        <b>
+                          {campana.motivoDesactivacion
+                            ? 'Motivo de desactivación'
+                            : 'Sin motivo registrado'}
+                        </b>
+                        {campana.motivoDesactivacion ? (
+                          <span>{campana.motivoDesactivacion}</span>
+                        ) : null}
+                        {campana.fechaDesactivacion ? (
+                          <small>
+                            {formatearFechaHora(campana.fechaDesactivacion)}
+                            {campana.desactivadaPor ? ` · ${campana.desactivadaPor}` : ''}
+                          </small>
+                        ) : null}
+                      </div>
+                    </div>
                   ) : null}
 
                   {!campana.puntoRecoleccionId ? (
@@ -580,26 +716,21 @@ export default function CampanasPage() {
               ) : null}
             </div>
 
-            <div className="panel-field">
-              <label htmlFor="campana-horario">Horario</label>
-              <input
-                id="campana-horario"
-                value={formulario.horario}
-                onChange={(evento) => cambiarCampo('horario', evento.target.value)}
-                placeholder="Se completa desde el punto"
-                maxLength={100}
-              />
-              {errores.horario ? (
-                <span className="panel-field__error">{errores.horario}</span>
-              ) : null}
-            </div>
+            <HorarioEditor
+              id="campana-horario"
+              valor={formulario.horario}
+              onChange={(valor) => cambiarCampo('horario', valor)}
+              error={errores.horario}
+              permitirSinHorario={false}
+              ayuda="Se completa desde el punto de acopio; puedes ajustarlo."
+            />
           </div>
 
           <label className="panel-check">
             <input
               type="checkbox"
               checked={formulario.activa}
-              onChange={(evento) => cambiarCampo('activa', evento.target.checked)}
+              onChange={(evento) => cambiarActivaFormulario(evento.target.checked)}
             />
             <span>
               <b>Visible para los ciudadanos</b>
@@ -622,6 +753,65 @@ export default function CampanasPage() {
         </form>
       </Modal>
 
+      <Modal
+        abierto={Boolean(campanaMotivo)}
+        titulo="Desactivar campaña"
+        descripcion={`Registra por qué se retira "${campanaMotivo?.titulo ?? ''}" antes de su fecha de fin.`}
+        ancho={520}
+        onCerrar={cerrarMotivo}
+      >
+        <form className="panel-form" onSubmit={confirmarDesactivacion} noValidate>
+          <div className="panel-field">
+            <label htmlFor="motivo-categoria">Motivo</label>
+            <select
+              id="motivo-categoria"
+              value={motivoCategoria}
+              onChange={(evento) => {
+                setMotivoCategoria(evento.target.value);
+                setErroresMotivo((actual) => ({ ...actual, categoria: '' }));
+              }}
+            >
+              {MOTIVOS_DESACTIVACION.map((motivo) => (
+                <option key={motivo} value={motivo}>
+                  {motivo}
+                </option>
+              ))}
+            </select>
+            {erroresMotivo.categoria ? (
+              <span className="panel-field__error">{erroresMotivo.categoria}</span>
+            ) : null}
+          </div>
+
+          <div className="panel-field">
+            <label htmlFor="motivo-detalle">Detalle</label>
+            <textarea
+              id="motivo-detalle"
+              rows={3}
+              value={motivoDetalle}
+              onChange={(evento) => {
+                setMotivoDetalle(evento.target.value);
+                setErroresMotivo((actual) => ({ ...actual, detalle: '' }));
+              }}
+              placeholder="Explica brevemente la situación para el registro interno."
+              maxLength={300}
+            />
+            <span className="panel-field__contador">{motivoCompleto.length}/300</span>
+            {erroresMotivo.detalle ? (
+              <span className="panel-field__error">{erroresMotivo.detalle}</span>
+            ) : null}
+          </div>
+
+          <div className="panel-form__acciones">
+            <Button variant="secondary" onClick={cerrarMotivo} disabled={guardandoMotivo}>
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={guardandoMotivo}>
+              {guardandoMotivo ? 'Desactivando...' : 'Desactivar campaña'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
       <ConfirmDialog
         abierto={Boolean(campanaEliminar)}
         titulo="Eliminar campaña"
@@ -630,6 +820,26 @@ export default function CampanasPage() {
         onConfirmar={() => void confirmarEliminar()}
         onCerrar={() => {
           if (!eliminando) setCampanaEliminar(null);
+        }}
+      />
+
+      <ConfirmDialog
+        abierto={Boolean(campanaReactivar)}
+        titulo="Reactivar campaña"
+        mensaje={`¿Reactivar "${campanaReactivar?.titulo ?? ''}"? Volverá a mostrarse a los ciudadanos si está dentro de su vigencia.`}
+        textoConfirmar="Reactivar"
+        textoCargando="Reactivando..."
+        variante="exito"
+        icono="check"
+        cargando={cambiandoEstado !== null}
+        onConfirmar={() => {
+          if (!campanaReactivar) return;
+          void ejecutarCambioEstado(campanaReactivar, true).then(() =>
+            setCampanaReactivar(null),
+          );
+        }}
+        onCerrar={() => {
+          if (cambiandoEstado === null) setCampanaReactivar(null);
         }}
       />
     </section>

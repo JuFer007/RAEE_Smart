@@ -42,6 +42,13 @@ public class Usuario {
     @Column(name = "fecha_registro", nullable = false, updatable = false)
     private LocalDateTime fechaRegistro;
 
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    @Builder.Default
+    private Boolean activo = true;
+
+    @Column(name = "ultimo_acceso")
+    private LocalDateTime ultimoAcceso;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "municipalidad_id")
     private Municipalidad municipalidad;
@@ -68,6 +75,9 @@ public class Usuario {
         }
         if (this.rolUsuario == null) {
             this.rolUsuario = RolUsuario.CIUDADANO;
+        }
+        if (this.activo == null) {
+            this.activo = true;
         }
     }
 }

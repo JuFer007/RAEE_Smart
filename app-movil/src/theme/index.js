@@ -23,13 +23,19 @@ const hostApi =
     ? '10.0.2.2'
     : hostExpo || 'localhost';
 const puertoBackend = extra.backendPort || '8080';
+const puertoPdf = extra.pdfPort || '3007';
 
 const API_BASE_URL_DESARROLLO = `http://${hostApi}:${puertoBackend}/api`;
+const PDF_BASE_URL_DESARROLLO = `http://${hostApi}:${puertoPdf}`;
 
 export const API_BASE_URL =
   extra.apiBaseUrl ||
   process.env.EXPO_PUBLIC_API_URL ||
   API_BASE_URL_DESARROLLO;
+export const PDF_BASE_URL =
+  extra.pdfBaseUrl ||
+  process.env.EXPO_PUBLIC_PDF_BASE_URL ||
+  PDF_BASE_URL_DESARROLLO;
 export const MAP_STYLE_URL =
   extra.mapStyleUrl ||
   process.env.EXPO_PUBLIC_MAP_STYLE_URL ||

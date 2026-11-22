@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
+import ConfirmDialog from '../../components/ConfirmDialog';
 import Icon from '../../components/Icon';
 import Modal from '../../components/Modal';
 import PanelAlert from '../../components/PanelAlert';
@@ -16,6 +17,7 @@ import {
   listarMunicipalidades,
   type MunicipalidadPayload,
 } from '../../api/panel';
+import { descargarPdf } from '../../api/pdf';
 import { useToast } from '../../context/ToastContext';
 import type { Municipalidad } from '../../types';
 import { obtenerMensajeError, pluralizar } from '../../utils/formato';
@@ -30,6 +32,11 @@ interface FormularioMunicipalidad {
   activo: boolean;
   campanasHabilitadas: boolean;
 }
+
+type ConfirmacionMunicipalidad =
+  | { tipo: 'estado'; municipalidad: Municipalidad }
+  | { tipo: 'campanas'; nombre: string; payload: MunicipalidadPayload }
+  | null;
 
 const FORMULARIO_VACIO: FormularioMunicipalidad = {
   nombre: '',
@@ -48,6 +55,7 @@ export default function MunicipalidadesPage() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
   const [busqueda, setBusqueda] = useState('');
+  const [generandoPdf, setGenerandoPdf] = useState(false);
 
   const [modalAbierto, setModalAbierto] = useState(false);
   const [editando, setEditando] = useState<Municipalidad | null>(null);
@@ -56,6 +64,7 @@ export default function MunicipalidadesPage() {
   const [errorFormulario, setErrorFormulario] = useState('');
   const [guardando, setGuardando] = useState(false);
   const [cambiandoEstado, setCambiandoEstado] = useState<number | null>(null);
+  const [confirmacion, setConfirmacion] = useState<ConfirmacionMunicipalidad>(null);
 
   const cargar = useCallback(async () => {
     setCargando(true);
@@ -190,12 +199,7 @@ export default function MunicipalidadesPage() {
     };
   };
 
-  const guardar = async (evento: FormEvent) => {
-    evento.preventDefault();
-    setErrorFormulario('');
-    const payload = validar();
-    if (!payload) return;
-
+  const ejecutarGuardado = async (payload: MunicipalidadPayload) => {
     setGuardando(true);
     try {
       if (editando) {
@@ -217,10 +221,25 @@ export default function MunicipalidadesPage() {
       setErrorFormulario(obtenerMensajeError(err));
     } finally {
       setGuardando(false);
+      setConfirmacion(null);
     }
   };
 
-  const alternarEstado = async (municipalidad: Municipalidad) => {
+  const guardar = (evento: FormEvent) => {
+    evento.preventDefault();
+    setErrorFormulario('');
+    const payload = validar();
+    if (!payload) return;
+
+    if (editando?.campanasHabilitadas && !payload.campanasHabilitadas) {
+      setConfirmacion({ tipo: 'campanas', nombre: editando.nombre, payload });
+      return;
+    }
+
+    void ejecutarGuardado(payload);
+  };
+
+  const ejecutarAlternarEstado = async (municipalidad: Municipalidad) => {
     setCambiandoEstado(municipalidad.id);
     try {
       const actualizada = await cambiarEstadoMunicipalidad(
@@ -239,18 +258,45 @@ export default function MunicipalidadesPage() {
       showToast(obtenerMensajeError(err), 'error');
     } finally {
       setCambiandoEstado(null);
+      setConfirmacion(null);
+    }
+  };
+
+  const alternarEstado = (municipalidad: Municipalidad) => {
+    setConfirmacion({ tipo: 'estado', municipalidad });
+  };
+
+  const exportarPdf = async () => {
+    setGenerandoPdf(true);
+    try {
+      await descargarPdf('/generar-reporte-municipalidades', {}, 'reporte-municipalidades');
+      showToast('Reporte de municipalidades descargado.');
+    } catch (err) {
+      showToast(obtenerMensajeError(err), 'error');
+    } finally {
+      setGenerandoPdf(false);
     }
   };
 
   return (
-    <section>
+    <section className="municipalidades">
       <PageHeader
         title="Municipalidades"
         description="Registra y administra los gobiernos locales que operan en RAEE Smart."
         actions={
-          <Button icon="plus" onClick={abrirNueva}>
-            Nueva municipalidad
-          </Button>
+          <>
+            <Button
+              icon="file"
+              variant="secondary"
+              onClick={() => void exportarPdf()}
+              disabled={generandoPdf}
+            >
+              {generandoPdf ? 'Generando PDF...' : 'Exportar PDF'}
+            </Button>
+            <Button icon="plus" onClick={abrirNueva}>
+              Nueva municipalidad
+            </Button>
+          </>
         }
       />
 
@@ -356,7 +402,7 @@ export default function MunicipalidadesPage() {
                       <button
                         type="button"
                         className={buttonClass('ghost')}
-                        onClick={() => void alternarEstado(municipalidad)}
+                        onClick={() => alternarEstado(municipalidad)}
                         disabled={cambiandoEstado === municipalidad.id}
                       >
                         <Icon
@@ -533,6 +579,51 @@ export default function MunicipalidadesPage() {
           </div>
         </form>
       </Modal>
+
+      <ConfirmDialog
+        abierto={Boolean(confirmacion)}
+        titulo={
+          confirmacion?.tipo === 'campanas'
+            ? 'Deshabilitar campañas'
+            : confirmacion?.municipalidad.activo
+              ? 'Desactivar municipalidad'
+              : 'Activar municipalidad'
+        }
+        mensaje={
+          confirmacion?.tipo === 'campanas'
+            ? `¿Deshabilitar las campañas de ${confirmacion.nombre}? Sus ciudadanos dejarán de ver las campañas publicadas.`
+            : confirmacion
+              ? confirmacion.municipalidad.activo
+                ? `¿Desactivar ${confirmacion.municipalidad.nombre}? No podrá registrar nuevas entregas.`
+                : `¿Activar ${confirmacion.municipalidad.nombre}? Podrá operar nuevamente en la plataforma.`
+              : ''
+        }
+        textoConfirmar={
+          confirmacion?.tipo === 'campanas'
+            ? 'Deshabilitar'
+            : confirmacion?.municipalidad.activo
+              ? 'Desactivar'
+              : 'Activar'
+        }
+        textoCargando="Guardando..."
+        variante={
+          confirmacion?.tipo === 'campanas' || confirmacion?.municipalidad.activo
+            ? 'peligro'
+            : 'exito'
+        }
+        icono={confirmacion?.tipo === 'campanas' || confirmacion?.municipalidad.activo ? 'alert' : 'check'}
+        cargando={guardando || cambiandoEstado !== null}
+        onConfirmar={() => {
+          if (confirmacion?.tipo === 'campanas') {
+            void ejecutarGuardado(confirmacion.payload);
+          } else if (confirmacion) {
+            void ejecutarAlternarEstado(confirmacion.municipalidad);
+          }
+        }}
+        onCerrar={() => {
+          if (!guardando && cambiandoEstado === null) setConfirmacion(null);
+        }}
+      />
     </section>
   );
 }

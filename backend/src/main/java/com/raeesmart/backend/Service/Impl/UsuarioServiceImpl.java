@@ -38,6 +38,11 @@ public class UsuarioServiceImpl implements UsuarioService {
         return usuarioRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
     }
 
+    @Override
+    public Usuario guardar(Usuario usuario) {
+        return usuarioRepository.save(usuario);
+    }
+
     @Transactional
     @Override
     public void cambiarPassword(String email, String passwordActual, String passwordNueva) {

@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 @Builder
@@ -24,4 +25,7 @@ public class CampanaResponseDTO {
     private LocalDate fechaFin;
     private Boolean activa;
     private String estado;
+    private String motivoDesactivacion;
+    private LocalDateTime fechaDesactivacion;
+    private String desactivadaPor;
 }

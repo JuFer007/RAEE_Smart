@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import Icon from './Icon';
 import Modal from './Modal';
 
@@ -10,6 +11,7 @@ interface ConfirmDialogProps {
   variante?: 'peligro' | 'exito';
   icono?: string;
   cargando?: boolean;
+  children?: ReactNode;
   onConfirmar: () => void;
   onCerrar: () => void;
 }
@@ -23,6 +25,7 @@ export default function ConfirmDialog({
   variante = 'peligro',
   icono = 'alert',
   cargando = false,
+  children,
   onConfirmar,
   onCerrar,
 }: ConfirmDialogProps) {
@@ -33,6 +36,7 @@ export default function ConfirmDialog({
           <Icon name={icono} size={22} />
         </span>
         <p>{mensaje}</p>
+        {children}
       </div>
       <div className="panel-form__acciones">
         <button type="button" className="panel-btn secundario" onClick={onCerrar}>

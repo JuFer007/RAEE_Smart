@@ -11,13 +11,18 @@ import com.raeesmart.backend.Repository.CampanaRepository;
 import com.raeesmart.backend.Repository.MunicipalidadRepository;
 import com.raeesmart.backend.Repository.PuntoRecoleccionRepository;
 import com.raeesmart.backend.Security.AutorizacionService;
+import com.raeesmart.backend.Service.AuditoriaService;
 import com.raeesmart.backend.Service.NotificacionService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Collections;
 
 @Service
@@ -30,6 +35,7 @@ public class CampanaServiceImpl implements CampanaService {
     private final PuntoRecoleccionRepository puntoRecoleccionRepository;
     private final NotificacionService notificacionService;
     private final AutorizacionService autorizacionService;
+    private AuditoriaService auditoriaService;
 
     public CampanaServiceImpl(CampanaRepository campanaRepository,
                               MunicipalidadRepository municipalidadRepository,
@@ -41,6 +47,11 @@ public class CampanaServiceImpl implements CampanaService {
         this.puntoRecoleccionRepository = puntoRecoleccionRepository;
         this.notificacionService = notificacionService;
         this.autorizacionService = autorizacionService;
+    }
+
+    @Autowired(required = false)
+    public void setAuditoriaService(AuditoriaService auditoriaService) {
+        this.auditoriaService = auditoriaService;
     }
 
     @Transactional
@@ -62,6 +73,11 @@ public class CampanaServiceImpl implements CampanaService {
                 .activa(request.getActiva() == null || request.getActiva())
                 .build();
         campana = campanaRepository.save(campana);
+        Map<String, Object> detalles = new HashMap<>();
+        detalles.put("titulo", campana.getTitulo());
+        detalles.put("municipalidadId", campana.getMunicipalidad() != null ? campana.getMunicipalidad().getId() : null);
+        detalles.put("activa", campana.getActiva());
+        registrar("CAMPANA_CREAR", "CAMPANA", String.valueOf(campana.getId()), detalles);
         notificarSiEsVigente(campana);
         return mapearAResponse(campana);
     }
@@ -71,8 +87,11 @@ public class CampanaServiceImpl implements CampanaService {
     public CampanaResponseDTO actualizar(Long id, CampanaRequestDTO request) {
         validarFechas(request);
         Campana campana = buscarCampana(id);
+        String detalleAnterior = detallePublico(campana);
         autorizacionService.validarGestionCampana(campana);
         Long municipalidadId = autorizacionService.resolverMunicipalidadId(request.getMunicipalidadId());
+        boolean estabaActiva = Boolean.TRUE.equals(campana.getActiva());
+        boolean nuevaActiva = request.getActiva() == null ? estabaActiva : request.getActiva();
         campana.setMunicipalidad(buscarMunicipalidad(municipalidadId));
         campana.setTitulo(request.getTitulo().trim());
         campana.setDescripcion(request.getDescripcion());
@@ -81,22 +100,54 @@ public class CampanaServiceImpl implements CampanaService {
         campana.setHorario(request.getHorario());
         campana.setFechaInicio(request.getFechaInicio());
         campana.setFechaFin(request.getFechaFin());
-        if (request.getActiva() != null) {
-            campana.setActiva(request.getActiva());
+        campana.setActiva(nuevaActiva);
+        if (nuevaActiva) {
+            limpiarDesactivacion(campana);
+        } else if (!estabaActiva) {
+            if (request.getMotivoDesactivacion() != null && !request.getMotivoDesactivacion().isBlank()) {
+                registrarDesactivacion(campana, request.getMotivoDesactivacion());
+            }
+        } else if (esAntesDelFin(campana)) {
+            registrarDesactivacion(campana, request.getMotivoDesactivacion());
+        } else {
+            limpiarDesactivacion(campana);
         }
-        return mapearAResponse(campanaRepository.save(campana));
+        Campana guardada = campanaRepository.save(campana);
+        Map<String, Object> detalles = new HashMap<>();
+        detalles.put("titulo", guardada.getTitulo());
+        detalles.put("estabaActiva", estabaActiva);
+        detalles.put("activa", nuevaActiva);
+        registrar("CAMPANA_ACTUALIZAR", "CAMPANA", String.valueOf(id), detalles);
+        notificarCambiosCampana(guardada, detalleAnterior, estabaActiva, nuevaActiva);
+        return mapearAResponse(guardada);
     }
 
     @Transactional
     @Override
-    public CampanaResponseDTO cambiarEstado(Long id, boolean activa) {
+    public CampanaResponseDTO cambiarEstado(Long id, boolean activa, String motivoDesactivacion) {
         Campana campana = buscarCampana(id);
         autorizacionService.validarGestionCampana(campana);
-        boolean estabaApagada = !Boolean.TRUE.equals(campana.getActiva());
+        boolean estabaActiva = Boolean.TRUE.equals(campana.getActiva());
+        if (activa) {
+            limpiarDesactivacion(campana);
+        } else if (estabaActiva && esAntesDelFin(campana)) {
+            registrarDesactivacion(campana, motivoDesactivacion);
+        } else {
+            limpiarDesactivacion(campana);
+        }
+        boolean notificarSuspension = estabaActiva && !activa && esAntesDelFin(campana);
         campana.setActiva(activa);
         campana = campanaRepository.save(campana);
-        if (activa && estabaApagada) {
-            notificarSiEsVigente(campana);
+        Map<String, Object> detalles = new HashMap<>();
+        detalles.put("titulo", campana.getTitulo());
+        detalles.put("estabaActiva", estabaActiva);
+        detalles.put("activa", activa);
+        registrar("CAMPANA_CAMBIAR_ESTADO", "CAMPANA", String.valueOf(id), detalles);
+        if (notificarSuspension) {
+            notificarCampana("Campaña suspendida", campana);
+        }
+        if (activa && !estabaActiva) {
+            notificarCampana("Campaña reactivada", campana);
         }
         return mapearAResponse(campana);
     }
@@ -107,6 +158,9 @@ public class CampanaServiceImpl implements CampanaService {
         Campana campana = buscarCampana(id);
         autorizacionService.validarGestionCampana(campana);
         campanaRepository.delete(campana);
+        Map<String, Object> detalles = new HashMap<>();
+        detalles.put("titulo", campana.getTitulo());
+        registrar("CAMPANA_ELIMINAR", "CAMPANA", String.valueOf(id), detalles);
     }
 
     @Transactional(readOnly = true)
@@ -170,10 +224,87 @@ public class CampanaServiceImpl implements CampanaService {
 
     private void notificarSiEsVigente(Campana campana) {
         boolean municipalidadActiva = Boolean.TRUE.equals(campana.getMunicipalidad().getActivo());
-        boolean noTermino = !campana.getFechaFin().isBefore(LocalDate.now(ZONA_PERU));
-        if (Boolean.TRUE.equals(campana.getActiva()) && municipalidadActiva && noTermino) {
-            String detalle = campana.getTitulo() + " - " + campana.getFechaInicio().format(FORMATO_FECHA) + " al " + campana.getFechaFin().format(FORMATO_FECHA) + (campana.getLugar() != null && !campana.getLugar().isBlank() ? " - " + campana.getLugar() : "");
-            notificacionService.notificarCiudadanos(TipoNotificacion.CAMPANA, "Nueva campaña de recolección", detalle);
+        if (Boolean.TRUE.equals(campana.getActiva()) && municipalidadActiva && esAntesDelFin(campana)) {
+            notificarCampana("Nueva campaña de recolección", campana);
+        }
+    }
+
+    private void notificarCambiosCampana(Campana campana, String detalleAnterior, boolean estabaActiva, boolean nuevaActiva) {
+        if (!esAntesDelFin(campana)) {
+            return;
+        }
+        if (estabaActiva && !nuevaActiva) {
+            notificarCampana("Campaña suspendida", campana);
+            return;
+        }
+        if (!estabaActiva && nuevaActiva) {
+            notificarCampana("Campaña reactivada", campana);
+            return;
+        }
+        if (nuevaActiva && !detalleAnterior.equals(detallePublico(campana))) {
+            notificarCampana("Campaña actualizada", campana);
+        }
+    }
+
+    private void notificarCampana(String titulo, Campana campana) {
+        if (!Boolean.TRUE.equals(campana.getMunicipalidad().getActivo())) {
+            return;
+        }
+        String detalle = campana.getTitulo()
+                + " - " + campana.getFechaInicio().format(FORMATO_FECHA)
+                + " al " + campana.getFechaFin().format(FORMATO_FECHA)
+                + (campana.getLugar() != null && !campana.getLugar().isBlank() ? " - " + campana.getLugar() : "");
+        notificacionService.notificarCiudadanos(TipoNotificacion.CAMPANA, titulo, detalle);
+    }
+
+    private String detallePublico(Campana campana) {
+        return String.join("|",
+                valorTexto(campana.getTitulo()),
+                valorTexto(campana.getDescripcion()),
+                valorTexto(campana.getLugar()),
+                campana.getPuntoRecoleccion() == null ? "" : String.valueOf(campana.getPuntoRecoleccion().getId()),
+                valorTexto(campana.getHorario()),
+                campana.getFechaInicio() == null ? "" : campana.getFechaInicio().toString(),
+                campana.getFechaFin() == null ? "" : campana.getFechaFin().toString(),
+                campana.getMunicipalidad() == null ? "" : String.valueOf(campana.getMunicipalidad().getId()),
+                String.valueOf(campana.getActiva()));
+    }
+
+    private String valorTexto(String texto) {
+        return texto == null ? "" : texto.trim();
+    }
+
+    private boolean esAntesDelFin(Campana campana) {
+        return !campana.getFechaFin().isBefore(LocalDate.now(ZONA_PERU));
+    }
+
+    private void validarMotivo(String motivo) {
+        if (motivo == null || motivo.isBlank()) {
+            throw new IllegalArgumentException(
+                    "El motivo de desactivación es obligatorio cuando la campaña aún no termina");
+        }
+        if (motivo.trim().length() > 300) {
+            throw new IllegalArgumentException(
+                    "El motivo de desactivación no debe superar los 300 caracteres");
+        }
+    }
+
+    private void registrarDesactivacion(Campana campana, String motivo) {
+        validarMotivo(motivo);
+        campana.setMotivoDesactivacion(motivo.trim());
+        campana.setFechaDesactivacion(LocalDateTime.now(ZONA_PERU));
+        campana.setDesactivadaPor(autorizacionService.obtenerActor().getNombre());
+    }
+
+    private void limpiarDesactivacion(Campana campana) {
+        campana.setMotivoDesactivacion(null);
+        campana.setFechaDesactivacion(null);
+        campana.setDesactivadaPor(null);
+    }
+
+    private void registrar(String accion, String entidad, String entidadId, Map<String, Object> detalles) {
+        if (auditoriaService != null) {
+            auditoriaService.registrar(accion, entidad, entidadId, detalles);
         }
     }
 
@@ -231,6 +362,9 @@ public class CampanaServiceImpl implements CampanaService {
                 .fechaFin(campana.getFechaFin())
                 .activa(campana.getActiva())
                 .estado(calcularEstado(campana))
+                .motivoDesactivacion(campana.getMotivoDesactivacion())
+                .fechaDesactivacion(campana.getFechaDesactivacion())
+                .desactivadaPor(campana.getDesactivadaPor())
                 .build();
     }
 }

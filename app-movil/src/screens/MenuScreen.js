@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Encabezado from '../components/Encabezado';
+import CalificarAppModal from '../components/CalificarAppModal';
 import useEntradaAnimada from '../hooks/useEntradaAnimada';
 import useSalidaAnimada from '../hooks/useSalidaAnimada';
 import { SECCIONES_MENU } from '../utils/menu';
@@ -10,7 +11,16 @@ import { COLORS, ESPACIOS, RADIOS, TIPOGRAFIA } from '../theme';
 
 export default function MenuScreen({ navigation }) {
   const [entrada, salir] = useEntradaAnimada({ eje: 'x', distancia: -34 });
+  const [calificarVisible, setCalificarVisible] = useState(false);
   useSalidaAnimada(navigation, salir);
+
+  function abrirOpcion(opcion) {
+    if (opcion.modal === 'calificarApp') {
+      setCalificarVisible(true);
+      return;
+    }
+    if (opcion.pantalla) navigation.navigate(opcion.pantalla);
+  }
 
   return (
     <View style={styles.fondo}>
@@ -18,31 +28,36 @@ export default function MenuScreen({ navigation }) {
         <Encabezado titulo="Menú" onBack={() => navigation.goBack()} />
 
         <Animated.View style={entrada}>
-        {SECCIONES_MENU.map((seccion) => (
-          <View key={seccion.titulo}>
-            <Text style={styles.seccion}>{seccion.titulo}</Text>
+          {SECCIONES_MENU.map((seccion) => (
+            <View key={seccion.titulo}>
+              <Text style={styles.seccion}>{seccion.titulo}</Text>
 
-            <View style={styles.lista}>
-              {seccion.opciones.map((opcion, i) => (
-                <TouchableOpacity
-                  key={opcion.titulo}
-                  style={[styles.fila, i === seccion.opciones.length - 1 && styles.filaUltima]}
-                  activeOpacity={0.7}
-                  onPress={() => (opcion.pantalla ? navigation.navigate(opcion.pantalla) : null)}
-                >
-                  <View style={styles.filaIcono}>
-                    <Ionicons name={opcion.icono} size={17} color={COLORS.primaryText} />
-                  </View>
-                  <Text style={styles.filaTitulo}>{opcion.titulo}</Text>
-                  <Ionicons name="chevron-forward" size={16} color={COLORS.mutSoft} />
-                </TouchableOpacity>
-              ))}
+              <View style={styles.lista}>
+                {seccion.opciones.map((opcion, i) => (
+                  <TouchableOpacity
+                    key={opcion.titulo}
+                    style={[styles.fila, i === seccion.opciones.length - 1 && styles.filaUltima]}
+                    activeOpacity={0.7}
+                    onPress={() => abrirOpcion(opcion)}
+                  >
+                    <View style={styles.filaIcono}>
+                      <Ionicons name={opcion.icono} size={17} color={COLORS.primaryText} />
+                    </View>
+                    <Text style={styles.filaTitulo}>{opcion.titulo}</Text>
+                    <Ionicons name="chevron-forward" size={16} color={COLORS.mutSoft} />
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
-          </View>
-        ))}
-        <Text style={styles.version}>{APP.nombre} · versión {APP.version}</Text>
+          ))}
+          <Text style={styles.version}>{APP.nombre} · versión {APP.version}</Text>
         </Animated.View>
       </ScrollView>
+
+      <CalificarAppModal
+        visible={calificarVisible}
+        onClose={() => setCalificarVisible(false)}
+      />
     </View>
   );
 }

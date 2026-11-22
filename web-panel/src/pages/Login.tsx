@@ -1,18 +1,23 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './Login.css';
 
 export default function Login() {
   const { usuario, cargando, iniciarSesion, cerrarSesion } = useAuth();
   const navigate = useNavigate();
+  const [parametros] = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [recordarSesion, setRecordarSesion] = useState(true);
   const [verPassword, setVerPassword] = useState(false);
   const [error, setError] = useState('');
-  const [aviso, setAviso] = useState('');
+  const [aviso, setAviso] = useState(
+    parametros.get('motivo') === 'expirada'
+      ? 'Tu sesión expiró. Inicia sesión nuevamente.'
+      : '',
+  );
   const [enviando, setEnviando] = useState(false);
 
   if (!cargando && usuario?.municipalidadId) {

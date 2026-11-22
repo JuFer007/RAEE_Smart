@@ -13,5 +13,6 @@ public interface NotificacionService {
     void marcarTodasLeidas(String email);
     void crearParaUsuario(Long usuarioId, TipoNotificacion tipo, String titulo, String detalle);
     void crearParaUsuariosDeMunicipalidad(Long municipalidadId, TipoNotificacion tipo, String titulo, String detalle);
+    void crearParaCiudadanosDeMunicipalidad(Long municipalidadId, TipoNotificacion tipo, String titulo, String detalle);
     List<NotificacionResponseDTO> listarDeUsuarioId(Long usuarioId);
 }

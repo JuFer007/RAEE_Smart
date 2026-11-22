@@ -17,6 +17,7 @@ const NAVEGACION: { grupo: string; enlaces: EnlaceNav[] }[] = [
     enlaces: [
       { to: '/panel', label: 'Resumen general', icono: 'dashboard', end: true },
       { to: '/panel/municipalidades', label: 'Municipalidades', icono: 'building' },
+      { to: '/panel/usuarios', label: 'Usuarios', icono: 'users' },
     ],
   },
   {
@@ -24,6 +25,7 @@ const NAVEGACION: { grupo: string; enlaces: EnlaceNav[] }[] = [
     enlaces: [
       { to: '/panel/reportes', label: 'Reportes consolidados', icono: 'file' },
       { to: '/panel/calidad-ia', label: 'Calidad de la IA', icono: 'sparkles' },
+      { to: '/panel/satisfaccion', label: 'Satisfacción', icono: 'star' },
     ],
   },
 ];
@@ -31,8 +33,10 @@ const NAVEGACION: { grupo: string; enlaces: EnlaceNav[] }[] = [
 const TITULOS: Record<string, { titulo: string; grupo: string }> = {
   '/panel': { titulo: 'Resumen general', grupo: 'Administración' },
   '/panel/municipalidades': { titulo: 'Municipalidades', grupo: 'Administración' },
+  '/panel/usuarios': { titulo: 'Usuarios', grupo: 'Administración' },
   '/panel/reportes': { titulo: 'Reportes consolidados', grupo: 'Análisis' },
   '/panel/calidad-ia': { titulo: 'Calidad de la IA', grupo: 'Análisis' },
+  '/panel/satisfaccion': { titulo: 'Satisfacción', grupo: 'Análisis' },
 };
 
 function capitalizar(texto: string) {
@@ -73,7 +77,7 @@ export default function AdminLayout() {
         aria-hidden="true"
       />
 
-      <aside className={`panel-sidebar${menuAbierto ? ' is-open' : ''}`}>
+      <aside className={`panel-sidebar panel-sidebar--admin${menuAbierto ? ' is-open' : ''}`}>
         <div className="panel-brand">
           <img src="/logoRAEE_Smart.png" alt="" />
           <div>
@@ -81,6 +85,10 @@ export default function AdminLayout() {
               RAEE <span>Smart</span>
             </strong>
             <small>Superadministración</small>
+            <span className="panel-sidebar__acceso">
+              <Icon name="globe" size={13} />
+              Acceso global
+            </span>
           </div>
         </div>
 
@@ -107,14 +115,7 @@ export default function AdminLayout() {
         </nav>
 
         <div className="panel-sidebar__footer">
-          <div className="panel-sidebar__usuario">
-            <span>{inicial}</span>
-            <div>
-              <b>{usuario?.nombre}</b>
-              <small>Superadministrador</small>
-            </div>
-          </div>
-          <button type="button" className="panel-logout" onClick={salir}>
+          <button type="button" className="panel-sidebar__logout" onClick={salir}>
             <Icon name="logout" size={17} />
             Cerrar sesión
           </button>
@@ -144,7 +145,7 @@ export default function AdminLayout() {
           </div>
         </header>
 
-        <main className="panel-content fade-in">
+        <main className="panel-content admin-content fade-in">
           <Outlet />
         </main>
       </div>

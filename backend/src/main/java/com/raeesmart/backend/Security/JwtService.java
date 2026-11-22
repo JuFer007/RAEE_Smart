@@ -1,4 +1,5 @@
 package com.raeesmart.backend.Security;
+import com.raeesmart.backend.Model.Enums.CanalAcceso;
 import com.raeesmart.backend.Model.Usuario;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -24,6 +25,10 @@ public class JwtService {
     }
 
     public String generarToken(Usuario usuario) {
+        return generarToken(usuario, CanalAcceso.WEB);
+    }
+
+    public String generarToken(Usuario usuario, CanalAcceso canal) {
         Date ahora = new Date();
         Date expiracion = new Date(ahora.getTime() + expiracionMs);
 
@@ -31,6 +36,7 @@ public class JwtService {
                 .subject(usuario.getEmail())
                 .claim("usuarioId", usuario.getId())
                 .claim("rol", usuario.getRolUsuario().name())
+                .claim("canal", canal.name())
                 .issuedAt(ahora)
                 .expiration(expiracion)
                 .signWith(clave)
@@ -51,6 +57,18 @@ public class JwtService {
 
     public String obtenerRol(String token) {
         return validarYObtenerClaims(token).get("rol", String.class);
+    }
+
+    public CanalAcceso obtenerCanal(String token) {
+        String canal = validarYObtenerClaims(token).get("canal", String.class);
+        if (canal == null) {
+            return CanalAcceso.WEB;
+        }
+        try {
+            return CanalAcceso.valueOf(canal);
+        } catch (IllegalArgumentException ex) {
+            return CanalAcceso.WEB;
+        }
     }
 
     public boolean esValido(String token) {

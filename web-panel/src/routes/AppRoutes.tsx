@@ -14,10 +14,13 @@ import HorariosPage from '../features/horarios/HorariosPage';
 import EstadisticasPage from '../features/estadisticas/EstadisticasPage';
 import ReportesPage from '../features/reportes/ReportesPage';
 import SatisfaccionPage from '../features/satisfaccion/SatisfaccionPage';
+import VerificarCertificadoPage from '../features/certificados/VerificarCertificadoPage';
 import AdminResumenPage from '../features/admin/AdminResumenPage';
 import MunicipalidadesPage from '../features/admin/MunicipalidadesPage';
 import AdminReportesPage from '../features/admin/AdminReportesPage';
 import CalidadIaPage from '../features/admin/CalidadIaPage';
+import AdministradoresPage from '../features/admin/AdministradoresPage';
+import MunicipalidadDetallePage from '../features/admin/MunicipalidadDetallePage';
 import PantallaCarga from '../components/PantallaCarga';
 import AccesoDenegado from '../components/AccesoDenegado';
 
@@ -50,6 +53,7 @@ export default function AppRoutes() {
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/acceso-denegado" element={<AccesoDenegado />} />
       <Route element={<RequireMunicipal />}>
         <Route path="/panel/municipal" element={<PanelLayout />}>
           <Route index element={<DashboardPage />} />
@@ -60,15 +64,23 @@ export default function AppRoutes() {
           <Route path="campanas" element={<CampanasPage />} />
           <Route path="estadisticas" element={<EstadisticasPage />} />
           <Route path="reportes" element={<ReportesPage />} />
-          <Route path="satisfaccion" element={<SatisfaccionPage />} />
+          <Route
+            path="satisfaccion"
+            element={<Navigate to="/panel/satisfaccion" replace />}
+          />
+          <Route path="verificar-certificado" element={<VerificarCertificadoPage />} />
         </Route>
       </Route>
       <Route element={<RequireSuperAdmin />}>
         <Route path="/panel" element={<AdminLayout />}>
           <Route index element={<AdminResumenPage />} />
           <Route path="municipalidades" element={<MunicipalidadesPage />} />
+          <Route path="municipalidades/:id" element={<MunicipalidadDetallePage />} />
+          <Route path="usuarios" element={<AdministradoresPage />} />
+          <Route path="administradores" element={<Navigate to="/panel/usuarios" replace />} />
           <Route path="reportes" element={<AdminReportesPage />} />
           <Route path="calidad-ia" element={<CalidadIaPage />} />
+          <Route path="satisfaccion" element={<SatisfaccionPage />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,6 +1,7 @@
 package com.raeesmart.backend.Controller;
 import com.raeesmart.backend.Dto.Request.CorreccionRequestDTO;
 import com.raeesmart.backend.Dto.Request.EntregaRequestDTO;
+import com.raeesmart.backend.Dto.Request.RechazoEntregaRequestDTO;
 import com.raeesmart.backend.Dto.Response.EntregaResponseDTO;
 import com.raeesmart.backend.Service.EntregaService;
 import jakarta.validation.Valid;
@@ -43,8 +44,11 @@ public class EntregaController {
     }
 
     @PutMapping("/{id}/rechazar")
-    public ResponseEntity<EntregaResponseDTO> rechazarEntrega(@PathVariable Long id) {
-        return ResponseEntity.ok(entregaService.rechazarEntrega(id));
+    public ResponseEntity<EntregaResponseDTO> rechazarEntrega(
+            @PathVariable Long id,
+            @Valid @RequestBody(required = false) RechazoEntregaRequestDTO request) {
+        String motivo = request == null ? null : request.getMotivo();
+        return ResponseEntity.ok(entregaService.rechazarEntrega(id, motivo));
     }
 
     @PutMapping("/{id}/corregir")

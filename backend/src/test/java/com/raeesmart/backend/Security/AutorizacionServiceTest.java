@@ -48,6 +48,14 @@ class AutorizacionServiceTest {
     }
 
     @Test
+    void ciudadanoConMunicipalidadPuedeAccederASuPropiaEntrega() {
+        Usuario dueno = crearUsuario(1L, RolUsuario.CIUDADANO, 20L);
+        autenticar(dueno);
+
+        assertDoesNotThrow(() -> autorizacionService.validarAccesoEntrega(crearEntrega(dueno, 10L)));
+    }
+
+    @Test
     void ciudadanoNoPuedeAccederAEntregaAjena() {
         Usuario dueno = crearUsuario(1L, RolUsuario.CIUDADANO, null);
         Usuario otro = crearUsuario(2L, RolUsuario.CIUDADANO, null);

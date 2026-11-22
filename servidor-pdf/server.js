@@ -5,17 +5,19 @@ const puppeteer = require('puppeteer');
 const fs = require('fs');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
-const { datosMunicipalidad, datosSuperadmin, ErrorHttp, ESTADOS } = require('./datos');
+const { datosMunicipalidad, datosSuperadmin, datosMunicipalidades, ErrorHttp, ESTADOS } = require('./datos');
+const { datosPorEntrega, datosPorHash, htmlCertificado } = require('./certificado');
 const { barras, dona, conColores } = require('./graficos');
 const { esc, render, ahoraLima } = require('./utils');
 
 const app = express();
 
 app.use(cors({
-  origin: (process.env.CORS_ALLOWED_ORIGINS || 'http://localhost:5173').split(',').map((o) => o.trim()),
+  origin: (process.env.CORS_ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:3000,http://localhost:19006,http://localhost:8081').split(',').map((o) => o.trim()),
   exposedHeaders: ['Content-Disposition'],
 }));
 app.use(express.json({ limit: '1mb' }));
+app.use('/recursos', express.static(path.join(__dirname, 'recursos')));
 
 const leer = (archivo) => fs.readFileSync(path.join(__dirname, 'templates', archivo), 'utf8');
 const ESTILOS = leer('estilos.css');
@@ -30,7 +32,9 @@ function autenticar(req, res, next) {
     return next();
   }
   try {
-    const claims = jwt.verify(token, Buffer.from(process.env.JWT_SECRET || '', 'utf8'), { algorithms: ['HS256'] });
+    const claims = jwt.verify(token, Buffer.from(process.env.JWT_SECRET || '', 'utf8'), {
+      algorithms: ['HS256', 'HS384', 'HS512'],
+    });
     req.usuario = { id: claims.usuarioId, rol: claims.rol, token };
     next();
   } catch {
@@ -55,13 +59,14 @@ const obtenerNavegador = () =>
       throw err;
     }));
 
-async function htmlAPdf(html) {
+async function htmlAPdf(html, opciones = {}) {
   const page = await (await obtenerNavegador()).newPage();
   try {
     await page.setContent(html, { waitUntil: 'load' });
     return Buffer.from(
       await page.pdf({
         format: 'A4',
+        landscape: Boolean(opciones.landscape),
         printBackground: true,
         displayHeaderFooter: true,
         headerTemplate: '<span></span>',
@@ -85,7 +90,7 @@ function responderError(res, err) {
   const status = err.status || 500;
   if (status >= 500) console.error('Error generando reporte:', err);
   res.status(status).json({
-    error: status >= 500 ? 'Error generando el reporte' : err.message,
+    error: status >= 500 ? 'Error generando el documento' : err.message,
     ...(status >= 500 && process.env.NODE_ENV !== 'production' ? { details: err.message } : {}),
   });
 }
@@ -179,6 +184,49 @@ function htmlSuperadmin(d) {
   });
 }
 
+function htmlMunicipalidades(d) {
+  const { fecha, hora } = ahoraLima();
+
+  const filas = d.municipalidades
+    .map((m) => {
+      const coordenadas =
+        m.latitud !== null && m.latitud !== undefined && m.longitud !== null && m.longitud !== undefined
+          ? `${m.latitud}, ${m.longitud}`
+          : '—';
+      const campanas = m.campanasHabilitadas
+        ? '<span class="estado" style="color:#07884E;background:#E3F5E9">Habilitadas</span>'
+        : '<span class="estado" style="color:#709087;background:#F8FCFA">No habilitadas</span>';
+      const estado = m.activa
+        ? '<span class="estado" style="color:#07884E;background:#E3F5E9">Activa</span>'
+        : '<span class="estado" style="color:#709087;background:#F8FCFA">Inactiva</span>';
+      return `<tr>
+        <td>${esc(m.nombre)}</td><td>${esc(m.distrito)}</td><td>${esc(m.direccion)}</td>
+        <td>${esc(m.contactoEmail)}</td><td class="mono">${esc(coordenadas)}</td>
+        <td>${campanas}</td><td>${estado}</td></tr>`;
+    })
+    .join('');
+
+  return render(leer('reporteMunicipalidades.html'), {
+    estilos: ESTILOS,
+    logo: LOGO,
+    fechaGeneracion: fecha,
+    horaGeneracion: hora,
+    total: d.total,
+    activas: d.activas,
+    inactivas: d.inactivas,
+    conCampanas: d.conCampanas,
+    municipalidades: filas,
+  });
+}
+
+const nombreCertificado = (codigoHash) =>
+  `certificado_${String(codigoHash || 'raee').replace(/[^A-Za-z0-9_-]/g, '_')}`;
+
+async function responderCertificado(res, datos) {
+  const pdf = await htmlAPdf(htmlCertificado(datos, ESTILOS, LOGO), { landscape: true });
+  enviarPdf(res, pdf, nombreCertificado(datos.hashArchivo));
+}
+
 /* ---------- Endpoints ---------- */
 app.post('/generar-reporte-municipalidad', autenticar, soloRoles('MUNICIPALIDAD', 'ADMIN'), async (req, res) => {
   try {
@@ -208,8 +256,61 @@ app.post('/generar-reporte-superadmin', autenticar, soloRoles('ADMIN'), async (r
   }
 });
 
+app.post('/generar-reporte-municipalidades', autenticar, soloRoles('ADMIN'), async (req, res) => {
+  try {
+    const datos = await datosMunicipalidades(req.usuario.token);
+    if (!datos.municipalidades.length) throw new ErrorHttp(404, 'No hay municipalidades registradas');
+
+    console.log('Generando reporte de municipalidades...');
+    enviarPdf(res, await htmlAPdf(htmlMunicipalidades(datos)), 'reporte_municipalidades');
+  } catch (err) {
+    responderError(res, err);
+  }
+});
+
+app.post('/generar-certificado', autenticar, async (req, res) => {
+  try {
+    const datos = await datosPorEntrega(req.body?.entregaId, req.usuario.token);
+    await responderCertificado(res, datos);
+  } catch (err) {
+    responderError(res, err);
+  }
+});
+
+app.get('/certificado/entrega/:entregaId/pdf', autenticar, async (req, res) => {
+  try {
+    const datos = await datosPorEntrega(req.params.entregaId, req.usuario.token);
+    await responderCertificado(res, datos);
+  } catch (err) {
+    responderError(res, err);
+  }
+});
+
+app.get('/certificado/:codigoHash/pdf', async (req, res) => {
+  try {
+    const datos = await datosPorHash(req.params.codigoHash);
+    await responderCertificado(res, datos);
+  } catch (err) {
+    responderError(res, err);
+  }
+});
+
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', service: 'RAEE PDF Service', version: '1.0.0', timestamp: new Date().toISOString() });
+});
+
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Servicio de generación de PDF de RAEE Smart',
+    endpoints: [
+      'POST /generar-reporte-municipalidad',
+      'POST /generar-reporte-superadmin',
+      'POST /generar-reporte-municipalidades',
+      'POST /generar-certificado',
+      'GET /certificado/entrega/:entregaId/pdf',
+      'GET /certificado/:codigoHash/pdf',
+    ],
+  });
 });
 
 const PORT = process.env.PORT_PDF || 3007;

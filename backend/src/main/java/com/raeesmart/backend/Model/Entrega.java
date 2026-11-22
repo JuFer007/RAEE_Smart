@@ -63,6 +63,15 @@ public class Entrega {
     @Column(name = "fecha_confirmacion")
     private LocalDateTime fechaConfirmacion;
 
+    @Column(name = "motivo_rechazo", length = 300)
+    private String motivoRechazo;
+
+    @Column(name = "rechazada_por", length = 150)
+    private String rechazadaPor;
+
+    @Column(name = "fecha_rechazo")
+    private LocalDateTime fechaRechazo;
+
     @OneToOne(mappedBy = "entrega", cascade = CascadeType.ALL, orphanRemoval = true)
     private Certificado certificado;
 

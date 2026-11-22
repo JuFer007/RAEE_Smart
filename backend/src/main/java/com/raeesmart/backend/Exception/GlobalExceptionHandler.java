@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -48,10 +49,19 @@ public class GlobalExceptionHandler {
         return construirRespuesta(HttpStatus.UNAUTHORIZED, "Correo o contraseña incorrectos", request, null);
     }
 
-    //403 — el usuario autenticado no tiene permisos sobre el recurso
+    //401/403 — sesión inválida o permisos insuficientes
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponseDTO> handleAccessDenied(
             AccessDeniedException ex, HttpServletRequest request) {
+        var autenticacion = SecurityContextHolder.getContext().getAuthentication();
+        boolean autenticado = autenticacion != null
+                && autenticacion.isAuthenticated()
+                && !"anonymousUser".equals(autenticacion.getPrincipal());
+
+        if (!autenticado) {
+            return construirRespuesta(HttpStatus.UNAUTHORIZED,
+                    "Tu sesión expiró o el token no es válido", request, null);
+        }
         return construirRespuesta(HttpStatus.FORBIDDEN,
                 "No tienes permisos para realizar esta acción", request, null);
     }

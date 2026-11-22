@@ -165,7 +165,7 @@ class EntregaServiceImplSecurityTest {
         doThrow(new AccessDeniedException("No autorizado"))
                 .when(autorizacionService).validarGestionEntrega(entrega);
 
-        assertThrows(AccessDeniedException.class, () -> entregaService.rechazarEntrega(1L));
+        assertThrows(AccessDeniedException.class, () -> entregaService.rechazarEntrega(1L, null));
         verify(entregaRepository, never()).save(any(Entrega.class));
     }
 

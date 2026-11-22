@@ -33,6 +33,15 @@ if errorlevel 1 (
   timeout /t 5 /nobreak >nul
 )
 
+call :esta_escuchando 3007
+if errorlevel 1 (
+  echo [OK] Servicio PDF ya esta activo en 3007
+) else (
+  echo [INICIANDO] Servicio de PDF en 3007 ...
+  start "RAEE Smart - PDF (3007)" /D "%~dp0servidor-pdf" cmd /k "npm start"
+  timeout /t 3 /nobreak >nul
+)
+
 call :esta_escuchando 5173
 if errorlevel 1 (
   echo [OK] Panel web ya esta activo en 5173
@@ -55,6 +64,7 @@ echo.
 echo ============================================================
 echo  Servicios listos
 echo   Backend : http://localhost:8080/api
+echo   PDF     : http://localhost:3007
 echo   Panel   : http://localhost:5173
 echo   IA      : http://127.0.0.1:8000
 echo   Expo    : terminal abierta en 8081, escanea con Expo Go

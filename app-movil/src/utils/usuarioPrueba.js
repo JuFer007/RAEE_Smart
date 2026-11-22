@@ -9,6 +9,7 @@ export const USUARIO_PRUEBA = {
   email: CREDENCIALES_PRUEBA.email,
   telefono: '987654321',
   dni: '76543210',
+  rol: 'CIUDADANO',
   direccion: 'Av. Balta 1234, Chiclayo',
   distrito: 'Chiclayo',
   fechaRegistro: '2026-01-15T09:00:00',

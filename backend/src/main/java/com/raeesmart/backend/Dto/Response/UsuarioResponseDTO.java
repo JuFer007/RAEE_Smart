@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.time.LocalDateTime;
 
 @Data
 @Builder
@@ -21,4 +22,6 @@ public class UsuarioResponseDTO {
     private String municipalidadNombre;
     private Double municipalidadLatitud;
     private Double municipalidadLongitud;
+    private Boolean activo;
+    private LocalDateTime ultimoAcceso;
 }

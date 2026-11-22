@@ -19,6 +19,8 @@ public class CertificadoResponseDTO {
     private String tipoAparato;
     private String nombreCategoria;
     private String iconoCategoria;
+    private String personaNombre;
+    private String personaDni;
     private String puntoEntregaNombre;
     private LocalDateTime fechaEmision;
     private LocalDateTime fechaEntrega;

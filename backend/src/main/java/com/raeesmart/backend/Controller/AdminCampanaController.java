@@ -1,4 +1,5 @@
 package com.raeesmart.backend.Controller;
+import com.raeesmart.backend.Dto.Request.CampanaDesactivacionRequestDTO;
 import com.raeesmart.backend.Dto.Request.CampanaRequestDTO;
 import com.raeesmart.backend.Dto.Response.CampanaResponseDTO;
 import com.raeesmart.backend.Security.AutorizacionService;
@@ -41,8 +42,12 @@ public class AdminCampanaController {
     }
 
     @PutMapping("/{id}/activa")
-    public CampanaResponseDTO cambiarEstado(@PathVariable Long id, @RequestParam boolean valor) {
-        return campanaService.cambiarEstado(id, valor);
+    public CampanaResponseDTO cambiarEstado(
+            @PathVariable Long id,
+            @RequestParam boolean valor,
+            @Valid @RequestBody(required = false) CampanaDesactivacionRequestDTO request) {
+        String motivo = request != null ? request.getMotivoDesactivacion() : null;
+        return campanaService.cambiarEstado(id, valor, motivo);
     }
 
     @DeleteMapping("/{id}")

@@ -23,7 +23,13 @@ export async function login(email, password, recordar = true) {
     return { token: 'token-prueba', usuario: USUARIO_PRUEBA };
   }
 
-  const { data } = await api.post('/auth/login', { email, password });
+  const { data } = await api.post('/auth/login/movil', { email, password });
+  if (data?.usuario?.rol && data.usuario.rol !== 'CIUDADANO') {
+    await limpiarSesion();
+    const error = new Error('La app móvil es solo para ciudadanos');
+    error.normalizado = error.message;
+    throw error;
+  }
   await guardarSesion(data.usuario, data.token, recordar);
   return data;
 }
@@ -76,6 +82,11 @@ export async function logout() {
 
 export async function obtenerSesionGuardada() {
   return obtenerSesionPersistida();
+}
+
+export async function obtenerSesionActual() {
+  const { data } = await api.get('/auth/me');
+  return data;
 }
 
 export async function obtenerUsuarioGuardado() {

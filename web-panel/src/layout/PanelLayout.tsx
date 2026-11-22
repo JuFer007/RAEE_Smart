@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Icon from '../components/Icon';
-import { listarEntregas } from '../api/panel';
 import { useAuth } from '../context/AuthContext';
 import './panel.css';
 
@@ -10,7 +9,6 @@ type EnlaceNav = {
   label: string;
   icono: string;
   end?: boolean;
-  badge?: boolean;
 };
 
 const NAVEGACION: { grupo: string; enlaces: EnlaceNav[] }[] = [
@@ -19,12 +17,7 @@ const NAVEGACION: { grupo: string; enlaces: EnlaceNav[] }[] = [
     enlaces: [
       { to: '/panel/municipal', label: 'Dashboard', icono: 'dashboard', end: true },
       { to: '/panel/municipal/entregas', label: 'Entregas', icono: 'scan' },
-      {
-        to: '/panel/municipal/recepcion',
-        label: 'Recepción',
-        icono: 'inbox',
-        badge: true,
-      },
+      { to: '/panel/municipal/recepcion', label: 'Recepción', icono: 'inbox' },
     ],
   },
   {
@@ -33,6 +26,13 @@ const NAVEGACION: { grupo: string; enlaces: EnlaceNav[] }[] = [
       { to: '/panel/municipal/puntos', label: 'Puntos de entrega', icono: 'location' },
       { to: '/panel/municipal/horarios', label: 'Horarios', icono: 'clock' },
       { to: '/panel/municipal/campanas', label: 'Campañas', icono: 'calendar' },
+    ],
+  },
+  {
+    grupo: 'Análisis',
+    enlaces: [
+      { to: '/panel/municipal/reportes', label: 'Reportes', icono: 'chart' },
+      { to: '/panel/municipal/verificar-certificado', label: 'Certificados', icono: 'qr' },
     ],
   },
 ];
@@ -46,11 +46,20 @@ const TITULOS: Record<string, { titulo: string; grupo: string }> = {
   '/panel/municipal/campanas': { titulo: 'Campañas', grupo: 'Gestión' },
   '/panel/municipal/estadisticas': { titulo: 'Estadísticas', grupo: 'Análisis' },
   '/panel/municipal/reportes': { titulo: 'Reportes', grupo: 'Análisis' },
-  '/panel/municipal/satisfaccion': { titulo: 'Satisfacción', grupo: 'Análisis' },
+  '/panel/municipal/verificar-certificado': {
+    titulo: 'Certificados',
+    grupo: 'Análisis',
+  },
 };
 
 function capitalizar(texto: string) {
   return texto.charAt(0).toUpperCase() + texto.slice(1);
+}
+
+function dividirNombreMunicipalidad(nombre: string) {
+  const posicion = nombre.search(/\s+de\s+/i);
+  if (posicion < 0) return { primera: nombre, segunda: '' };
+  return { primera: nombre.slice(0, posicion), segunda: nombre.slice(posicion + 1) };
 }
 
 export default function PanelLayout() {
@@ -58,32 +67,10 @@ export default function PanelLayout() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [menuAbierto, setMenuAbierto] = useState(false);
-  const [pendientes, setPendientes] = useState(0);
 
   useEffect(() => {
     setMenuAbierto(false);
   }, [pathname]);
-
-  useEffect(() => {
-    const municipalidadId = usuario?.municipalidadId;
-    if (!municipalidadId) return;
-    let activo = true;
-    listarEntregas(municipalidadId)
-      .then((entregas) => {
-        if (!activo) return;
-        setPendientes(
-          entregas.filter(
-            (entrega) => entrega.estado === 'REGISTRADA' || entrega.estado === 'EN_PROCESO',
-          ).length,
-        );
-      })
-      .catch(() => {
-        if (activo) setPendientes(0);
-      });
-    return () => {
-      activo = false;
-    };
-  }, [pathname, usuario?.municipalidadId]);
 
   const salir = () => {
     cerrarSesion();
@@ -100,6 +87,8 @@ export default function PanelLayout() {
     }),
   );
   const inicial = usuario?.nombre?.trim().charAt(0).toUpperCase() || 'M';
+  const nombreMunicipalidad = usuario?.municipalidadNombre || 'Municipalidad';
+  const partesNombre = dividirNombreMunicipalidad(nombreMunicipalidad);
 
   return (
     <div className="app-shell">
@@ -109,7 +98,7 @@ export default function PanelLayout() {
         aria-hidden="true"
       />
 
-      <aside className={`panel-sidebar${menuAbierto ? ' is-open' : ''}`}>
+      <aside className={`panel-sidebar panel-sidebar--municipal${menuAbierto ? ' is-open' : ''}`}>
         <div className="panel-brand">
           <img src="/logoRAEE_Smart.png" alt="" />
           <div>
@@ -118,6 +107,21 @@ export default function PanelLayout() {
             </strong>
             <small>Panel municipal</small>
           </div>
+        </div>
+
+        <div className="panel-sidebar__municipalidad" title={nombreMunicipalidad}>
+          <Icon name="building" size={14} />
+          <span>
+            {partesNombre.segunda ? (
+              <>
+                {partesNombre.primera}
+                <br />
+                {partesNombre.segunda}
+              </>
+            ) : (
+              partesNombre.primera
+            )}
+          </span>
         </div>
 
         <nav className="panel-nav" aria-label="Menú del panel municipal">
@@ -136,11 +140,6 @@ export default function PanelLayout() {
                 >
                   <Icon name={enlace.icono} size={17} />
                   <span className="panel-nav__label">{enlace.label}</span>
-                  {enlace.badge && pendientes > 0 ? (
-                    <span className="panel-nav__badge" aria-label={`${pendientes} pendientes`}>
-                      {pendientes}
-                    </span>
-                  ) : null}
                 </NavLink>
               ))}
             </div>
@@ -148,7 +147,7 @@ export default function PanelLayout() {
         </nav>
 
         <div className="panel-sidebar__footer">
-          <button type="button" className="panel-logout" onClick={salir}>
+          <button type="button" className="panel-sidebar__logout" onClick={salir}>
             <Icon name="logout" size={17} />
             Cerrar sesión
           </button>

@@ -1,4 +1,6 @@
 package com.raeesmart.backend.Security;
+import com.raeesmart.backend.Model.Enums.CanalAcceso;
+import com.raeesmart.backend.Model.Enums.RolUsuario;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,9 +37,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (jwtService.esValido(token)) {
                 String email = jwtService.obtenerEmail(token);
                 String rol = jwtService.obtenerRol(token);
+                CanalAcceso canal = jwtService.obtenerCanal(token);
+                String rolEfectivo = canal == CanalAcceso.MOVIL
+                        ? RolUsuario.CIUDADANO.name()
+                        : (rol == null ? RolUsuario.CIUDADANO.name() : rol);
 
                 var authentication = new UsernamePasswordAuthenticationToken(
-                        email, null, List.of(new SimpleGrantedAuthority("ROLE_" + rol)));
+                        email, null, List.of(new SimpleGrantedAuthority("ROLE_" + rolEfectivo)));
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }

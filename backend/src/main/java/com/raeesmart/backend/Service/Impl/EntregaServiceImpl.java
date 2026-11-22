@@ -8,17 +8,21 @@ import com.raeesmart.backend.Model.Enums.EstadoEntrega;
 import com.raeesmart.backend.Model.Enums.TipoNotificacion;
 import com.raeesmart.backend.Model.Enums.TipoRAEE;
 import com.raeesmart.backend.Repository.*;
+import com.raeesmart.backend.Service.AuditoriaService;
 import com.raeesmart.backend.Service.CertificadoService;
 import com.raeesmart.backend.Service.ClasificacionIAService;
 import com.raeesmart.backend.Service.EntregaService;
 import com.raeesmart.backend.Security.AutorizacionService;
 import com.raeesmart.backend.Service.GeolocalizacionService;
 import com.raeesmart.backend.Service.NotificacionService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,6 +36,7 @@ public class EntregaServiceImpl implements EntregaService {
     private final NotificacionService notificacionService;
     private final CertificadoService certificadoService;
     private final AutorizacionService autorizacionService;
+    private AuditoriaService auditoriaService;
 
     public EntregaServiceImpl(EntregaRepository entregaRepository,
                               PuntoRecoleccionRepository puntoRecoleccionRepository,
@@ -51,6 +56,11 @@ public class EntregaServiceImpl implements EntregaService {
         this.notificacionService = notificacionService;
         this.certificadoService = certificadoService;
         this.autorizacionService = autorizacionService;
+    }
+
+    @Autowired(required = false)
+    public void setAuditoriaService(AuditoriaService auditoriaService) {
+        this.auditoriaService = auditoriaService;
     }
 
     @Transactional
@@ -74,6 +84,11 @@ public class EntregaServiceImpl implements EntregaService {
                 .build();
 
         entrega = entregaRepository.save(entrega);
+        Map<String, Object> detallesRegistro = new HashMap<>();
+        detallesRegistro.put("puntoRecoleccionId", punto.getId());
+        detallesRegistro.put("tipoRaee", entrega.getTipoRaee() != null ? entrega.getTipoRaee().name() : null);
+        detallesRegistro.put("estado", entrega.getEstado().name());
+        registrar("ENTREGA_REGISTRAR", "ENTREGA", String.valueOf(entrega.getId()), detallesRegistro);
 
         notificacionService.notificarUsuario(
                 usuario,
@@ -110,6 +125,11 @@ public class EntregaServiceImpl implements EntregaService {
             entrega.setCertificado(certificadoService.generarCertificado(entrega));
         }
         entrega = entregaRepository.save(entrega);
+        Map<String, Object> detallesConfirmacion = new HashMap<>();
+        detallesConfirmacion.put("estado", EstadoEntrega.CONFIRMADA.name());
+        detallesConfirmacion.put("puntoRecoleccionId", entrega.getPuntoRecoleccion() != null
+                ? entrega.getPuntoRecoleccion().getId() : null);
+        registrar("ENTREGA_CONFIRMAR", "ENTREGA", String.valueOf(entregaId), detallesConfirmacion);
 
         notificacionService.notificarUsuario(
                 entrega.getUsuario(),
@@ -122,7 +142,7 @@ public class EntregaServiceImpl implements EntregaService {
 
     @Transactional
     @Override
-    public EntregaResponseDTO rechazarEntrega(Long entregaId) {
+    public EntregaResponseDTO rechazarEntrega(Long entregaId, String motivo) {
         Entrega entrega = entregaRepository.findById(entregaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Entrega no encontrada"));
 
@@ -135,20 +155,33 @@ public class EntregaServiceImpl implements EntregaService {
             return mapearAResponse(entrega);
         }
 
+        String motivoNormalizado = motivo == null || motivo.isBlank()
+                ? "Sin motivo especificado"
+                : motivo.trim();
+        Usuario actor = autorizacionService.obtenerActor();
+
         if (entrega.getEstado() == EstadoEntrega.REGISTRADA) {
             entrega.setEstado(EstadoEntrega.EN_PROCESO);
             entrega = entregaRepository.save(entrega);
         }
 
         entrega.setEstado(EstadoEntrega.RECHAZADA);
+        entrega.setMotivoRechazo(motivoNormalizado);
+        entrega.setRechazadaPor(actor.getEmail());
+        entrega.setFechaRechazo(LocalDateTime.now());
         entrega = entregaRepository.save(entrega);
+        Map<String, Object> detallesRechazo = new HashMap<>();
+        detallesRechazo.put("estado", EstadoEntrega.RECHAZADA.name());
+        detallesRechazo.put("motivo", motivoNormalizado);
+        detallesRechazo.put("rechazadaPor", actor.getEmail());
+        registrar("ENTREGA_RECHAZAR", "ENTREGA", String.valueOf(entregaId), detallesRechazo);
 
         notificacionService.notificarUsuario(
                 entrega.getUsuario(),
                 TipoNotificacion.ENTREGA,
                 "Entrega rechazada",
                 "La recepcion de tu RAEE en " + entrega.getPuntoRecoleccion().getNombre()
-                        + " fue rechazada. Acercate al punto para mas informacion.");
+                        + " fue rechazada. Motivo: " + motivoNormalizado + ". Acercate al punto para mas informacion.");
 
         return mapearAResponse(entrega);
     }
@@ -168,6 +201,10 @@ public class EntregaServiceImpl implements EntregaService {
             entrega.setTipoCorregido(tipoCorregido);
             entrega.setClasificacionCorregida(true);
             entrega = entregaRepository.save(entrega);
+            Map<String, Object> detallesCorreccion = new HashMap<>();
+            detallesCorreccion.put("tipoAnterior", entrega.getTipoRaee() != null ? entrega.getTipoRaee().name() : null);
+            detallesCorreccion.put("tipoCorregido", tipoCorregido.name());
+            registrar("ENTREGA_CORREGIR_CLASIFICACION", "ENTREGA", String.valueOf(entregaId), detallesCorreccion);
         }
 
         return mapearAResponse(entrega);
@@ -192,6 +229,12 @@ public class EntregaServiceImpl implements EntregaService {
         return entregaRepository.findByPuntoRecoleccionMunicipalidadId(municipalidadId).stream().map(this::mapearAResponse).collect(Collectors.toList());
     }
 
+    private void registrar(String accion, String entidad, String entidadId, Map<String, Object> detalles) {
+        if (auditoriaService != null) {
+            auditoriaService.registrar(accion, entidad, entidadId, detalles);
+        }
+    }
+
     private EntregaResponseDTO mapearAResponse(Entrega entrega) {
         TipoRAEE tipoFinal = entrega.getClasificacionCorregida()
                 ? entrega.getTipoCorregido()
@@ -213,6 +256,9 @@ public class EntregaServiceImpl implements EntregaService {
                 .certificadoCodigoQr(entrega.getCertificado() != null ? entrega.getCertificado().getCodigoQr() : null)
                 .fechaRegistro(entrega.getFechaRegistro())
                 .fechaConfirmacion(entrega.getFechaConfirmacion())
+                .motivoRechazo(entrega.getMotivoRechazo())
+                .rechazadaPor(entrega.getRechazadaPor())
+                .fechaRechazo(entrega.getFechaRechazo())
                 .build();
     }
 

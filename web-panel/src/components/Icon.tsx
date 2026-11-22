@@ -15,6 +15,7 @@ import {
   Download,
   FileText,
   Filter,
+  Globe2,
   Inbox,
   Laptop,
   LayoutDashboard,
@@ -48,6 +49,7 @@ import {
 
 const ICONS: Record<string, LucideIcon> = {
   dashboard: LayoutDashboard,
+  globe: Globe2,
   list: List,
   chart: BarChart3,
   leaf: Leaf,

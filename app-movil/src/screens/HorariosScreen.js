@@ -45,7 +45,8 @@ export default function HorariosScreen({ route, navigation }) {
       setCampanas(resCampanas.value || []);
       setErrorCampanas(null);
     } else {
-      setErrorCampanas('No pudimos cargar las campañas');
+      const motivo = resCampanas.reason?.normalizado || resCampanas.reason?.message;
+      setErrorCampanas(motivo || 'No pudimos cargar las campañas');
     }
 
     setCargando(false);

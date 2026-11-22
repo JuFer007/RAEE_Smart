@@ -19,6 +19,21 @@ export function AuthProvider({ children }) {
       let sesion = null;
       try {
         sesion = await authService.obtenerSesionGuardada();
+        if (sesion?.usuario?.rol && sesion.usuario.rol !== 'CIUDADANO') {
+          await authService.logout();
+          sesion = null;
+        }
+        if (sesion?.token) {
+          try {
+            const actual = await authService.obtenerSesionActual();
+            if (actual?.rol && actual.rol !== 'CIUDADANO') {
+              await authService.logout();
+              sesion = null;
+            } else if (actual) {
+              sesion = { ...sesion, usuario: actual };
+            }
+          } catch {}
+        }
       } catch {}
       if (!activo) return;
       setUsuario(sesion?.usuario ?? null);
@@ -33,7 +48,14 @@ export function AuthProvider({ children }) {
 
   async function iniciarSesion(email, password, recordar = true) {
     const data = await authService.login(email, password, recordar);
+    if (data?.usuario?.rol && data.usuario.rol !== 'CIUDADANO') {
+      await authService.logout();
+      const error = new Error('La app móvil es solo para ciudadanos');
+      error.normalizado = error.message;
+      throw error;
+    }
     setUsuario(data.usuario);
+    return data;
   }
 
   async function registrar(datos) {

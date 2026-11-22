@@ -36,6 +36,9 @@ export interface Campana {
   fechaFin: string;
   activa: boolean;
   estado: string;
+  motivoDesactivacion?: string | null;
+  fechaDesactivacion?: string | null;
+  desactivadaPor?: string | null;
 }
 
 export type EstadoEntrega = 'REGISTRADA' | 'EN_PROCESO' | 'CONFIRMADA' | 'RECHAZADA';
@@ -69,6 +72,9 @@ export interface Entrega {
   certificadoCodigoQr: string | null;
   fechaRegistro: string;
   fechaConfirmacion: string | null;
+  motivoRechazo: string | null;
+  rechazadaPor: string | null;
+  fechaRechazo: string | null;
 }
 
 export interface Certificado {
@@ -106,8 +112,50 @@ export interface TipoRaee {
   icono: string;
 }
 
+export interface EstadoClasificadorIa {
+  disponible: boolean;
+  categorias?: string[];
+}
+
 export interface EstadoInfo {
   label: string;
   color: string;
   bg: string;
+}
+
+export interface UsuarioAdmin {
+  id: number;
+  nombre: string;
+  email: string;
+  dni?: string | null;
+  telefono?: string | null;
+  rol: RolUsuario;
+  municipalidadId?: number | null;
+  municipalidadNombre?: string | null;
+  activo: boolean;
+  ultimoAcceso?: string | null;
+  fechaRegistro?: string | null;
+}
+
+export interface SatisfaccionDistribucion {
+  calificacion: number;
+  total: number;
+}
+
+export interface SatisfaccionReciente {
+  id: number;
+  calificacion: number;
+  comentario?: string | null;
+  fechaRegistro: string;
+  fechaActualizacion?: string | null;
+  ciudadanoNombre: string;
+  municipalidadId: number | null;
+  municipalidadNombre: string | null;
+}
+
+export interface ResumenSatisfaccion {
+  total: number;
+  promedio: number | null;
+  distribucion: SatisfaccionDistribucion[];
+  recientes: SatisfaccionReciente[];
 }

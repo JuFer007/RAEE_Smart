@@ -62,6 +62,7 @@ export default function EntregasPage({ vistaRecepcion = false }: EntregasPagePro
   const [errorCertificado, setErrorCertificado] = useState('');
 
   const [accion, setAccion] = useState<AccionEntrega | null>(null);
+  const [motivoRechazo, setMotivoRechazo] = useState('');
   const [procesando, setProcesando] = useState(false);
 
   const municipalidadId = usuario?.municipalidadId;
@@ -149,11 +150,16 @@ export default function EntregasPage({ vistaRecepcion = false }: EntregasPagePro
 
   const abrirAccion = (entrega: Entrega, tipo: AccionEntrega['tipo']) => {
     setDetalle(null);
+    setMotivoRechazo('');
     setAccion({ entrega, tipo });
   };
 
   const ejecutarAccion = async () => {
     if (!accion) return;
+    if (accion.tipo === 'rechazar' && !motivoRechazo.trim()) {
+      showToast('Indica el motivo del rechazo antes de continuar.', 'error');
+      return;
+    }
 
     setProcesando(true);
     setError('');
@@ -161,7 +167,7 @@ export default function EntregasPage({ vistaRecepcion = false }: EntregasPagePro
       const actualizada =
         accion.tipo === 'confirmar'
           ? await confirmarEntrega(accion.entrega.id)
-          : await rechazarEntrega(accion.entrega.id);
+          : await rechazarEntrega(accion.entrega.id, motivoRechazo.trim());
 
       setEntregas((actuales) =>
         actuales.map((entrega) =>
@@ -484,8 +490,17 @@ export default function EntregasPage({ vistaRecepcion = false }: EntregasPagePro
 
             {detalle.estado === 'RECHAZADA' ? (
               <PanelAlert variante="info">
-                Esta entrega fue rechazada. El ciudadano recibió una notificación con
-                las indicaciones para acercarse al punto de acopio.
+                <strong>Esta entrega fue rechazada.</strong>
+                {detalle.motivoRechazo ? (
+                  <span>Motivo: {detalle.motivoRechazo}</span>
+                ) : null}
+                {detalle.rechazadaPor ? (
+                  <span>Rechazada por: {detalle.rechazadaPor}</span>
+                ) : null}
+                {detalle.fechaRechazo ? (
+                  <span>Fecha: {formatearFechaHora(detalle.fechaRechazo)}</span>
+                ) : null}
+                <span>El ciudadano recibió una notificación con las indicaciones.</span>
               </PanelAlert>
             ) : null}
 
@@ -534,7 +549,21 @@ export default function EntregasPage({ vistaRecepcion = false }: EntregasPagePro
         onCerrar={() => {
           if (!procesando) setAccion(null);
         }}
-      />
+      >
+        {accion?.tipo === 'rechazar' ? (
+          <label className="panel-field">
+            <span>Motivo del rechazo</span>
+            <textarea
+              value={motivoRechazo}
+              onChange={(evento) => setMotivoRechazo(evento.target.value)}
+              placeholder="Ej.: El aparato no corresponde a la categoría declarada"
+              maxLength={300}
+              rows={3}
+              disabled={procesando}
+            />
+          </label>
+        ) : null}
+      </ConfirmDialog>
     </section>
   );
 }

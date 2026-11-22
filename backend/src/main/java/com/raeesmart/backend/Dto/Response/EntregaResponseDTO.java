@@ -26,4 +26,7 @@ public class EntregaResponseDTO {
     private String certificadoCodigoQr;
     private LocalDateTime fechaRegistro;
     private LocalDateTime fechaConfirmacion;
+    private String motivoRechazo;
+    private String rechazadaPor;
+    private LocalDateTime fechaRechazo;
 }

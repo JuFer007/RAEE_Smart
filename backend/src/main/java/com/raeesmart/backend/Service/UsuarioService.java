@@ -7,6 +7,7 @@ public interface UsuarioService {
     Usuario registrar(Usuario usuario);
     Usuario buscarPorId(Long id);
     Usuario buscarPorEmail(String email);
+    Usuario guardar(Usuario usuario);
     void cambiarPassword(String email, String passwordActual, String passwordNueva);
     PreferenciaNotificacionResponseDTO obtenerPreferenciasNotificacion(String email);
     PreferenciaNotificacionResponseDTO actualizarPreferenciasNotificacion(

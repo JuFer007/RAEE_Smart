@@ -13,6 +13,7 @@ export const SECCIONES_MENU = [
       { icono: 'lock-closed-outline', titulo: 'Cambiar contraseña', pantalla: 'CambiarPassword' },
       { icono: 'notifications-outline', titulo: 'Notificaciones', pantalla: 'Notificaciones' },
       { icono: 'settings-outline', titulo: 'Administrar notificaciones', pantalla: 'AdministrarNotificaciones' },
+      { icono: 'star-outline', titulo: 'Calificar la app', modal: 'calificarApp' },
       { icono: 'help-circle-outline', titulo: 'Soporte', pantalla: 'Ayuda' },
       { icono: 'information-circle-outline', titulo: 'Acerca de RAEE Smart', pantalla: 'Acerca' },
     ],

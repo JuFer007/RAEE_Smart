@@ -20,7 +20,14 @@ export default function Campo({
   const [visible, setVisible] = useState(false);
 
   return (
-    <View style={[estilos.campo, foco && estilos.foco, error && estilos.error]}>
+    <View
+      style={[
+        estilos.campo,
+        multilinea && estilos.campoMultilinea,
+        foco && estilos.foco,
+        error && estilos.error,
+      ]}
+    >
       {icono ? <Ionicons name={icono} size={16} color={error ? COLORS.danger : COLORS.mutIcon} /> : null}
       <TextInput
         style={[estilos.input, multilinea && estilos.multilinea]}
@@ -58,7 +65,13 @@ const estilos = StyleSheet.create({
     borderRadius: RADIOS.campo,
     backgroundColor: COLORS.surface,
   },
-  multilinea: { height: 92, textAlignVertical: 'top', paddingTop: ESPACIOS.md },
+  campoMultilinea: {
+    height: 132,
+    alignItems: 'flex-start',
+    paddingTop: ESPACIOS.md,
+    paddingBottom: ESPACIOS.md,
+  },
+  multilinea: { minHeight: 100, textAlignVertical: 'top', paddingTop: 0 },
   foco: { borderColor: '#4EAF79', boxShadow: `0px 0px 0px 3px ${COLORS.focusSoft}` },
   error: { borderColor: COLORS.danger },
   input: {

@@ -42,16 +42,16 @@ public class AutorizacionService {
         if (esSuperAdmin(actor)) {
             return;
         }
+        if (actor.getRolUsuario() == RolUsuario.CIUDADANO
+                && entrega.getUsuario() != null
+                && actor.getId().equals(entrega.getUsuario().getId())) {
+            return;
+        }
         if (actor.getMunicipalidad() != null) {
             if (perteneceAMunicipalidad(actor, entrega)) {
                 return;
             }
             throw new AccessDeniedException("No autorizado para acceder a esta entrega");
-        }
-        if (actor.getRolUsuario() == RolUsuario.CIUDADANO
-                && entrega.getUsuario() != null
-                && actor.getId().equals(entrega.getUsuario().getId())) {
-            return;
         }
         throw new AccessDeniedException("No autorizado para acceder a esta entrega");
     }

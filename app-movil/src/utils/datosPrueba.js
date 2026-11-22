@@ -162,7 +162,7 @@ export const PUNTOS_PRUEBA = [
     direccion: 'Centro de Túcume, Lambayeque',
     latitud: -6.5067,
     longitud: -79.8589,
-    horarioAtencion: 'Lunes a viernes · 7:30 a 14:30',
+    horarioAtencion: 'Lunes a viernes · 08:00 a 14:30',
   },
   {
     id: 'p15',
@@ -184,7 +184,7 @@ export const PUNTOS_PRUEBA = [
     direccion: 'Calle Real 444, Íllimo, Lambayeque',
     latitud: -6.4736,
     longitud: -79.8531,
-    horarioAtencion: 'Lunes a viernes · 7:30 a 15:00',
+    horarioAtencion: 'Lunes a viernes · 08:00 a 15:00',
   },
   {
     id: 'p17',

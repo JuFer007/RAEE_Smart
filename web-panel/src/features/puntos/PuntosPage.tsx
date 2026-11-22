@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
+import HorarioEditor from '../../components/HorarioEditor';
 import Icon from '../../components/Icon';
 import MapView from '../../components/MapView';
 import Modal from '../../components/Modal';
@@ -19,6 +20,13 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import type { Punto } from '../../types';
 import { obtenerMensajeError, pluralizar } from '../../utils/formato';
+import {
+  formatearHorario,
+  horarioVacio,
+  parsearHorario,
+  validarHorario,
+  type HorarioValor,
+} from '../../utils/horario';
 import { centroMunicipalidad, zoomMunicipalidad } from '../../utils/mapa';
 
 interface FormularioPunto {
@@ -26,7 +34,7 @@ interface FormularioPunto {
   direccion: string;
   latitud: string;
   longitud: string;
-  horarioAtencion: string;
+  horarioAtencion: HorarioValor;
   capacidadDiaria: string;
 }
 
@@ -35,7 +43,7 @@ const FORMULARIO_VACIO: FormularioPunto = {
   direccion: '',
   latitud: '-6.771400',
   longitud: '-79.840900',
-  horarioAtencion: '',
+  horarioAtencion: horarioVacio(),
   capacidadDiaria: '',
 };
 
@@ -58,7 +66,7 @@ export default function PuntosPage() {
   const [guardando, setGuardando] = useState(false);
 
   const [puntoHorario, setPuntoHorario] = useState<Punto | null>(null);
-  const [horario, setHorario] = useState('');
+  const [horario, setHorario] = useState<HorarioValor>(horarioVacio());
   const [errorHorario, setErrorHorario] = useState('');
   const [guardandoHorario, setGuardandoHorario] = useState(false);
 
@@ -134,7 +142,7 @@ export default function PuntosPage() {
       direccion: punto.direccion ?? '',
       latitud: String(punto.latitud),
       longitud: String(punto.longitud),
-      horarioAtencion: punto.horarioAtencion ?? '',
+      horarioAtencion: parsearHorario(punto.horarioAtencion) ?? horarioVacio(),
       capacidadDiaria: punto.capacidadDiaria ? String(punto.capacidadDiaria) : '',
     });
     setErrores({});
@@ -152,6 +160,11 @@ export default function PuntosPage() {
   const cambiarCampo = (campo: keyof FormularioPunto, valor: string) => {
     setFormulario((actual) => ({ ...actual, [campo]: valor }));
     setErrores((actual) => ({ ...actual, [campo]: '' }));
+  };
+
+  const cambiarHorario = (valor: HorarioValor) => {
+    setFormulario((actual) => ({ ...actual, horarioAtencion: valor }));
+    setErrores((actual) => ({ ...actual, horarioAtencion: '' }));
   };
 
   const validarFormulario = (): PuntoPayload | null => {
@@ -187,10 +200,12 @@ export default function PuntosPage() {
       nuevosErrores.longitud = 'Ingresa una longitud válida entre -180 y 180.';
     }
 
-    if (!formulario.horarioAtencion.trim()) {
-      nuevosErrores.horarioAtencion = 'El horario de atención es obligatorio.';
-    } else if (formulario.horarioAtencion.trim().length > 100) {
-      nuevosErrores.horarioAtencion = 'El horario no debe superar los 100 caracteres.';
+    const errorHorario = validarHorario(formulario.horarioAtencion, {
+      obligatorio: true,
+      permitirSinHorario: true,
+    });
+    if (errorHorario) {
+      nuevosErrores.horarioAtencion = errorHorario;
     }
 
     if (capacidad !== null && (!Number.isInteger(capacidad) || capacidad < 1)) {
@@ -211,7 +226,7 @@ export default function PuntosPage() {
       direccion: formulario.direccion.trim(),
       latitud,
       longitud,
-      horarioAtencion: formulario.horarioAtencion.trim(),
+      horarioAtencion: formatearHorario(formulario.horarioAtencion),
       capacidadDiaria: capacidad,
     };
   };
@@ -246,7 +261,7 @@ export default function PuntosPage() {
 
   const abrirHorario = (punto: Punto) => {
     setPuntoHorario(punto);
-    setHorario(punto.horarioAtencion ?? '');
+    setHorario(parsearHorario(punto.horarioAtencion) ?? horarioVacio());
     setErrorHorario('');
   };
 
@@ -254,12 +269,12 @@ export default function PuntosPage() {
     evento.preventDefault();
     if (!puntoHorario) return;
 
-    if (!horario.trim()) {
-      setErrorHorario('El horario de atención es obligatorio.');
-      return;
-    }
-    if (horario.trim().length > 100) {
-      setErrorHorario('El horario no debe superar los 100 caracteres.');
+    const errorHorario = validarHorario(horario, {
+      obligatorio: true,
+      permitirSinHorario: true,
+    });
+    if (errorHorario) {
+      setErrorHorario(errorHorario);
       return;
     }
     if (!usuario?.municipalidadId) {
@@ -276,7 +291,7 @@ export default function PuntosPage() {
         direccion: puntoHorario.direccion ?? '',
         latitud: puntoHorario.latitud,
         longitud: puntoHorario.longitud,
-        horarioAtencion: horario.trim(),
+        horarioAtencion: formatearHorario(horario),
         capacidadDiaria: puntoHorario.capacidadDiaria ?? null,
       });
       setPuntos((actuales) =>
@@ -526,35 +541,27 @@ export default function PuntosPage() {
             </div>
           </div>
 
-          <div className="panel-form__grid2">
-            <div className="panel-field">
-              <label htmlFor="punto-horario">Horario de atención</label>
-              <input
-                id="punto-horario"
-                value={formulario.horarioAtencion}
-                onChange={(evento) => cambiarCampo('horarioAtencion', evento.target.value)}
-                placeholder="Lunes a viernes · 8:00 a 16:30"
-                maxLength={100}
-              />
-              {errores.horarioAtencion ? (
-                <span className="panel-field__error">{errores.horarioAtencion}</span>
-              ) : null}
-            </div>
+          <HorarioEditor
+            id="punto-horario"
+            valor={formulario.horarioAtencion}
+            onChange={cambiarHorario}
+            error={errores.horarioAtencion}
+            obligatorio
+          />
 
-            <div className="panel-field">
-              <label htmlFor="punto-capacidad">Capacidad diaria</label>
-              <input
-                id="punto-capacidad"
-                type="number"
-                min="1"
-                value={formulario.capacidadDiaria}
-                onChange={(evento) => cambiarCampo('capacidadDiaria', evento.target.value)}
-                placeholder="Opcional"
-              />
-              {errores.capacidadDiaria ? (
-                <span className="panel-field__error">{errores.capacidadDiaria}</span>
-              ) : null}
-            </div>
+          <div className="panel-field">
+            <label htmlFor="punto-capacidad">Capacidad diaria</label>
+            <input
+              id="punto-capacidad"
+              type="number"
+              min="1"
+              value={formulario.capacidadDiaria}
+              onChange={(evento) => cambiarCampo('capacidadDiaria', evento.target.value)}
+              placeholder="Opcional"
+            />
+            {errores.capacidadDiaria ? (
+              <span className="panel-field__error">{errores.capacidadDiaria}</span>
+            ) : null}
           </div>
 
           <div className="panel-field">
@@ -597,23 +604,17 @@ export default function PuntosPage() {
       >
         <form className="panel-form" onSubmit={guardarHorario} noValidate>
           {errorHorario ? <PanelAlert>{errorHorario}</PanelAlert> : null}
-          <div className="panel-field">
-            <label htmlFor="horario-punto">Nuevo horario</label>
-            <input
-              id="horario-punto"
-              value={horario}
-              onChange={(evento) => {
-                setHorario(evento.target.value);
-                setErrorHorario('');
-              }}
-              placeholder="Lunes a viernes · 8:00 a 16:30"
-              maxLength={100}
-              autoFocus
-            />
-            <small className="panel-field__ayuda">
-              Al guardar se notificará a los ciudadanos sobre el cambio de horario.
-            </small>
-          </div>
+          <HorarioEditor
+            id="horario-punto"
+            valor={horario}
+            onChange={(valor) => {
+              setHorario(valor);
+              setErrorHorario('');
+            }}
+            error={errorHorario}
+            ayuda="Al guardar se notificará a los ciudadanos sobre el cambio de horario."
+            obligatorio
+          />
           <div className="panel-form__acciones">
             <Button
               variant="secondary"

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -26,6 +26,19 @@ const ICONO_POR_TIPO = {
   GENERAL: 'sparkles-outline',
 };
 
+const FILTROS_ESTADO = [
+  { id: 'todas', etiqueta: 'Todas' },
+  { id: 'no-leidas', etiqueta: 'No leídas' },
+];
+
+const FILTROS_TIPO = [
+  { id: 'TODOS', etiqueta: 'Todos' },
+  { id: 'CAMPANA', etiqueta: 'Campañas' },
+  { id: 'ENTREGA', etiqueta: 'Entregas' },
+  { id: 'HORARIO', etiqueta: 'Horarios' },
+  { id: 'GENERAL', etiqueta: 'Generales' },
+];
+
 function iconoDe(aviso) {
   return ICONO_POR_TIPO[aviso.tipo] || 'notifications-outline';
 }
@@ -35,6 +48,8 @@ export default function NotificacionesScreen({ navigation }) {
   const [cargando, setCargando] = useState(true);
   const [marcando, setMarcando] = useState(false);
   const [error, setError] = useState('');
+  const [filtroEstado, setFiltroEstado] = useState('todas');
+  const [filtroTipo, setFiltroTipo] = useState('TODOS');
   const [entrada, salir] = useEntradaAnimada({ eje: 'y', distancia: -22 });
   useSalidaAnimada(navigation, salir);
 
@@ -57,6 +72,16 @@ export default function NotificacionesScreen({ navigation }) {
   );
 
   const nuevos = avisos.filter((aviso) => !aviso.leida).length;
+
+  const avisosFiltrados = useMemo(
+    () =>
+      avisos.filter(
+        (aviso) =>
+          (filtroEstado !== 'no-leidas' || !aviso.leida) &&
+          (filtroTipo === 'TODOS' || aviso.tipo === filtroTipo),
+      ),
+    [avisos, filtroEstado, filtroTipo],
+  );
 
   async function marcarTodas() {
     if (!nuevos || marcando) return;
@@ -116,6 +141,53 @@ export default function NotificacionesScreen({ navigation }) {
             ) : null}
           </View>
 
+          <View style={styles.filtros}>
+            <View style={styles.filaFiltros}>
+              {FILTROS_ESTADO.map((filtro) => {
+                const activo = filtroEstado === filtro.id;
+                return (
+                  <TouchableOpacity
+                    key={filtro.id}
+                    style={[styles.chip, activo && styles.chipActivo]}
+                    onPress={() => setFiltroEstado(filtro.id)}
+                    activeOpacity={0.75}
+                  >
+                    <Text style={[styles.chipTexto, activo && styles.chipTextoActivo]}>
+                      {filtro.etiqueta}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.filaTipos}
+              contentContainerStyle={styles.filaTiposContenido}
+            >
+              {FILTROS_TIPO.map((filtro) => {
+                const activo = filtroTipo === filtro.id;
+                return (
+                  <TouchableOpacity
+                    key={filtro.id}
+                    style={[styles.chip, styles.chipTipo, activo && styles.chipActivo]}
+                    onPress={() => setFiltroTipo(filtro.id)}
+                    activeOpacity={0.75}
+                  >
+                    <Text style={[styles.chipTexto, activo && styles.chipTextoActivo]}>
+                      {filtro.etiqueta}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+
+            <Text style={styles.contadorFiltro}>
+              Mostrando {avisosFiltrados.length} de {avisos.length}
+            </Text>
+          </View>
+
           {error ? (
             <View style={styles.vacio}>
               <Ionicons name="cloud-offline-outline" size={30} color={COLORS.mut} />
@@ -135,8 +207,15 @@ export default function NotificacionesScreen({ navigation }) {
             </View>
           ) : null}
 
+          {!cargando && !error && avisos.length > 0 && avisosFiltrados.length === 0 ? (
+            <View style={styles.vacio}>
+              <Ionicons name="funnel-outline" size={30} color={COLORS.mut} />
+              <Text style={styles.vacioTexto}>No hay notificaciones con estos filtros</Text>
+            </View>
+          ) : null}
+
           <View style={styles.lista}>
-            {avisos.map((aviso) => (
+            {avisosFiltrados.map((aviso) => (
               <TouchableOpacity
                 key={aviso.id}
                 style={styles.tarjeta}
@@ -197,6 +276,24 @@ const styles = StyleSheet.create({
   resumenTexto: { ...TIPOGRAFIA.micro, fontSize: 12, color: COLORS.inkItem, flex: 1 },
   marcar: { flexDirection: 'row', alignItems: 'center', gap: 3, padding: 2 },
   marcarTexto: { ...TIPOGRAFIA.micro, fontSize: 11.5, fontFamily: FUENTES.dmSemi, color: COLORS.primaryText },
+
+  filtros: { marginBottom: ESPACIOS.lg },
+  filaFiltros: { flexDirection: 'row', gap: 8, marginBottom: 9 },
+  filaTipos: { marginBottom: 7 },
+  filaTiposContenido: { gap: 8, paddingRight: ESPACIOS.page },
+  chip: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: RADIOS.pill,
+    borderWidth: 1,
+    borderColor: COLORS.lineSoft,
+    backgroundColor: COLORS.surface,
+  },
+  chipTipo: { paddingHorizontal: 11 },
+  chipActivo: { backgroundColor: COLORS.primarySoft, borderColor: COLORS.primaryRing },
+  chipTexto: { ...TIPOGRAFIA.micro, fontSize: 11.5, color: COLORS.mut },
+  chipTextoActivo: { fontFamily: FUENTES.dmSemi, color: COLORS.primaryText },
+  contadorFiltro: { ...TIPOGRAFIA.micro, fontSize: 10.5, color: COLORS.mutSoft },
 
   lista: { gap: 9 },
   tarjeta: {

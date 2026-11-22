@@ -9,6 +9,7 @@ import Boton from '../components/Boton';
 import QRDisplay from '../components/QRDisplay';
 import * as entregaService from '../services/entregaService';
 import * as certificadoService from '../services/certificadoService';
+import * as pdfService from '../services/pdfService';
 import { obtenerEstado, obtenerInfoTipo, COLORS, ESPACIOS, RADIOS, TIPOGRAFIA, FUENTES } from '../theme';
 import { formatearFechaHora } from '../utils/fecha';
 import { USAR_DATOS_PRUEBA } from '../utils/datosPrueba';
@@ -82,31 +83,8 @@ export default function CertificadoScreen({ route, navigation }) {
   const verificado = confirmada && Boolean(codigoHash) && Boolean(codigoQr);
   const nivel = confirmada ? 2 : estado === 'EN_PROCESO' ? 1 : 0;
 
-  async function compartir() {
-    if (!verificado) {
-      setError('El certificado se genera cuando la entrega es confirmada');
-      return;
-    }
-    try {
-      await Share.share({
-        message:
-          `Certificado de entrega RAEE Smart\n` +
-          `Categoría: ${certificado?.nombreCategoria || entregaActual?.nombreCategoriaVisible || info.nombre}\n` +
-          `Fecha: ${formatearFechaHora(fecha)}\n` +
-          `Punto: ${direccionPunto}\n` +
-          `Código: ${codigoHash}`,
-      });
-    } catch (_e) {
-      setError('No pudimos compartir el certificado en este dispositivo');
-    }
-  }
-
-  async function descargar() {
-    if (!verificado) {
-      setError('El certificado se genera cuando la entrega es confirmada');
-      return;
-    }
-    try {
+  async function obtenerUriCertificado() {
+    if (USAR_DATOS_PRUEBA || !entregaId) {
       const html = htmlCertificado(
         certificado?.nombreCategoria || entregaActual?.nombreCategoriaVisible || info.nombre,
         fecha,
@@ -116,18 +94,57 @@ export default function CertificadoScreen({ route, navigation }) {
       );
       if (Platform.OS === 'web') {
         await Print.printAsync({ html });
-        return;
+        return null;
       }
       const { uri } = await Print.printToFileAsync({ html });
+      return uri;
+    }
+
+    if (Platform.OS === 'web') {
+      await pdfService.descargarCertificadoWeb(entregaId, codigoHash);
+      return null;
+    }
+    return pdfService.descargarCertificado(entregaId, codigoHash);
+  }
+
+  async function compartir() {
+    if (!verificado) {
+      setError('El certificado se genera cuando la entrega es confirmada');
+      return;
+    }
+    try {
+      const uri = await obtenerUriCertificado();
+      if (!uri) return;
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(uri, {
           mimeType: 'application/pdf',
           dialogTitle: 'Certificado de entrega',
           UTI: 'com.adobe.pdf',
         });
+        return;
       }
-    } catch (_e) {
-      setError('No pudimos generar el certificado en este dispositivo');
+      await Share.share({ message: `Certificado de entrega RAEE Smart · Código: ${codigoHash}` });
+    } catch (err) {
+      setError(err?.message || 'No pudimos compartir el certificado en este dispositivo');
+    }
+  }
+
+  async function descargar() {
+    if (!verificado) {
+      setError('El certificado se genera cuando la entrega es confirmada');
+      return;
+    }
+    try {
+      const uri = await obtenerUriCertificado();
+      if (uri && (await Sharing.isAvailableAsync())) {
+        await Sharing.shareAsync(uri, {
+          mimeType: 'application/pdf',
+          dialogTitle: 'Certificado de entrega',
+          UTI: 'com.adobe.pdf',
+        });
+      }
+    } catch (err) {
+      setError(err?.message || 'No pudimos generar el certificado en este dispositivo');
     }
   }
 

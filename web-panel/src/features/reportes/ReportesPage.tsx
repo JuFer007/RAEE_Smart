@@ -7,6 +7,7 @@ import EmptyState from '../../components/ui/EmptyState';
 import PageHeader from '../../components/ui/PageHeader';
 import StatusDot from '../../components/ui/StatusDot';
 import { listarEntregas, listarPuntos } from '../../api/panel';
+import { descargarPdf } from '../../api/pdf';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import type { Entrega, EstadoEntrega, Punto } from '../../types';
@@ -36,6 +37,7 @@ export default function ReportesPage() {
   const [entregas, setEntregas] = useState<Entrega[]>([]);
   const [puntos, setPuntos] = useState<Punto[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [generandoPdf, setGenerandoPdf] = useState(false);
   const [error, setError] = useState('');
 
   const [desde, setDesde] = useState(sumarDias(fechaHoyISO(), -30));
@@ -122,15 +124,42 @@ export default function ReportesPage() {
     showToast('Reporte exportado en formato CSV.');
   };
 
+  const exportarPdf = async () => {
+    if (!municipalidadId) return;
+    setGenerandoPdf(true);
+    try {
+      await descargarPdf(
+        '/generar-reporte-municipalidad',
+        { municipalidadId, fechaInicio: desde, fechaFin: hasta, categoria },
+        `reporte-entregas-${desde}-a-${hasta}`,
+      );
+      showToast('Reporte PDF descargado.');
+    } catch (err) {
+      showToast(obtenerMensajeError(err), 'error');
+    } finally {
+      setGenerandoPdf(false);
+    }
+  };
+
   return (
     <section>
       <PageHeader
         title="Reportes"
         description="Filtra y exporta el detalle de entregas para tus informes de gestión."
         actions={
-          <Button icon="download" variant="secondary" onClick={exportar}>
-            Exportar CSV
-          </Button>
+          <>
+            <Button icon="download" variant="secondary" onClick={exportar}>
+              Exportar CSV
+            </Button>
+            <Button
+              icon="file"
+              variant="primary"
+              onClick={() => void exportarPdf()}
+              disabled={generandoPdf || !municipalidadId}
+            >
+              {generandoPdf ? 'Generando PDF...' : 'Exportar PDF'}
+            </Button>
+          </>
         }
       />
 

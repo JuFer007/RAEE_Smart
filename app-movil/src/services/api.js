@@ -8,6 +8,8 @@ export const MENSAJES_ERROR_POR_DEFECTO = {
   SERVIDOR: 'Hubo un error en el servidor. Inténtalo nuevamente en unos segundos.',
   NO_AUTORIZADO: 'Tu sesión ha expirado. Inicia sesión nuevamente.',
   PROHIBIDO: 'No tienes permisos para realizar esta acción.',
+  PROHIBIDO_SIN_DETALLE:
+    'No pudimos conectar con el servidor desde esta red. Revisa la URL de la API y el CORS del backend.',
   NO_ENCONTRADO: 'No se encontró el recurso solicitado.',
   GENERICO: 'Ocurrió un error inesperado. Inténtalo de nuevo.',
 };
@@ -64,13 +66,17 @@ api.interceptors.response.use(
         }
 
         error.normalizado = MENSAJES_ERROR_POR_DEFECTO.NO_AUTORIZADO;
+        if (String(originalRequest.url || '').startsWith('/municipalidades/')) break;
         try {
           await limpiarSesion();
         } catch {}
         manejadorSesionExpirada?.();
         break;
       case 403:
-        error.normalizado = MENSAJES_ERROR_POR_DEFECTO.PROHIBIDO;
+        error.normalizado =
+          error.response?.data?.mensaje ||
+          error.response?.data?.message ||
+          MENSAJES_ERROR_POR_DEFECTO.PROHIBIDO_SIN_DETALLE;
         break;
       case 404:
         error.normalizado = MENSAJES_ERROR_POR_DEFECTO.NO_ENCONTRADO;

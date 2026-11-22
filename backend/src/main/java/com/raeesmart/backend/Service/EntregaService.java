@@ -7,7 +7,7 @@ import java.util.List;
 public interface EntregaService {
     EntregaResponseDTO registrarEntrega(EntregaRequestDTO request);
     EntregaResponseDTO confirmarEntrega(Long entregaId);
-    EntregaResponseDTO rechazarEntrega(Long entregaId);
+    EntregaResponseDTO rechazarEntrega(Long entregaId, String motivo);
     EntregaResponseDTO corregirClasificacion(Long entregaId, TipoRAEE tipoCorregido);
     EntregaResponseDTO buscarPorId(Long id);
     List<EntregaResponseDTO> listarPorUsuario(Long usuarioId);

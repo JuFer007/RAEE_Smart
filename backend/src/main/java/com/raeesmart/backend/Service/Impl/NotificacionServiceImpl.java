@@ -94,6 +94,19 @@ public class NotificacionServiceImpl implements NotificacionService {
         }
     }
 
+    @Transactional
+    @Override
+    public void crearParaCiudadanosDeMunicipalidad(Long municipalidadId, TipoNotificacion tipo, String titulo, String detalle) {
+        List<Notificacion> lote = usuarioRepository.findByMunicipalidadId(municipalidadId).stream()
+                .filter(u -> u.getRolUsuario() == RolUsuario.CIUDADANO)
+                .filter(u -> debeNotificar(u, tipo))
+                .map(u -> construir(u, tipo, titulo, detalle))
+                .toList();
+        if (!lote.isEmpty()) {
+            notificacionRepository.saveAll(lote);
+        }
+    }
+
     @Transactional(readOnly = true)
     @Override
     public List<NotificacionResponseDTO> listarDeUsuarioId(Long usuarioId) {

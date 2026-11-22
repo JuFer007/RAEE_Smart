@@ -132,11 +132,6 @@ export default function CalidadIaPage() {
         </PanelAlert>
       ) : null}
 
-      <PanelAlert variante="info">
-        Sin un conjunto de validación etiquetado, estos indicadores son una estimación operativa
-        basada en la confianza reportada por el clasificador y en las correcciones de categoría.
-      </PanelAlert>
-
       {cargando ? (
         <div className="panel-loading">
           <span className="panel-spinner" />
@@ -202,9 +197,11 @@ export default function CalidadIaPage() {
                     {porCategoria.map((item) => (
                       <tr key={item.nombre}>
                         <td>
-                          <span className="ui-table__main">
-                            <Icon name={item.icono} size={15} />
-                            {item.nombre}
+                          <span className="calidad-categoria">
+                            <span className="calidad-categoria__icono">
+                              <Icon name={item.icono} size={15} />
+                            </span>
+                            <span className="calidad-categoria__nombre">{item.nombre}</span>
                           </span>
                         </td>
                         <td className="ui-table__muted">{item.total}</td>

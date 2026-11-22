@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Reporte de municipalidades RAEE</title>
+<style>{{estilos}}</style>
+</head>
+<body>
+<div class="reporte">
+
+  <div class="cabecera">
+    <div class="logo-section">
+      <img class="logo" src="{{logo}}" alt="RAEE Smart">
+      <div class="info-negocio">
+        <div class="nombre-negocio">RAEE SMART</div>
+        <div class="subtitulo-negocio">Panel de administración · Padrón de municipalidades</div>
+      </div>
+    </div>
+    <div class="info-reporte">
+      <div class="titulo-reporte">Reporte de municipalidades</div>
+      <div class="fecha-reporte">Generado el: {{fechaGeneracion}} - {{horaGeneracion}}</div>
+    </div>
+  </div>
+
+  <div class="periodo">
+    <div class="dato"><div class="periodo-label">Alcance</div><div class="periodo-valor">Todas las municipalidades registradas</div></div>
+    <div class="dato"><div class="periodo-label">Registradas</div><div class="periodo-valor">{{total}}</div></div>
+    <div class="dato"><div class="periodo-label">Estado</div><div class="periodo-valor">{{activas}} activas · {{inactivas}} inactivas</div></div>
+    <div class="dato"><div class="periodo-label">Campañas</div><div class="periodo-valor">{{conCampanas}} habilitadas</div></div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="n">{{total}}</div><div class="l">Municipalidades</div></div>
+    <div class="kpi"><div class="n ok">{{activas}}</div><div class="l">Activas</div></div>
+    <div class="kpi"><div class="n warn">{{inactivas}}</div><div class="l">Inactivas</div></div>
+    <div class="kpi"><div class="n">{{conCampanas}}</div><div class="l">Con campañas</div></div>
+  </div>
+
+  <h2>Detalle de municipalidades</h2>
+  <table class="fija">
+    <thead><tr>
+      <th>Municipalidad</th><th>Distrito</th><th>Dirección</th>
+      <th>Contacto</th><th>Coordenadas</th><th>Campañas</th><th>Estado</th>
+    </tr></thead>
+    <tbody>{{municipalidades}}</tbody>
+  </table>
+
+  <div class="firmas"><div>Administrador general</div><div>Sello institucional</div></div>
+
+  <div class="pie">
+    <div class="pie-info">RAEE SMART - Plataforma de reciclaje de residuos de aparatos eléctricos y electrónicos</div>
+    <div class="pie-info">Información institucional de las municipalidades registradas en la plataforma</div>
+    <div class="pie-info">Este documento es generado automáticamente por el sistema</div>
+  </div>
+</div>
+</body>
+</html>

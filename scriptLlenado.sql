@@ -402,9 +402,174 @@ WHERE u.email = 'vecino@raee.com'
     WHERE n.usuario_id = u.id AND n.titulo = 'Horario de atención actualizado'
   );
 
-COMMIT;
+UPDATE usuario u
+SET municipalidad_id = m.id
+FROM (VALUES
+  ('vecino@raee.com', 'Municipalidad Provincial de Chiclayo'),
+  ('maria.torres@raee.com', 'Municipalidad Provincial de Chiclayo'),
+  ('luis.sanchez@raee.com', 'Municipalidad Distrital de José Leonardo Ortiz'),
+  ('ana.delgado@raee.com', 'Municipalidad Distrital de La Victoria'),
+  ('jorge.custodio@raee.com', 'Municipalidad Distrital de Pimentel'),
+  ('rosa.vasquez@raee.com', 'Municipalidad Provincial de Lambayeque')
+) AS v(email, municipalidad)
+JOIN municipalidad m ON m.nombre = v.municipalidad
+WHERE u.email = v.email
+  AND u.rol_usuario = 'CIUDADANO'
+  AND u.municipalidad_id IS NULL;
 
--- Verificación rápida
--- SELECT id, nombre FROM municipalidad ORDER BY id;
--- SELECT m.distrito, COUNT(p.id) AS puntos FROM municipalidad m LEFT JOIN puntos_recoleccion p ON p.municipalidad_id = m.id GROUP BY m.distrito;
--- SELECT email, rol_usuario, municipalidad_id FROM usuario ORDER BY id;
+INSERT INTO valoracion_app (usuario_id, calificacion, comentario, fecha_registro, fecha_actualizacion)
+SELECT u.id,
+       v.calificacion,
+       v.comentario,
+       NOW() - make_interval(days => v.dias),
+       NOW() - make_interval(days => v.dias) + interval '2 hours'
+FROM (VALUES
+  ('maria.torres@raee.com', 5, 'La app es muy fácil para registrar entregas y descargar el certificado.', 1),
+  ('luis.sanchez@raee.com', 4, 'Me gustó, aunque quisiera ver el historial con más filtros.', 2),
+  ('ana.delgado@raee.com', 5, 'Excelente orientación sobre dónde llevar mis equipos.', 4),
+  ('jorge.custodio@raee.com', 3, 'Funciona bien, pero el mapa a veces tarda en cargar.', 6),
+  ('rosa.vasquez@raee.com', 4, 'El proceso fue claro y rápido desde el celular.', 9)
+) AS v(email, calificacion, comentario, dias)
+JOIN usuario u ON u.email = v.email AND u.rol_usuario = 'CIUDADANO'
+WHERE NOT EXISTS (
+  SELECT 1 FROM valoracion_app va WHERE va.usuario_id = u.id
+);
+
+INSERT INTO auditoria_evento (
+  fecha_hora, actor_id, actor_email, actor_nombre, actor_rol,
+  accion, entidad, entidad_id, detalles, resultado, origen, endpoint, metodo_http
+)
+SELECT NOW() - interval '6 days', u.id, u.email, u.nombre, u.rol_usuario::text,
+       'USUARIO_LOGIN', 'USUARIO', u.id::text,
+       '{"seed":"SEED-AUDITORIA-USUARIO_LOGIN","canal":"web"}',
+       'EXITOSO', 'WEB', '/api/auth/login', 'POST'
+FROM usuario u
+WHERE u.email = 'admin@raee.com'
+  AND NOT EXISTS (
+    SELECT 1 FROM auditoria_evento a
+    WHERE a.accion = 'USUARIO_LOGIN'
+      AND a.actor_id = u.id
+      AND a.detalles LIKE '%SEED-AUDITORIA-USUARIO_LOGIN%'
+  );
+
+INSERT INTO auditoria_evento (
+  fecha_hora, actor_id, actor_email, actor_nombre, actor_rol,
+  accion, entidad, entidad_id, detalles, resultado, origen, endpoint, metodo_http
+)
+SELECT NOW() - interval '5 days', actor.id, actor.email, actor.nombre, actor.rol_usuario::text,
+       'ADMIN_USUARIO_CREAR', 'USUARIO', objetivo.id::text,
+       '{"seed":"SEED-AUDITORIA-ADMIN_USUARIO_CREAR","rol":"MUNICIPALIDAD"}',
+       'EXITOSO', 'WEB', '/api/admin/usuarios', 'POST'
+FROM usuario actor
+JOIN usuario objetivo ON objetivo.email = 'admin.chiclayo@raee.com'
+WHERE actor.email = 'admin@raee.com'
+  AND NOT EXISTS (
+    SELECT 1 FROM auditoria_evento a
+    WHERE a.accion = 'ADMIN_USUARIO_CREAR'
+      AND a.entidad_id = objetivo.id::text
+      AND a.detalles LIKE '%SEED-AUDITORIA-ADMIN_USUARIO_CREAR%'
+  );
+
+INSERT INTO auditoria_evento (
+  fecha_hora, actor_id, actor_email, actor_nombre, actor_rol,
+  actor_municipalidad_id, actor_municipalidad_nombre,
+  accion, entidad, entidad_id, detalles, resultado, origen, endpoint, metodo_http
+)
+SELECT NOW() - interval '4 days', actor.id, actor.email, actor.nombre, actor.rol_usuario::text,
+       m.id, m.nombre,
+       'CAMPANA_CREAR', 'CAMPANA', c.id::text,
+       '{"seed":"SEED-AUDITORIA-CAMPANA_CREAR","titulo":"Campaña de Reciclaje Electrónico Chiclayo"}',
+       'EXITOSO', 'WEB', '/api/admin/campanas', 'POST'
+FROM usuario actor
+JOIN municipalidad m ON m.id = actor.municipalidad_id
+JOIN campanas c ON c.titulo = 'Campaña de Reciclaje Electrónico Chiclayo'
+WHERE actor.email = 'admin.chiclayo@raee.com'
+  AND NOT EXISTS (
+    SELECT 1 FROM auditoria_evento a
+    WHERE a.accion = 'CAMPANA_CREAR'
+      AND a.entidad_id = c.id::text
+      AND a.detalles LIKE '%SEED-AUDITORIA-CAMPANA_CREAR%'
+  );
+
+INSERT INTO auditoria_evento (
+  fecha_hora, actor_id, actor_email, actor_nombre, actor_rol,
+  actor_municipalidad_id, actor_municipalidad_nombre,
+  accion, entidad, entidad_id, detalles, resultado, origen, endpoint, metodo_http
+)
+SELECT NOW() - interval '3 days', actor.id, actor.email, actor.nombre, actor.rol_usuario::text,
+       m.id, m.nombre,
+       'ENTREGA_CONFIRMAR', 'ENTREGA', e.id::text,
+       '{"seed":"SEED-AUDITORIA-ENTREGA_CONFIRMAR","estado":"CONFIRMADA"}',
+       'EXITOSO', 'WEB', '/api/entregas/' || e.id || '/confirmar', 'PUT'
+FROM usuario actor
+JOIN municipalidad m ON m.id = actor.municipalidad_id
+JOIN entregas e ON e.foto_url = '/uploads/raee-smart/seed/entrega-01.jpg'
+WHERE actor.email = 'admin.chiclayo@raee.com'
+  AND NOT EXISTS (
+    SELECT 1 FROM auditoria_evento a
+    WHERE a.accion = 'ENTREGA_CONFIRMAR'
+      AND a.entidad_id = e.id::text
+      AND a.detalles LIKE '%SEED-AUDITORIA-ENTREGA_CONFIRMAR%'
+  );
+
+INSERT INTO auditoria_evento (
+  fecha_hora, actor_id, actor_email, actor_nombre, actor_rol,
+  actor_municipalidad_id, actor_municipalidad_nombre,
+  accion, entidad, entidad_id, detalles, resultado, origen, endpoint, metodo_http
+)
+SELECT NOW() - interval '2 days', actor.id, actor.email, actor.nombre, actor.rol_usuario::text,
+       m.id, m.nombre,
+       'ENTREGA_RECHAZAR', 'ENTREGA', e.id::text,
+       '{"seed":"SEED-AUDITORIA-ENTREGA_RECHAZAR","estado":"RECHAZADA"}',
+       'EXITOSO', 'WEB', '/api/entregas/' || e.id || '/rechazar', 'PUT'
+FROM usuario actor
+JOIN municipalidad m ON m.id = actor.municipalidad_id
+JOIN entregas e ON e.foto_url = '/uploads/raee-smart/seed/entrega-06.jpg'
+WHERE actor.email = 'admin.jlo@raee.com'
+  AND NOT EXISTS (
+    SELECT 1 FROM auditoria_evento a
+    WHERE a.accion = 'ENTREGA_RECHAZAR'
+      AND a.entidad_id = e.id::text
+      AND a.detalles LIKE '%SEED-AUDITORIA-ENTREGA_RECHAZAR%'
+  );
+
+INSERT INTO auditoria_evento (
+  fecha_hora, actor_id, actor_email, actor_nombre, actor_rol,
+  accion, entidad, entidad_id, detalles, resultado, origen, endpoint, metodo_http
+)
+SELECT NOW() - interval '1 day', actor.id, actor.email, actor.nombre, actor.rol_usuario::text,
+       'PUNTO_ACTUALIZAR', 'PUNTO_RECOLECCION', p.id::text,
+       '{"seed":"SEED-AUDITORIA-PUNTO_ACTUALIZAR","campo":"horario_atencion"}',
+       'EXITOSO', 'WEB', '/api/admin/puntos/' || p.id, 'PUT'
+FROM usuario actor
+JOIN puntos_recoleccion p ON p.nombre = 'Municipalidad de Chiclayo'
+WHERE actor.email = 'admin@raee.com'
+  AND NOT EXISTS (
+    SELECT 1 FROM auditoria_evento a
+    WHERE a.accion = 'PUNTO_ACTUALIZAR'
+      AND a.entidad_id = p.id::text
+      AND a.detalles LIKE '%SEED-AUDITORIA-PUNTO_ACTUALIZAR%'
+  );
+
+INSERT INTO auditoria_evento (
+  fecha_hora, actor_id, actor_email, actor_nombre, actor_rol,
+  actor_municipalidad_id, actor_municipalidad_nombre,
+  accion, entidad, entidad_id, detalles, resultado, origen, endpoint, metodo_http
+)
+SELECT NOW() - interval '22 hours', actor.id, actor.email, actor.nombre, actor.rol_usuario::text,
+       m.id, m.nombre,
+       'VALORACION_APP_REGISTRAR', 'VALORACION_APP', va.id::text,
+       '{"seed":"SEED-AUDITORIA-VALORACION_APP_REGISTRAR","calificacion":5}',
+       'EXITOSO', 'MOVIL', '/api/satisfaccion', 'POST'
+FROM usuario actor
+JOIN municipalidad m ON m.id = actor.municipalidad_id
+JOIN valoracion_app va ON va.usuario_id = actor.id AND va.calificacion = 5
+WHERE actor.email = 'maria.torres@raee.com'
+  AND NOT EXISTS (
+    SELECT 1 FROM auditoria_evento a
+    WHERE a.accion = 'VALORACION_APP_REGISTRAR'
+      AND a.entidad_id = va.id::text
+      AND a.detalles LIKE '%SEED-AUDITORIA-VALORACION_APP_REGISTRAR%'
+  );
+
+COMMIT;

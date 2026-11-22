@@ -1,10 +1,15 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Icon from './Icon';
 import { useAuth } from '../context/AuthContext';
 
 export default function AccesoDenegado() {
   const { cerrarSesion } = useAuth();
   const navigate = useNavigate();
+  const [parametros] = useSearchParams();
+  const mensaje =
+    parametros.get('motivo') === 'accion'
+      ? 'Tu rol no permite realizar esta acción.'
+      : 'La cuenta con la que iniciaste sesión no pertenece a una municipalidad.';
 
   const volverAlLogin = () => {
     cerrarSesion();
@@ -18,7 +23,7 @@ export default function AccesoDenegado() {
           <Icon name="alert" size={24} />
         </span>
         <h1>Sin acceso a este panel</h1>
-        <p>La cuenta con la que iniciaste sesión no pertenece a una municipalidad.</p>
+        <p>{mensaje}</p>
         <button type="button" onClick={volverAlLogin}>
           Volver al inicio de sesión
         </button>
