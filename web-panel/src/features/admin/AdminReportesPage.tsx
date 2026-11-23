@@ -203,7 +203,7 @@ export default function AdminReportesPage() {
         </PanelAlert>
       ) : null}
 
-      <Card>
+      <Card className="report-filters-card">
         <div className="report-filters">
           <label className="ui-field">
             <span>Desde</span>

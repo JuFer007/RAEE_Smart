@@ -2,9 +2,11 @@ package com.raeesmart.backend.Service.Impl;
 import com.raeesmart.backend.Dto.Request.PreferenciaNotificacionRequestDTO;
 import com.raeesmart.backend.Dto.Response.PreferenciaNotificacionResponseDTO;
 import com.raeesmart.backend.Exception.ResourceNotFoundException;
+import com.raeesmart.backend.Model.Enums.RolUsuario;
 import com.raeesmart.backend.Model.Usuario;
 import com.raeesmart.backend.Repository.UsuarioRepository;
 import com.raeesmart.backend.Service.UsuarioService;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,10 +49,15 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Override
     public void cambiarPassword(String email, String passwordActual, String passwordNueva) {
         Usuario usuario = buscarPorEmail(email);
+        if (usuario.getRolUsuario() != RolUsuario.CIUDADANO) {
+            throw new AccessDeniedException("Solo los ciudadanos pueden cambiar su contraseña");
+        }
         if (!passwordEncoder.matches(passwordActual, usuario.getPassword())) {
             throw new IllegalArgumentException("La contrasena actual no es correcta");
         }
         usuario.setPassword(passwordEncoder.encode(passwordNueva));
+        long version = usuario.getPasswordVersion() == null ? 0L : usuario.getPasswordVersion();
+        usuario.setPasswordVersion(version + 1);
         usuarioRepository.save(usuario);
     }
 

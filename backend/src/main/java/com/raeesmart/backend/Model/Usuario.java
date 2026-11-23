@@ -49,6 +49,10 @@ public class Usuario {
     @Column(name = "ultimo_acceso")
     private LocalDateTime ultimoAcceso;
 
+    @Builder.Default
+    @Column(name = "password_version", columnDefinition = "bigint default 0")
+    private Long passwordVersion = 0L;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "municipalidad_id")
     private Municipalidad municipalidad;
@@ -78,6 +82,9 @@ public class Usuario {
         }
         if (this.activo == null) {
             this.activo = true;
+        }
+        if (this.passwordVersion == null) {
+            this.passwordVersion = 0L;
         }
     }
 }

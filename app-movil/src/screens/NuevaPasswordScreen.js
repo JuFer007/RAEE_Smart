@@ -1,18 +1,46 @@
 import React, { useState } from 'react';
-import { View, Text, Image, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
+import { View, Text, Image, KeyboardAvoidingView, Platform, Alert, StyleSheet } from 'react-native';
 import Encabezado from '../components/Encabezado';
 import Campo from '../components/Campo';
 import Boton from '../components/Boton';
+import { limpiarSesion } from '../services/authService';
+import { restablecerPassword } from '../services/recuperacionService';
 import { COLORS, ESPACIOS, RADIOS, SOMBRAS, TIPOGRAFIA, FUENTES } from '../theme';
 
 export default function NuevaPasswordScreen({ navigation, route }) {
   const [password, setPassword] = useState('');
   const [repetir, setRepetir] = useState('');
+  const [cargando, setCargando] = useState(false);
 
   const codigo = route.params?.codigo || '';
+  const email = route.params?.email || '';
   const codigoOculto = codigo
     ? `${'\u2022'.repeat(Math.max(codigo.length - 2, 0))}${codigo.slice(-2)}`
     : '\u2014\u2014\u2014\u2014\u2014\u2014';
+
+  async function guardar() {
+    if (password.length < 6) {
+      Alert.alert('Error', 'La contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
+    if (password !== repetir) {
+      Alert.alert('Error', 'Las contraseñas no coinciden.');
+      return;
+    }
+
+    try {
+      setCargando(true);
+      await restablecerPassword(email, codigo, password);
+      await limpiarSesion();
+      Alert.alert('Contraseña actualizada', 'Inicia sesión con tu nueva contraseña.', [
+        { text: 'OK', onPress: () => navigation.navigate('Login') },
+      ]);
+    } catch (err) {
+      Alert.alert('No se pudo guardar', err.normalizado || 'Código inválido o expirado.');
+    } finally {
+      setCargando(false);
+    }
+  }
 
   return (
     <View style={styles.fondo}>
@@ -20,7 +48,7 @@ export default function NuevaPasswordScreen({ navigation, route }) {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.envoltorio}
       >
-        <Encabezado onBack={() => navigation.navigate('Recuperar')} />
+        <Encabezado onBack={() => navigation.navigate('Recuperar', { email })} />
 
         <View style={styles.bloque}>
           <Image
@@ -63,12 +91,13 @@ export default function NuevaPasswordScreen({ navigation, route }) {
             <Boton
               titulo="Guardar contraseña"
               iconoDerecha="checkmark"
-              onPress={() => navigation.navigate('Login')}
+              onPress={guardar}
+              cargando={cargando}
               style={styles.boton}
             />
           </View>
 
-          <Text style={styles.volver} onPress={() => navigation.navigate('Recuperar')}>
+          <Text style={styles.volver} onPress={() => navigation.navigate('Recuperar', { email })}>
             ¿El código es incorrecto? Solicitar otro
           </Text>
         </View>

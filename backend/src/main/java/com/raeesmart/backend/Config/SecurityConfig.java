@@ -50,6 +50,7 @@ public class SecurityConfig {
                         }))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/me").authenticated()
+                        .requestMatchers("/api/usuarios/me/password").hasRole("CIUDADANO")
                         .requestMatchers("/api/auth/login", "/api/auth/login/movil", "/api/auth/registro").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/municipalidades/puntos", "/api/municipalidades/*/puntos").permitAll()

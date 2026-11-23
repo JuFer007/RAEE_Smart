@@ -1,6 +1,10 @@
 package com.raeesmart.backend.Controller;
 import com.raeesmart.backend.Dto.Request.LoginRequestDTO;
+import com.raeesmart.backend.Dto.Request.RecuperarPasswordRequestDTO;
+import com.raeesmart.backend.Dto.Request.ReenviarCodigoRequestDTO;
 import com.raeesmart.backend.Dto.Request.RegistroRequestDTO;
+import com.raeesmart.backend.Dto.Request.RestablecerPasswordRequestDTO;
+import com.raeesmart.backend.Dto.Request.VerificarCodigoRequestDTO;
 import com.raeesmart.backend.Dto.Response.LoginResponseDTO;
 import com.raeesmart.backend.Dto.Response.UsuarioResponseDTO;
 import com.raeesmart.backend.Exception.ResourceNotFoundException;
@@ -9,6 +13,7 @@ import com.raeesmart.backend.Model.Enums.RolUsuario;
 import com.raeesmart.backend.Model.Usuario;
 import com.raeesmart.backend.Security.JwtService;
 import com.raeesmart.backend.Service.AuditoriaService;
+import com.raeesmart.backend.Service.PasswordResetService;
 import com.raeesmart.backend.Service.UsuarioService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,12 +39,15 @@ public class AuthController {
     private final UsuarioService usuarioService;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final PasswordResetService passwordResetService;
     private AuditoriaService auditoriaService;
 
-    public AuthController(UsuarioService usuarioService, PasswordEncoder passwordEncoder, JwtService jwtService) {
+    public AuthController(UsuarioService usuarioService, PasswordEncoder passwordEncoder,
+                          JwtService jwtService, PasswordResetService passwordResetService) {
         this.usuarioService = usuarioService;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.passwordResetService = passwordResetService;
     }
 
     @Autowired(required = false)
@@ -71,6 +79,30 @@ public class AuthController {
                 .build();
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PostMapping("/recuperar-password")
+    public ResponseEntity<Void> recuperarPassword(@Valid @RequestBody RecuperarPasswordRequestDTO request) {
+        passwordResetService.solicitarCodigo(request.getEmail());
+        return ResponseEntity.accepted().build();
+    }
+
+    @PostMapping("/reenviar-codigo")
+    public ResponseEntity<Void> reenviarCodigo(@Valid @RequestBody ReenviarCodigoRequestDTO request) {
+        passwordResetService.reenviarCodigo(request.getEmail());
+        return ResponseEntity.accepted().build();
+    }
+
+    @PostMapping("/verificar-codigo")
+    public ResponseEntity<Void> verificarCodigo(@Valid @RequestBody VerificarCodigoRequestDTO request) {
+        passwordResetService.verificarCodigo(request.getEmail(), request.getCodigo());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/restablecer-password")
+    public ResponseEntity<Void> restablecerPassword(@Valid @RequestBody RestablecerPasswordRequestDTO request) {
+        passwordResetService.restablecerPassword(request.getEmail(), request.getCodigo(), request.getPasswordNueva());
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/login")

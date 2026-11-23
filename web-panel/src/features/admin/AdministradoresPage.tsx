@@ -569,15 +569,17 @@ export default function AdministradoresPage() {
                         >
                           <Icon name={item.activo ? 'x' : 'check'} size={15} />
                         </button>
-                        <button
-                          type="button"
-                          className={buttonClass('ghost')}
-                          onClick={() => abrirPassword(item)}
-                          title="Cambiar contraseña"
-                          aria-label={`Cambiar contraseña de ${item.nombre}`}
-                        >
-                          <Icon name="shield" size={15} />
-                        </button>
+                        {item.rol === 'CIUDADANO' ? (
+                          <button
+                            type="button"
+                            className={buttonClass('ghost')}
+                            onClick={() => abrirPassword(item)}
+                            title="Cambiar contraseña"
+                            aria-label={`Cambiar contraseña de ${item.nombre}`}
+                          >
+                            <Icon name="shield" size={15} />
+                          </button>
+                        ) : null}
                       </td>
                     ) : null}
                   </tr>

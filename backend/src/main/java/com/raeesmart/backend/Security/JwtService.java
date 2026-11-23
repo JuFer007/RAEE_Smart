@@ -31,12 +31,14 @@ public class JwtService {
     public String generarToken(Usuario usuario, CanalAcceso canal) {
         Date ahora = new Date();
         Date expiracion = new Date(ahora.getTime() + expiracionMs);
+        long version = usuario.getPasswordVersion() == null ? 0L : usuario.getPasswordVersion();
 
         return Jwts.builder()
                 .subject(usuario.getEmail())
                 .claim("usuarioId", usuario.getId())
                 .claim("rol", usuario.getRolUsuario().name())
                 .claim("canal", canal.name())
+                .claim("passwordVersion", String.valueOf(version))
                 .issuedAt(ahora)
                 .expiration(expiracion)
                 .signWith(clave)
@@ -57,6 +59,18 @@ public class JwtService {
 
     public String obtenerRol(String token) {
         return validarYObtenerClaims(token).get("rol", String.class);
+    }
+
+    public long obtenerPasswordVersion(String token) {
+        Object valor = validarYObtenerClaims(token).get("passwordVersion");
+        if (valor == null) {
+            return 0L;
+        }
+        try {
+            return Long.parseLong(valor.toString());
+        } catch (NumberFormatException ex) {
+            return 0L;
+        }
     }
 
     public CanalAcceso obtenerCanal(String token) {

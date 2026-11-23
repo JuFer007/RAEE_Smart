@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Entrega rechazada - RAEE Smart</title>
+</head>
+<body style="margin:0;padding:0;background:#EEF9F2;font-family:Arial,Helvetica,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+    <tr>
+        <td align="center" style="padding:24px 12px;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#FFFFFF;border-radius:14px;overflow:hidden;border:1px solid #D5E8DF;">
+                <tr>
+                    <td th:replace="~{email/fragments/cabecera :: cabecera}"></td>
+                </tr>
+                <tr>
+                    <td style="padding:26px 28px 12px;">
+                        <h1 style="margin:0 0 10px;color:#B3261E;font-size:21px;">Entrega rechazada</h1>
+                        <p style="margin:0;color:#22584C;font-size:14px;line-height:1.6;">
+                            Hola <strong th:text="${nombre}">ciudadano</strong>, la municipalidad rechazó tu entrega. Revisa el motivo y comunícate con el punto de acopio si necesitas más información.
+                        </p>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:10px 28px 18px;">
+                        <table width="100%" cellpadding="0" cellspacing="0" style="background:#FBE9E7;border-left:4px solid #B3261E;border-radius:10px;">
+                            <tr>
+                                <td style="padding:14px 16px;color:#22584C;font-size:14px;line-height:1.7;">
+                                    <p style="margin:0 0 8px;"><strong style="color:#B3261E;">Código de entrega:</strong> <span th:text="${codigoEntrega}">ENT-0001</span></p>
+                                    <p style="margin:0 0 8px;"><strong style="color:#B3261E;">Fecha:</strong> <span th:text="${fecha}">22/11/2026</span></p>
+                                    <p style="margin:0;"><strong style="color:#B3261E;">Motivo:</strong> <span th:text="${motivo}">Los residuos no cumplen la categoría registrada</span></p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:0 28px 24px;text-align:center;">
+                        <p style="margin:0;color:#709087;font-size:12px;">Puedes registrar una nueva entrega con la documentación correcta.</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td th:replace="~{email/fragments/pie :: pie}"></td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

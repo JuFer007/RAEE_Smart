@@ -164,11 +164,17 @@ public class AdminUsuarioServiceImpl implements AdminUsuarioService {
         Usuario actor = autorizacionService.obtenerActor();
         Usuario usuario = buscarUsuario(id);
         validarPuedeGestionar(actor, usuario);
+        if (usuario.getRolUsuario() != RolUsuario.CIUDADANO) {
+            throw new AccessDeniedException("Solo se puede cambiar la contraseña de ciudadanos");
+        }
         if (request.getPasswordNueva() == null || request.getPasswordNueva().isBlank()) {
             throw new IllegalArgumentException("La nueva contraseña es obligatoria");
         }
         usuario.setPassword(passwordEncoder.encode(request.getPasswordNueva()));
+        long version = usuario.getPasswordVersion() == null ? 0L : usuario.getPasswordVersion();
+        usuario.setPasswordVersion(version + 1);
         usuarioRepository.save(usuario);
+
         registrar("ADMIN_USUARIO_CAMBIAR_PASSWORD", usuario, null, null);
     }
 

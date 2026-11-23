@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
-import { View, Text, Image, Keyboard, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Image, Keyboard, Pressable, Alert, StyleSheet } from 'react-native';
 import Encabezado from '../components/Encabezado';
 import Campo from '../components/Campo';
 import Boton from '../components/Boton';
+import { solicitarCodigo } from '../services/recuperacionService';
 import { COLORS, ESPACIOS, RADIOS, SOMBRAS, TIPOGRAFIA } from '../theme';
 
 export default function RecuperarCorreoScreen({ navigation, route }) {
   const [email, setEmail] = useState(route.params?.email || '');
   const [error, setError] = useState('');
+  const [cargando, setCargando] = useState(false);
 
-  function continuar() {
+  async function continuar() {
     const correo = email.trim();
     if (!correo) {
       setError('Ingresa tu correo electrónico.');
@@ -19,8 +21,19 @@ export default function RecuperarCorreoScreen({ navigation, route }) {
       setError('Escribe un correo electrónico válido.');
       return;
     }
+
     setError('');
-    navigation.navigate('Recuperar', { email: correo });
+    try {
+      setCargando(true);
+      await solicitarCodigo(correo);
+      Alert.alert('Revisa tu correo', 'Si la cuenta existe, te enviamos un código de 6 dígitos.', [
+        { text: 'OK', onPress: () => navigation.navigate('Recuperar', { email: correo }) },
+      ]);
+    } catch (err) {
+      Alert.alert('No se pudo enviar el código', err.normalizado || 'Inténtalo nuevamente.');
+    } finally {
+      setCargando(false);
+    }
   }
 
   return (
@@ -59,7 +72,7 @@ export default function RecuperarCorreoScreen({ navigation, route }) {
               {error ? <Text style={styles.errorTexto}>{error}</Text> : null}
             </View>
 
-            <Boton titulo="Recuperar" onPress={continuar} style={styles.boton} />
+            <Boton titulo="Recuperar" onPress={continuar} cargando={cargando} style={styles.boton} />
           </View>
         </View>
       </Pressable>

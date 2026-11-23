@@ -1,0 +1,135 @@
+name: raee-smart
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: raee-smart-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: RAEE_Smart
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-123456}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d RAEE_Smart"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: raee-smart-backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/RAEE_Smart
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-123456}
+      IA_BASE_URL: http://ia-service:8000
+      CERT_PDF_BASE_URL: http://servidor-pdf:3007
+      CERT_VERIFICATION_BASE_URL: http://backend:8080/api/certificados/verificar
+      CORS_ALLOWED_ORIGINS: http://localhost:5173,http://localhost:8081,http://localhost:19006,http://localhost:3000
+      CORS_ALLOWED_ORIGIN_PATTERNS: http://localhost:*,http://127.0.0.1:*,http://10.*.*.*:*,http://192.168.*.*:*,http://172.*.*.*:*
+    ports:
+      - "8080:8080"
+    volumes:
+      - uploads:/app/uploads/raee-smart
+    depends_on:
+      db:
+        condition: service_healthy
+      ia-service:
+        condition: service_started
+      servidor-pdf:
+        condition: service_started
+
+  ia-service:
+    build:
+      context: ./ia-service
+      dockerfile: Dockerfile
+    container_name: raee-smart-ia
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      IA_HOST: 0.0.0.0
+      IA_PORT: 8000
+    ports:
+      - "8000:8000"
+
+  ia-demo:
+    build:
+      context: ./ia-service
+      dockerfile: Dockerfile
+    container_name: raee-smart-ia-demo
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      IA_HOST: 0.0.0.0
+      IA_PORT: 8000
+      IA_DEMO_HOST: 0.0.0.0
+      IA_DEMO_PORT: 8010
+    ports:
+      - "8010:8010"
+    command: ["python", "demo.py"]
+    depends_on:
+      - ia-service
+
+  servidor-pdf:
+    build:
+      context: ./servidor-pdf
+      dockerfile: Dockerfile
+    container_name: raee-smart-pdf
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      PORT_PDF: 3007
+      PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium
+      CORS_ALLOWED_ORIGINS: http://localhost:5173,http://localhost:8081,http://localhost:19006,http://localhost:3000
+    ports:
+      - "3007:3007"
+
+  web-panel:
+    build:
+      context: ./web-panel
+      dockerfile: Dockerfile
+    container_name: raee-smart-web
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      VITE_API_BASE_URL: http://localhost:8080/api
+      VITE_PDF_BASE_URL: http://localhost:3007
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+      - servidor-pdf
+
+  app-movil:
+    build:
+      context: ./app-movil
+      dockerfile: Dockerfile
+    container_name: raee-smart-movil
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      EXPO_PUBLIC_API_URL: http://localhost:8080/api
+      EXPO_PUBLIC_USAR_DATOS_PRUEBA: ${EXPO_PUBLIC_USAR_DATOS_PRUEBA:-false}
+      EXPO_PUBLIC_MAP_STYLE_URL: ${EXPO_PUBLIC_MAP_STYLE_URL:-https://tiles.openfreemap.org/styles/bright/style.json}
+    ports:
+      - "8081:8081"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+  uploads:

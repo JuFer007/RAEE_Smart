@@ -56,12 +56,18 @@ api.interceptors.response.use(
     const status = error.response?.status;
 
     switch (status) {
-      case 401:
-        if (String(originalRequest.url || '').includes('/auth/login')) {
+      case 401: {
+        const url = String(originalRequest.url || '');
+        if (url.includes('/auth/login')) {
           error.normalizado =
             error.response?.data?.mensaje ||
             error.response?.data?.message ||
             'Correo o contraseña incorrectos';
+          break;
+        }
+        if (url.startsWith('/auth/recuperar-password') || url.startsWith('/auth/reenviar-codigo')
+          || url.startsWith('/auth/verificar-codigo') || url.startsWith('/auth/restablecer-password')) {
+          error.normalizado = 'No pudimos procesar tu solicitud. Inténtalo nuevamente.';
           break;
         }
 
@@ -72,6 +78,7 @@ api.interceptors.response.use(
         } catch {}
         manejadorSesionExpirada?.();
         break;
+      }
       case 403:
         error.normalizado =
           error.response?.data?.mensaje ||

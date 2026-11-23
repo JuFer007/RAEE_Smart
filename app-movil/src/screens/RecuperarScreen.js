@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Image, TextInput, Keyboard, Pressable, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, Image, TextInput, Keyboard, Pressable, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Encabezado from '../components/Encabezado';
 import Boton from '../components/Boton';
+import { reenviarCodigo, verificarCodigo } from '../services/recuperacionService';
 import { COLORS, ESPACIOS, RADIOS, SOMBRAS, TIPOGRAFIA, FUENTES } from '../theme';
 
 const CANTIDAD = 6;
@@ -70,6 +71,36 @@ export default function RecuperarScreen({ navigation, route }) {
   }
 
   const completo = codigo.every((d) => d !== '');
+  const [cargando, setCargando] = useState(false);
+  const [reenviando, setReenviando] = useState(false);
+
+  async function verificar() {
+    if (!completo) {
+      Alert.alert('Código incompleto', 'Ingresa los 6 dígitos del código.');
+      return;
+    }
+    try {
+      setCargando(true);
+      await verificarCodigo(email, codigo.join(''));
+      navigation.navigate('NuevaPassword', { codigo: codigo.join(''), email });
+    } catch (err) {
+      Alert.alert('No se pudo verificar', err.normalizado || 'Código inválido o expirado.');
+    } finally {
+      setCargando(false);
+    }
+  }
+
+  async function reenviar() {
+    try {
+      setReenviando(true);
+      await reenviarCodigo(email);
+      Alert.alert('Código reenviado', 'Revisa tu correo electrónico.');
+    } catch (err) {
+      Alert.alert('No se pudo reenviar', err.normalizado || 'Inténtalo nuevamente.');
+    } finally {
+      setReenviando(false);
+    }
+  }
 
   return (
     <View style={styles.fondo}>
@@ -129,11 +160,12 @@ export default function RecuperarScreen({ navigation, route }) {
             <Boton
               titulo="Verificar código"
               variante={completo ? 'primario' : 'fantasma'}
-              onPress={() => navigation.navigate('NuevaPassword', { codigo: codigo.join(''), email })}
+              onPress={verificar}
+              cargando={cargando}
               style={styles.boton}
             />
 
-            <TouchableOpacity style={styles.reenviar} activeOpacity={0.7}>
+            <TouchableOpacity style={styles.reenviar} activeOpacity={0.7} onPress={reenviar} disabled={reenviando}>
               <Ionicons name="mail-outline" size={15} color={COLORS.primaryText} />
               <Text style={styles.reenviarTexto}>¿No recibiste el código? Reenviar</Text>
             </TouchableOpacity>

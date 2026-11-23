@@ -1,6 +1,7 @@
 package com.raeesmart.backend.Security;
 import com.raeesmart.backend.Model.Enums.CanalAcceso;
 import com.raeesmart.backend.Model.Enums.RolUsuario;
+import com.raeesmart.backend.Repository.UsuarioRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,9 +19,11 @@ import java.util.List;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
+    private final UsuarioRepository usuarioRepository;
 
-    public JwtAuthenticationFilter(JwtService jwtService) {
+    public JwtAuthenticationFilter(JwtService jwtService, UsuarioRepository usuarioRepository) {
         this.jwtService = jwtService;
+        this.usuarioRepository = usuarioRepository;
     }
 
     @Override
@@ -36,6 +39,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (jwtService.esValido(token)) {
                 String email = jwtService.obtenerEmail(token);
+                var usuario = usuarioRepository.findByEmail(email);
+                long versionToken = jwtService.obtenerPasswordVersion(token);
+                long versionActual = usuario
+                        .map(u -> u.getPasswordVersion() == null ? 0L : u.getPasswordVersion())
+                        .orElse(0L);
+                if (usuario.isEmpty() || versionToken != versionActual) {
+                    filterChain.doFilter(request, response);
+                    return;
+                }
                 String rol = jwtService.obtenerRol(token);
                 CanalAcceso canal = jwtService.obtenerCanal(token);
                 String rolEfectivo = canal == CanalAcceso.MOVIL

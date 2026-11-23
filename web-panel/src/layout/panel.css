@@ -3429,6 +3429,10 @@ body {
 }
 
 /* Reports */
+.report-filters-card {
+  margin-bottom: 18px;
+}
+
 .report-filters {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));

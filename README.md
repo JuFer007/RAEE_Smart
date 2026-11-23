@@ -13,6 +13,8 @@
   ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=000)
   ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=fff)
   ![Java](https://img.shields.io/badge/Java-ED8B00?logo=openjdk&logoColor=fff)
+  ![Node.js](https://img.shields.io/badge/Node.js-339933?logo=node.js&logoColor=white)
+  ![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)
 </div>
 
 ---
@@ -33,6 +35,120 @@ municipalidad da seguimiento a las entregas desde un panel web.
     <td align="center">
       <img src="capturas/serivicioIA.png" alt="Vista del servicio de IA" width="720" style="border-radius: 16px;">
       <br><sub><b>Vista de reconocimiento de imágenes con IA</b></sub>
+    </td>
+  </tr>
+</table>
+</div>
+
+---
+
+## Capturas del panel web
+
+<h3 align="center">1. Inicio de sesión</h3>
+<p align="center"><em>Acceso al panel web con credenciales de administración municipal o super administración.</em></p>
+
+<div align="center">
+<table>
+  <tr>
+    <td align="center">
+      <img src="capturas/loginWeb.png" alt="Inicio de sesión del panel web" width="480" style="border-radius: 16px;">
+      <br><sub><b>Inicio de sesión del panel web</b></sub>
+    </td>
+  </tr>
+</table>
+</div>
+
+---
+
+<h3 align="center">2. Panel de administración municipal</h3>
+<p align="center"><em>Gestión de entregas, recepciones, campañas, puntos de acopio, horarios, certificados y reportes por municipalidad.</em></p>
+
+<div align="center">
+<table>
+  <tr>
+    <td align="center">
+      <img src="capturas/admin/dashboard.png" alt="Panel general municipal" width="480" style="border-radius: 16px;">
+      <br><sub><b>Panel general municipal</b></sub>
+    </td>
+    <td align="center">
+      <img src="capturas/admin/entregas.png" alt="Gestión de entregas" width="480" style="border-radius: 16px;">
+      <br><sub><b>Gestión de entregas</b></sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="capturas/admin/recepcion.png" alt="Recepción de residuos" width="480" style="border-radius: 16px;">
+      <br><sub><b>Recepción de residuos</b></sub>
+    </td>
+    <td align="center">
+      <img src="capturas/admin/campañas.png" alt="Campañas de recolección" width="480" style="border-radius: 16px;">
+      <br><sub><b>Campañas de recolección</b></sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="capturas/admin/puntos.png" alt="Puntos de acopio" width="480" style="border-radius: 16px;">
+      <br><sub><b>Puntos de acopio</b></sub>
+    </td>
+    <td align="center">
+      <img src="capturas/admin/horarios.png" alt="Horarios de atención" width="480" style="border-radius: 16px;">
+      <br><sub><b>Horarios de atención</b></sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="capturas/admin/certificados.png" alt="Certificados digitales" width="480" style="border-radius: 16px;">
+      <br><sub><b>Certificados digitales</b></sub>
+    </td>
+    <td align="center">
+      <img src="capturas/admin/reportes.png" alt="Reportes municipales" width="480" style="border-radius: 16px;">
+      <br><sub><b>Reportes municipales</b></sub>
+    </td>
+  </tr>
+</table>
+</div>
+
+---
+
+<h3 align="center">3. Panel super admin</h3>
+<p align="center"><em>Visión consolidada de usuarios, municipalidades, reportes, satisfacción ciudadana y calidad de clasificación.</em></p>
+
+<div align="center">
+<table>
+  <tr>
+    <td align="center">
+      <img src="capturas/superadmin/dashboard1.png" alt="Panel general super admin" width="480" style="border-radius: 16px;">
+      <br><sub><b>Panel general super admin</b></sub>
+    </td>
+    <td align="center">
+      <img src="capturas/superadmin/dashboard2.png" alt="Indicadores consolidados" width="480" style="border-radius: 16px;">
+      <br><sub><b>Indicadores consolidados</b></sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="capturas/superadmin/usuarios.png" alt="Administración de usuarios" width="480" style="border-radius: 16px;">
+      <br><sub><b>Administración de usuarios</b></sub>
+    </td>
+    <td align="center">
+      <img src="capturas/superadmin/municipalidades.png" alt="Municipalidades" width="480" style="border-radius: 16px;">
+      <br><sub><b>Municipalidades</b></sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="capturas/superadmin/reportes.png" alt="Reportes consolidados" width="480" style="border-radius: 16px;">
+      <br><sub><b>Reportes consolidados</b></sub>
+    </td>
+    <td align="center">
+      <img src="capturas/superadmin/satisfaccion.png" alt="Satisfacción ciudadana" width="480" style="border-radius: 16px;">
+      <br><sub><b>Satisfacción ciudadana</b></sub>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center">
+      <img src="capturas/superadmin/calidadIA.png" alt="Calidad de la IA" width="480" style="border-radius: 16px;">
+      <br><sub><b>Calidad de la IA</b></sub>
     </td>
   </tr>
 </table>
