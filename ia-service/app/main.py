@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 
 from app.config import settings
 from app.models.mobilenet_classifier import clasificador
@@ -28,6 +28,11 @@ def estado():
 @app.get("/salud")
 def salud():
     return {"ok": True}
+
+
+@app.head("/salud", include_in_schema=False)
+def salud_head():
+    return Response(status_code=200)
 
 
 @app.get("/categorias")
