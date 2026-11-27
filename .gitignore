@@ -28,6 +28,7 @@ Thumbs.db
 
 #appMobile
 app-movil/.expo/
+*.apk
 
 # Archivos subidos en tiempo de ejecución
 backend/uploads/

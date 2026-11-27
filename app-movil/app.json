@@ -35,6 +35,15 @@
           "locationWhenInUsePermission": "Permítenos acceder a tu ubicación para registrar la entrega y asignarte el punto de acopio más cercano."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "backendPort": "8080",
+      "mapStyleUrl": "https://tiles.openfreemap.org/styles/bright/style.json",
+      "usarDatosPrueba": false,
+      "eas": {
+        "projectId": "73cedfa6-fecf-4fcb-93a6-37bf3b16dd87"
+      }
+    },
+    "owner": "jufer07"
   }
 }
