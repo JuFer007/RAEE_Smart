@@ -53,6 +53,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/usuarios/me/password").hasRole("CIUDADANO")
                         .requestMatchers("/api/auth/login", "/api/auth/login/movil", "/api/auth/registro").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/health").permitAll()
                         .requestMatchers("/api/municipalidades/puntos", "/api/municipalidades/*/puntos").permitAll()
                         .requestMatchers("/api/municipalidades/*/campanas", "/api/municipalidades/campanas/*").permitAll()
                         .requestMatchers("/api/certificados/verificar/**").permitAll()

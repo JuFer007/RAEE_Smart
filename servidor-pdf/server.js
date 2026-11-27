@@ -12,8 +12,23 @@ const { esc, render, ahoraLima } = require('./utils');
 
 const app = express();
 
+const origenesPermitidos = new Set(
+  (process.env.CORS_ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:3000,http://localhost:19006,http://localhost:8081')
+    .split(',').map((o) => o.trim()).filter(Boolean)
+);
+const patronesPermitidos = (
+  process.env.CORS_ALLOWED_ORIGIN_PATTERNS || 'http://localhost:*,http://127.0.0.1:*,https://*.vercel.app,https://*.onrender.com,https://*.expo.app'
+).split(',').map((o) => o.trim()).filter(Boolean).map((patron) =>
+  new RegExp(`^${patron.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')}$`)
+);
+
 app.use(cors({
-  origin: (process.env.CORS_ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:3000,http://localhost:19006,http://localhost:8081').split(',').map((o) => o.trim()),
+  origin: (origin, callback) => {
+    if (!origin || origenesPermitidos.has(origin) || patronesPermitidos.some((patron) => patron.test(origin))) {
+      return callback(null, true);
+    }
+    callback(new Error(`Origen no permitido por CORS: ${origin}`));
+  },
   exposedHeaders: ['Content-Disposition'],
 }));
 app.use(express.json({ limit: '1mb' }));
@@ -313,7 +328,7 @@ app.get('/', (req, res) => {
   });
 });
 
-const PORT = process.env.PORT_PDF || 3007;
+const PORT = process.env.PORT_PDF || process.env.PORT || 3007;
 app.listen(PORT, () => console.log(`Servidor de reportes RAEE corriendo en puerto ${PORT}`));
 
 process.on('SIGINT', async () => {

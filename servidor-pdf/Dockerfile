@@ -7,4 +7,4 @@ COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
 EXPOSE 3007
-CMD ["npm", "start"]
+CMD ["sh", "-c", "export PORT_PDF=${PORT_PDF:-${PORT:-3007}} && exec npm start"]
